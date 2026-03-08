@@ -1,0 +1,6 @@
+region: eu-central-1
+cluster: cool-fish
+service: achievements
+service_definition: ./.ecs/ecs-app-service-def.json
+task_definition: ./.ecs/ecs-app-task-def.json
+timeout: "10m0s"

@@ -1,0 +1,80 @@
+{
+  "containerDefinitions": [
+    {
+      "command": [
+        "./bin/rails",
+        "server"
+      ],
+      "cpu": 0,
+      "entryPoint": [
+        "/rails/bin/docker-entrypoint"
+      ],
+      "environment": [
+        {
+          "name": "DB_HOST",
+          "value": "10.0.101.185"
+        },
+        {
+          "name": "DB_USER",
+          "value": "achievements"
+        },
+        {
+          "name": "REDIS_URL",
+          "value": "redis://10.0.101.185:6379/0"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "RAILS_MASTER_KEY",
+          "valueFrom": "/achievements/rails-master-key"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "/achievements/db-password"
+        },
+        {
+          "name": "SIDEKIQ_USERNAME",
+          "valueFrom": "/achievements/sidekiq-username"
+        },
+        {
+          "name": "SIDEKIQ_PASSWORD",
+          "valueFrom": "/achievements/sidekiq-password"
+        }
+      ],
+      "essential": true,
+      "image": "949665810427.dkr.ecr.eu-central-1.amazonaws.com/achievements:latest",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "achievements",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "achievements-web"
+        }
+      },
+      "name": "achievements-web",
+      "portMappings": [
+        {
+          "appProtocol": "http",
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  ],
+  "cpu": "256",
+  "executionRoleArn": "arn:aws:iam::949665810427:role/ecs_task_role",
+  "family": "service",
+  "memory": "512",
+  "networkMode": "bridge",
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "taskRoleArn": "arn:aws:iam::949665810427:role/ecs_task_role",
+  "placementConstraints": [
+    {
+      "type": "memberOf",
+      "expression": "attribute:ecs.cpu-architecture == arm64"
+    }
+  ]
+}

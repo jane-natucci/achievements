@@ -1,0 +1,27 @@
+{
+  "deploymentConfiguration": {
+    "deploymentCircuitBreaker": {
+      "enable": false,
+      "rollback": false
+    },
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 100
+  },
+  "deploymentController": {
+    "type": "ECS"
+  },
+  "desiredCount": 1,
+  "enableECSManagedTags": false,
+  "enableExecuteCommand": false,
+  "healthCheckGracePeriodSeconds": 0,
+  "launchType": "",
+  "loadBalancers": [
+    {
+      "containerName": "achievements-web",
+      "containerPort": 3000,
+      "targetGroupArn": "arn:aws:elasticloadbalancing:eu-central-1:949665810427:targetgroup/test-target-group/d90a3a249eb0f886"
+    }
+  ],
+  "propagateTags": "NONE",
+  "schedulingStrategy": "REPLICA"
+}

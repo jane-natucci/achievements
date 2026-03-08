@@ -69,3 +69,5 @@ yarn-debug.log*
 /public/uploads
 
 *.swp
+
+.DS_Store
