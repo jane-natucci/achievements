@@ -60,7 +60,7 @@
       "portMappings": [
         {
           "appProtocol": "http",
-          "containerPort": 3000,
+          "containerPort": 4000,
           "protocol": "tcp"
         }
       ]
