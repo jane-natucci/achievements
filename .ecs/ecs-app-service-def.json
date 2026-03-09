@@ -18,8 +18,8 @@
   "loadBalancers": [
     {
       "containerName": "achievements-web",
-      "containerPort": 3000,
-      "targetGroupArn": "arn:aws:elasticloadbalancing:eu-central-1:949665810427:targetgroup/test-target-group/d90a3a249eb0f886"
+      "containerPort": 4000,
+      "targetGroupArn": "arn:aws:elasticloadbalancing:eu-central-1:949665810427:targetgroup/achievements-target-group/ba1797f6d24d2381"
     }
   ],
   "propagateTags": "NONE",

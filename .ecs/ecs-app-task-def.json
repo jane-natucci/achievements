@@ -11,6 +11,10 @@
       ],
       "environment": [
         {
+          "name": "PORT",
+          "value": "4000"
+        },
+        {
           "name": "DB_HOST",
           "value": "10.0.101.185"
         },
