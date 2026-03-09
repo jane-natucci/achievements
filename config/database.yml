@@ -89,7 +89,8 @@ production:
     <<: *default
     database: achievements_production
     username: achievements
-    password: <%= ENV["ACHIEVEMENTS_DATABASE_PASSWORD"] %>
+    password: <%= ENV["DB_PASSWORD"] %>
+    host: <%= ENV['DB_HOST'] %>
   cache:
     <<: *primary_production
     database: achievements_production_cache
