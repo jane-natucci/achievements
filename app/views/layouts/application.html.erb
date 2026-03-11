@@ -23,7 +23,69 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="steam-shell">
+    <header class="topbar">
+      <div class="topbar__inner">
+        <div class="brand-lockup">
+          <span class="brand-lockup__logo">A</span>
+          <div>
+            <p class="eyebrow">Community</p>
+            <h1>Achievement Chains</h1>
+          </div>
+        </div>
+
+        <nav class="topbar__nav" aria-label="Primary">
+          <a href="/">Profile</a>
+          <a href="/">Library</a>
+          <a href="/">Showcase</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="profile-shell">
+      <section class="profile-hero">
+        <div class="profile-hero__backdrop"></div>
+        <div class="profile-hero__content">
+          <div class="avatar-frame" aria-hidden="true">JC</div>
+
+          <div class="profile-meta">
+            <p class="eyebrow">Achievement profile</p>
+            <h2>Jane's Achievement Hub</h2>
+            <p class="profile-meta__tagline">
+              A lightweight profile layout inspired by Steam community pages.
+            </p>
+          </div>
+
+          <div class="profile-status">
+            <span class="profile-status__dot"></span>
+            Online
+          </div>
+        </div>
+      </section>
+
+      <div class="profile-grid">
+        <aside class="panel summary-panel">
+          <h3>Summary</h3>
+          <dl class="summary-list">
+            <div>
+              <dt>Focus</dt>
+              <dd>Achievement tracking</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>In progress</dd>
+            </div>
+            <div>
+              <dt>Style</dt>
+              <dd>Clean Steam-inspired shell</dd>
+            </div>
+          </dl>
+        </aside>
+
+        <section class="panel content-panel">
+          <%= yield %>
+        </section>
+      </div>
+    </main>
   </body>
 </html>
