@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_223550) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_223800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "achievements", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.bigint "game_id", null: false
+    t.boolean "hidden"
+    t.string "icon_locked"
+    t.string "icon_unlocked"
+    t.string "steam_api_name"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "steam_api_name"], name: "index_achievements_on_game_id_and_steam_api_name", unique: true
+    t.index ["game_id"], name: "index_achievements_on_game_id"
+  end
 
   create_table "games", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -30,4 +44,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_223550) do
     t.datetime "updated_at", null: false
     t.index ["steam_id"], name: "index_users_on_steam_id", unique: true
   end
+
+  add_foreign_key "achievements", "games"
 end
