@@ -266,6 +266,8 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    redis-client (0.27.0)
+      connection_pool
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -304,6 +306,8 @@ GEM
       ffi (~> 1.12)
       logger
     rubyzip (3.2.2)
+    rufus-scheduler (3.9.2)
+      fugit (~> 1.1, >= 1.11.1)
     securerandom (0.4.1)
     selenium-webdriver (4.41.0)
       base64 (~> 0.2)
@@ -311,6 +315,15 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
+    sidekiq (8.1.1)
+      connection_pool (>= 3.0.0)
+      json (>= 2.16.0)
+      logger (>= 1.7.0)
+      rack (>= 3.2.0)
+      redis-client (>= 0.26.0)
+    sidekiq-scheduler (6.0.1)
+      rufus-scheduler (~> 3.2)
+      sidekiq (>= 7.3, < 9)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -387,6 +400,8 @@ DEPENDENCIES
   rails (~> 8.1.2)
   rubocop-rails-omakase
   selenium-webdriver
+  sidekiq (~> 8.1)
+  sidekiq-scheduler (~> 6.0)
   solid_cable
   solid_cache
   solid_queue

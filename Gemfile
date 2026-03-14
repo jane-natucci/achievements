@@ -64,3 +64,6 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "sidekiq", "~> 8.1"
+gem "sidekiq-scheduler", "~> 6.0"
