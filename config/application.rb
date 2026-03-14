@@ -25,5 +25,7 @@ module Achievements
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.active_job.queue_adapter = :sidekiq
+
+    Steam.apikey = Rails.application.credentials.steam_key
   end
 end
