@@ -365,6 +365,33 @@ a {
   gap: 1rem;
 }
 
+.chain-card__lead {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.chain-card__icon-wrap {
+  flex: 0 0 auto;
+}
+
+.chain-card__icon {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  background: #0f1721;
+}
+
+.chain-card__icon--placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(102, 192, 244, 0.2), rgba(7, 12, 18, 0.9));
+}
+
 .chain-card__heading h2 {
   margin: 0.15rem 0 0;
   font-size: 1.2rem;
@@ -629,6 +656,10 @@ a {
 
   .chain-card__top {
     flex-direction: column;
+  }
+
+  .chain-card__lead {
+    width: 100%;
   }
 
   .chain-card__stats,

@@ -53,12 +53,25 @@
           visible_count = display_nodes.count { |node| !node.achievement&.hidden }
           first_node = display_nodes.first
           last_node = display_nodes.last
+          last_icon_url = last_node&.achievement&.icon_unlocked || last_node&.icon_unlocked
         %>
         <article class="chain-card">
           <div class="chain-card__top">
-            <div class="chain-card__heading">
-              <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
-              <h2><%= link_to chain.title, chain_path(chain) %></h2>
+            <div class="chain-card__lead">
+              <div class="chain-card__icon-wrap">
+                <% if last_icon_url.present? %>
+                  <%= image_tag last_icon_url, alt: "", class: "chain-card__icon" %>
+                <% else %>
+                  <div class="chain-card__icon chain-card__icon--placeholder" aria-hidden="true">
+                    <span><%= display_nodes.size %></span>
+                  </div>
+                <% end %>
+              </div>
+
+              <div class="chain-card__heading">
+                <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
+                <h2><%= link_to chain.title, chain_path(chain) %></h2>
+              </div>
             </div>
 
             <div class="chain-card__stats">
