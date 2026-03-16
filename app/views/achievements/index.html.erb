@@ -1,1 +1,43 @@
-<h1>Welcome to Achievement Chains</h1>
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <section class="sidebar-section">
+      <h3>Overview</h3>
+      <div class="sidebar-stat-grid">
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= @total_chains %></span>
+          <span class="achievement-stat-card__label">Published Chains</span>
+        </div>
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= @total_achievements %></span>
+          <span class="achievement-stat-card__label">Achievements Tracked</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="sidebar-section">
+      <h3>Browse</h3>
+      <%= link_to "All Chains", chains_path, class: "sidebar-button" %>
+    </section>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="chain-index__header">
+    <p class="eyebrow">Home</p>
+    <h1>Achievement Chains</h1>
+    <p class="chain-index__description">
+      Turn achievements into journeys. Start with a curated chain and follow it from the first unlock to the crown achievement.
+    </p>
+  </header>
+
+  <% if @chains.any? %>
+    <div class="chain-card-list">
+      <%= render partial: "chains/chain_card", collection: @chains, as: :chain %>
+    </div>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No chains yet</h3>
+      <p>Once chains are created, they will appear here with their progression details.</p>
+    </div>
+  <% end %>
+</section>

@@ -23,10 +23,6 @@
       <h3>Browse</h3>
       <dl class="summary-list">
         <div>
-          <dt>Order</dt>
-          <dd>Newest first</dd>
-        </div>
-        <div>
           <dt>Focus</dt>
           <dd>Curated progression paths and achievement routes</dd>
         </div>
@@ -46,72 +42,7 @@
 
   <% if @chains.any? %>
     <div class="chain-card-list">
-      <% @chains.each do |chain| %>
-        <%
-          ordered_nodes = chain.nodes_in_order
-          display_nodes = ordered_nodes.presence || chain.chain_nodes.to_a
-          visible_count = display_nodes.count { |node| !node.achievement&.hidden }
-          first_node = display_nodes.first
-          last_node = display_nodes.last
-          last_icon_url = last_node&.achievement&.icon_unlocked || last_node&.icon_unlocked
-        %>
-        <article class="chain-card">
-          <div class="chain-card__top">
-            <div class="chain-card__lead">
-              <div class="chain-card__icon-wrap">
-                <% if last_icon_url.present? %>
-                  <%= image_tag last_icon_url, alt: "", class: "chain-card__icon" %>
-                <% else %>
-                  <div class="chain-card__icon chain-card__icon--placeholder" aria-hidden="true">
-                    <span><%= display_nodes.size %></span>
-                  </div>
-                <% end %>
-              </div>
-
-              <div class="chain-card__heading">
-                <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
-                <h2><%= link_to chain.title, chain_path(chain) %></h2>
-              </div>
-            </div>
-
-            <div class="chain-card__stats">
-              <div class="chain-card__stat">
-                <span class="chain-card__stat-value"><%= visible_count %></span>
-                <span class="chain-card__stat-label">Achievements</span>
-              </div>
-              <div class="chain-card__stat">
-                <span class="chain-card__stat-value"><%= display_nodes.size %></span>
-                <span class="chain-card__stat-label">Steps</span>
-              </div>
-            </div>
-          </div>
-
-          <% if chain.description.present? %>
-            <p class="chain-card__description"><%= chain.description %></p>
-          <% end %>
-
-          <div class="chain-card__details">
-            <div class="chain-card__detail">
-              <span class="chain-card__detail-label">Starts With</span>
-              <span class="chain-card__detail-value"><%= first_node&.title || "No starting achievement" %></span>
-            </div>
-            <div class="chain-card__detail">
-              <span class="chain-card__detail-label">Ends With</span>
-              <span class="chain-card__detail-value"><%= last_node&.title || "No final achievement" %></span>
-            </div>
-          </div>
-
-          <div class="chain-card__footer">
-            <% if chain.visibility.present? %>
-              <span class="chain-card__pill"><%= chain.visibility.humanize %></span>
-            <% end %>
-            <% if chain.featured_score.present? %>
-              <span class="chain-card__pill">Featured <%= chain.featured_score %></span>
-            <% end %>
-            <%= link_to "Open Chain", chain_path(chain), class: "chain-card__link" %>
-          </div>
-        </article>
-      <% end %>
+      <%= render partial: "chain_card", collection: @chains, as: :chain %>
     </div>
   <% else %>
     <div class="achievement-empty-state">
