@@ -24,8 +24,8 @@
       <%= link_to icon_markup, chain_path(chain), class: "chain-card__icon-link", aria: { label: "Open #{chain.title}" } %>
 
       <div class="chain-card__heading">
-        <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
         <h2><%= link_to chain.title, chain_path(chain) %></h2>
+        <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
       </div>
     </div>
 
@@ -52,13 +52,14 @@
     </div>
   </div>
 
-  <div class="chain-card__footer">
-    <% if chain.visibility.present? %>
-      <span class="chain-card__pill"><%= chain.visibility.humanize %></span>
-    <% end %>
-    <% if chain.featured_score.present? %>
-      <span class="chain-card__pill">Featured <%= chain.featured_score %></span>
-    <% end %>
-    <%= link_to "Open Chain", chain_path(chain), class: "chain-card__link" %>
-  </div>
+  <% if chain.visibility.present? || chain.featured_score.present? %>
+    <div class="chain-card__footer">
+      <% if chain.visibility.present? %>
+        <span class="chain-card__pill"><%= chain.visibility.humanize %></span>
+      <% end %>
+      <% if chain.featured_score.present? %>
+        <span class="chain-card__pill">Featured <%= chain.featured_score %></span>
+      <% end %>
+    </div>
+  <% end %>
 </article>
