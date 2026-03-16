@@ -65,25 +65,31 @@
 
       <div class="profile-grid">
         <aside class="panel summary-panel">
-          <h3>Summary</h3>
-          <dl class="summary-list">
-            <div>
-              <dt>Focus</dt>
-              <dd>Achievement tracking</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>In progress</dd>
-            </div>
-            <div>
-              <dt>Style</dt>
-              <dd>Clean Steam-inspired shell</dd>
-            </div>
-          </dl>
+          <% if content_for?(:sidebar) %>
+            <%= yield :sidebar %>
+          <% else %>
+            <h3>Summary</h3>
+            <dl class="summary-list">
+              <div>
+                <dt>Focus</dt>
+                <dd>Achievement tracking</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>In progress</dd>
+              </div>
+              <div>
+                <dt>Style</dt>
+                <dd>Clean Steam-inspired shell</dd>
+              </div>
+            </dl>
+          <% end %>
         </aside>
 
-        <section class="panel content-panel">
-          <%= yield %>
+        <section class="panel content-panel" role="main">
+          <div class="view-content">
+            <%= yield %>
+          </div>
         </section>
       </div>
     </main>

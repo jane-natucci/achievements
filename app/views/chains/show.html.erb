@@ -1,0 +1,108 @@
+<%
+  total_nodes = @nodes.size
+  visible_nodes = @nodes.reject { |node| node.achievement&.hidden }
+  total_visible_nodes = visible_nodes.size
+  completion_rate = total_visible_nodes.positive? ? 100 : 0
+%>
+
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "All Chains", chains_path, class: "sidebar-button" %>
+
+    <section class="sidebar-section">
+      <h3>Chain Stats</h3>
+      <div class="sidebar-stat-grid">
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= total_visible_nodes %></span>
+          <span class="achievement-stat-card__label">Achievements In Chain</span>
+        </div>
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= completion_rate %>%</span>
+          <span class="achievement-stat-card__label">Chain Completion</span>
+        </div>
+      </div>
+    </section>
+
+    <% if @chain.game&.name.present? || @chain.description.present? %>
+      <section class="sidebar-section">
+        <h3>Details</h3>
+        <dl class="summary-list">
+          <% if @chain.game&.name.present? %>
+            <div>
+              <dt>Game</dt>
+              <dd><%= @chain.game.name %></dd>
+            </div>
+          <% end %>
+          <% if @chain.description.present? %>
+            <div>
+              <dt>About</dt>
+              <dd><%= @chain.description %></dd>
+            </div>
+          <% end %>
+        </dl>
+      </section>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="chain-show">
+  <header class="chain-show__header">
+    <div>
+      <p class="eyebrow">Game stats</p>
+      <h1><%= @chain.title %></h1>
+      <% if @chain.game&.name.present? %>
+        <p class="chain-show__game"><%= @chain.game.name %></p>
+      <% end %>
+      <% if @chain.description.present? %>
+        <p class="chain-show__description"><%= @chain.description %></p>
+      <% end %>
+    </div>
+  </header>
+
+  <section class="achievements-section">
+    <div class="achievements-section__header">
+      <h2>Achievements</h2>
+      <p class="achievements-section__meta"><%= total_visible_nodes %> of <%= total_nodes %> shown</p>
+    </div>
+
+    <% if visible_nodes.any? %>
+      <div class="achievement-list">
+        <% visible_nodes.each_with_index do |node, index| %>
+          <% icon_url = node.achievement&.icon_unlocked || node.icon_unlocked %>
+          <article class="achievement-row">
+            <div class="achievement-row__icon-wrap">
+              <% if icon_url.present? %>
+                <%= image_tag icon_url, alt: "", class: "achievement-row__icon" %>
+              <% else %>
+                <div class="achievement-row__icon achievement-row__icon--placeholder" aria-hidden="true">
+                  <span><%= index + 1 %></span>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="achievement-row__body">
+              <div class="achievement-row__title-line">
+                <h3><%= node.title %></h3>
+                <% if node.node_type.present? %>
+                  <span class="achievement-row__type"><%= node.node_type.humanize %></span>
+                <% end %>
+              </div>
+
+              <p class="achievement-row__description"><%= node.description %></p>
+
+              <div class="achievement-row__meta">
+                <span>Unlocked in chain</span>
+                <span>Step <%= index + 1 %> of <%= total_nodes %></span>
+              </div>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="achievement-empty-state">
+        <h3>No visible achievements yet</h3>
+        <p>This chain does not currently expose any achievement entries to render.</p>
+      </div>
+    <% end %>
+  </section>
+</section>

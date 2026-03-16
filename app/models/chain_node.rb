@@ -5,12 +5,15 @@ class ChainNode < ApplicationRecord
 
   before_save :sync_with_achievement
 
+  delegate :icon_locked, to: :achievement, allow_nil: true
+  delegate :icon_unlocked, to: :achievement, allow_nil: true
+
   def title
-    achievement&.title || title || "Unknown Achievement #{id}"
+    achievement&.title || self[:title] || "Unknown Achievement #{id}"
   end
 
   def description
-    achievement&.description || description || "No description available"
+    achievement&.description || self[:description] || "No description available"
   end
 
   def sync_with_achievement

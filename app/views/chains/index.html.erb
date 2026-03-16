@@ -1,0 +1,109 @@
+<%
+  total_chains = @chains.size
+  total_nodes = @chains.sum { |chain| chain.chain_nodes.size }
+%>
+
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <section class="sidebar-section">
+      <h3>Chain Library</h3>
+      <div class="sidebar-stat-grid">
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= total_chains %></span>
+          <span class="achievement-stat-card__label">Published Chains</span>
+        </div>
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= total_nodes %></span>
+          <span class="achievement-stat-card__label">Achievements Tracked</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="sidebar-section">
+      <h3>Browse</h3>
+      <dl class="summary-list">
+        <div>
+          <dt>Order</dt>
+          <dd>Newest first</dd>
+        </div>
+        <div>
+          <dt>Focus</dt>
+          <dd>Curated progression paths and achievement routes</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="chain-index__header">
+    <p class="eyebrow">Collection</p>
+    <h1>Chains</h1>
+    <p class="chain-index__description">
+      Explore curated achievement routes, with each chain ordered into a clear progression from first unlock to final target.
+    </p>
+  </header>
+
+  <% if @chains.any? %>
+    <div class="chain-card-list">
+      <% @chains.each do |chain| %>
+        <%
+          ordered_nodes = chain.nodes_in_order
+          display_nodes = ordered_nodes.presence || chain.chain_nodes.to_a
+          visible_count = display_nodes.count { |node| !node.achievement&.hidden }
+          first_node = display_nodes.first
+          last_node = display_nodes.last
+        %>
+        <article class="chain-card">
+          <div class="chain-card__top">
+            <div class="chain-card__heading">
+              <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
+              <h2><%= link_to chain.title, chain_path(chain) %></h2>
+            </div>
+
+            <div class="chain-card__stats">
+              <div class="chain-card__stat">
+                <span class="chain-card__stat-value"><%= visible_count %></span>
+                <span class="chain-card__stat-label">Achievements</span>
+              </div>
+              <div class="chain-card__stat">
+                <span class="chain-card__stat-value"><%= display_nodes.size %></span>
+                <span class="chain-card__stat-label">Steps</span>
+              </div>
+            </div>
+          </div>
+
+          <% if chain.description.present? %>
+            <p class="chain-card__description"><%= chain.description %></p>
+          <% end %>
+
+          <div class="chain-card__details">
+            <div class="chain-card__detail">
+              <span class="chain-card__detail-label">Starts With</span>
+              <span class="chain-card__detail-value"><%= first_node&.title || "No starting achievement" %></span>
+            </div>
+            <div class="chain-card__detail">
+              <span class="chain-card__detail-label">Ends With</span>
+              <span class="chain-card__detail-value"><%= last_node&.title || "No final achievement" %></span>
+            </div>
+          </div>
+
+          <div class="chain-card__footer">
+            <% if chain.visibility.present? %>
+              <span class="chain-card__pill"><%= chain.visibility.humanize %></span>
+            <% end %>
+            <% if chain.featured_score.present? %>
+              <span class="chain-card__pill">Featured <%= chain.featured_score %></span>
+            <% end %>
+            <%= link_to "Open Chain", chain_path(chain), class: "chain-card__link" %>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No chains yet</h3>
+      <p>Once chains are created, they will appear here with their progression details.</p>
+    </div>
+  <% end %>
+</section>
