@@ -13,6 +13,6 @@ Rails.application.routes.draw do
   scope path: "achievements" do
     root "achievements#index"
     resources :achievements
-    resources :chains, only: %i[index show]
+    resources :chains
   end
 end
