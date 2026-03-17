@@ -38,7 +38,7 @@
         <h3>Library</h3>
         <div class="game-filter-list">
           <%= link_to "Saved Chains",
-                chains_path(favorites: 1, game: @active_game&.id),
+                chains_path(favorites: 1),
                 class: ["game-filter-chip", (@favorites_only ? "game-filter-chip--active" : nil)].compact.join(" ") %>
         </div>
       </section>

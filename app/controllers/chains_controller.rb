@@ -6,7 +6,7 @@ class ChainsController < ApplicationController
     @chains = Chain.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
     @chains = @chains.where(game: @active_game) if @active_game
     if @favorites_only
-      @chains = @chains.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
+      @chains = Chain.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
     end
     @favorite_chain_ids =
       if current_user
