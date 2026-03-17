@@ -24,13 +24,13 @@
     </section>
 
     <section class="sidebar-section">
-      <h3>Browse</h3>
-      <dl class="summary-list">
-        <div>
-          <dt>Focus</dt>
-          <dd>Curated progression paths and achievement routes</dd>
-        </div>
-      </dl>
+      <h3>By Game</h3>
+      <%= render "game_filters",
+            games: @filter_games,
+            active_game_id: @active_game&.id,
+            all_path: chains_path,
+            label_all: "All Games",
+            filter_path: ->(game) { chains_path(game: game.id) } %>
     </section>
   </div>
 <% end %>
@@ -41,6 +41,9 @@
     <h1>Chains</h1>
     <p class="chain-index__description">
       Explore curated achievement routes, with each chain ordered into a clear progression from first unlock to final target.
+      <% if @active_game %>
+        Showing chains for <strong><%= @active_game.name %></strong>.
+      <% end %>
     </p>
   </header>
 

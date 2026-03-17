@@ -15,8 +15,13 @@
     </section>
 
     <section class="sidebar-section">
-      <h3>Browse</h3>
-      <%= link_to "All Chains", chains_path, class: "sidebar-button" %>
+      <h3>By Game</h3>
+      <%= render "chains/game_filters",
+            games: @filter_games,
+            active_game_id: nil,
+            all_path: chains_path,
+            label_all: "All Chains",
+            filter_path: ->(game) { chains_path(game: game.id) } %>
     </section>
   </div>
 <% end %>

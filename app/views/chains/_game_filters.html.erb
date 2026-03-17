@@ -1,0 +1,9 @@
+<div class="game-filter-list">
+  <%= link_to label_all, all_path, class: ["game-filter-chip", (active_game_id.blank? ? "game-filter-chip--active" : nil)].compact.join(" ") %>
+
+  <% games.each do |game| %>
+    <%= link_to game.name,
+          filter_path.call(game),
+          class: ["game-filter-chip", (active_game_id == game.id ? "game-filter-chip--active" : nil)].compact.join(" ") %>
+  <% end %>
+</div>

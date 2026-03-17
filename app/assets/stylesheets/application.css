@@ -542,6 +542,37 @@ a {
   background: linear-gradient(180deg, rgba(62, 72, 83, 0.94), rgba(35, 42, 50, 0.98));
 }
 
+.game-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.game-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid rgba(102, 192, 244, 0.14);
+  border-radius: 999px;
+  background: rgba(102, 192, 244, 0.08);
+  color: #d9e7f4;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.game-filter-chip:hover,
+.game-filter-chip:focus-visible {
+  background: rgba(102, 192, 244, 0.16);
+  color: var(--text);
+}
+
+.game-filter-chip--active {
+  background: linear-gradient(180deg, rgba(57, 107, 136, 0.9), rgba(31, 66, 91, 0.95));
+  color: #eef8ff;
+  border-color: rgba(102, 192, 244, 0.26);
+}
+
 .sidebar-stat-grid {
   display: grid;
   gap: 0.8rem;

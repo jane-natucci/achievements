@@ -1,6 +1,9 @@
 class ChainsController < ApplicationController
   def index
+    @filter_games = Game.joins(:chains).distinct.order(:name)
+    @active_game = @filter_games.find_by(id: params[:game])
     @chains = Chain.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
+    @chains = @chains.where(game: @active_game) if @active_game
   end
 
   def show
