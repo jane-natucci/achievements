@@ -4,34 +4,42 @@
   first_node = display_nodes.first
   last_node = display_nodes.last
   last_icon_url = last_node&.achievement&.icon_unlocked || last_node&.icon_unlocked
-  icon_markup = capture do
+  favorited = current_user.present? && @favorite_chain_ids.include?(chain.id)
 %>
-    <div class="chain-card__icon-wrap <%= "chain-card__icon-wrap--glow" if last_icon_url.present? %>">
-      <% if last_icon_url.present? %>
-        <%= image_tag last_icon_url, alt: "", class: "chain-card__icon" %>
-      <% else %>
-        <div class="chain-card__icon chain-card__icon--placeholder" aria-hidden="true">
-          <span><%= display_nodes.size %></span>
-        </div>
-      <% end %>
-    </div>
-<% end %>
 
 <article class="chain-card">
+  <% if current_user %>
+    <%= button_to favorited ? favorite_chain_path(chain) : favorite_chain_path(chain),
+          method: favorited ? :delete : :post,
+          form_class: "chain-favorite-form chain-favorite-form--corner",
+          class: ["chain-favorite-button", "chain-favorite-button--corner", (favorited ? "chain-favorite-button--active" : nil)].compact.join(" "),
+          aria: { label: favorited ? "Remove from library" : "Save to library" } do %>
+      <svg viewBox="0 0 24 24" fill="<%= favorited ? 'currentColor' : 'none' %>" aria-hidden="true">
+        <path d="M12 3.7L14.55 8.87L20.25 9.7L16.12 13.72L17.1 19.4L12 16.72L6.9 19.4L7.88 13.72L3.75 9.7L9.45 8.87L12 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    <% end %>
+  <% end %>
+
   <div class="chain-card__top">
     <div class="chain-card__lead">
-      <%= link_to icon_markup, chain_path(chain), class: "chain-card__icon-link", aria: { label: "Open #{chain.title}" } %>
+      <div class="chain-card__icon-stack">
+        <%= link_to chain_path(chain), class: "chain-card__icon-link", aria: { label: "Open #{chain.title}" } do %>
+          <div class="chain-card__icon-wrap <%= "chain-card__icon-wrap--glow" if last_icon_url.present? %>">
+            <% if last_icon_url.present? %>
+              <%= image_tag last_icon_url, alt: "", class: "chain-card__icon" %>
+            <% else %>
+              <div class="chain-card__icon chain-card__icon--placeholder" aria-hidden="true">
+                <span><%= display_nodes.size %></span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
 
       <div class="chain-card__heading">
         <h2><%= link_to chain.title, chain_path(chain) %></h2>
         <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
-      </div>
-    </div>
-
-    <div class="chain-card__stats">
-      <div class="chain-card__stat">
-        <span class="chain-card__stat-value"><%= display_nodes.size %></span>
-        <span class="chain-card__stat-label">Achievements</span>
+        <p class="chain-card__meta"><%= pluralize(display_nodes.size, "achievement") %></p>
       </div>
     </div>
   </div>

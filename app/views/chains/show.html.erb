@@ -8,6 +8,16 @@
   <div class="sidebar-stack">
     <div class="sidebar-actions">
       <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+      <% if current_user %>
+        <%= button_to @favorited ? favorite_chain_path(@chain) : favorite_chain_path(@chain),
+              method: @favorited ? :delete : :post,
+              class: ["sidebar-icon-button", "sidebar-icon-button--star", (@favorited ? "sidebar-icon-button--star-active" : nil)].compact.join(" "),
+              aria: { label: @favorited ? "Remove from library" : "Save to library" } do %>
+          <svg viewBox="0 0 24 24" fill="<%= @favorited ? 'currentColor' : 'none' %>" aria-hidden="true">
+            <path d="M12 3.7L14.55 8.87L20.25 9.7L16.12 13.72L17.1 19.4L12 16.72L6.9 19.4L7.88 13.72L3.75 9.7L9.45 8.87L12 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        <% end %>
+      <% end %>
       <% if current_user && @chain.creator_user_id == current_user.id %>
         <%= button_to chain_path(@chain), method: :delete, class: "sidebar-icon-button", form: { data: { turbo_confirm: "Delete this chain?" } }, aria: { label: "Delete chain" } do %>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">

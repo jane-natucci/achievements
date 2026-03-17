@@ -17,6 +17,11 @@ Rails.application.routes.draw do
     post "login", to: "sessions#create"
     delete "logout", to: "sessions#destroy"
     resources :achievements
-    resources :chains
+    resources :chains do
+      member do
+        post :favorite
+        delete :favorite, action: :unfavorite
+      end
+    end
   end
 end

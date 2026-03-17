@@ -2,8 +2,18 @@ class ChainsController < ApplicationController
   def index
     @filter_games = Game.joins(:chains).distinct.order(:name)
     @active_game = @filter_games.find_by(id: params[:game])
+    @favorites_only = current_user.present? && params[:favorites] == "1"
     @chains = Chain.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
     @chains = @chains.where(game: @active_game) if @active_game
+    if @favorites_only
+      @chains = @chains.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
+    end
+    @favorite_chain_ids =
+      if current_user
+        current_user.user_chain_progresses.where(chain_id: @chains.map(&:id), favorite: true).pluck(:chain_id)
+      else
+        []
+      end
   end
 
   def show
@@ -15,6 +25,7 @@ class ChainsController < ApplicationController
       else
         {}
       end
+    @favorited = current_user.present? && current_user.user_chain_progresses.exists?(chain: @chain, favorite: true)
   end
 
   def new
@@ -78,6 +89,27 @@ class ChainsController < ApplicationController
 
     chain.destroy!
     redirect_to chains_path, notice: "Chain deleted."
+  end
+
+  def favorite
+    return redirect_to("/achievements/login/", alert: "Log in to save chains.") unless current_user
+
+    chain = Chain.find(params[:id])
+    progress = UserChainProgress.find_or_initialize_by(user: current_user, chain: chain)
+    progress.favorite = true
+    progress.save!
+
+    redirect_back fallback_location: chain_path(chain), notice: "Chain saved to your library."
+  end
+
+  def unfavorite
+    return redirect_to("/achievements/login/", alert: "Log in to manage saved chains.") unless current_user
+
+    chain = Chain.find(params[:id])
+    progress = UserChainProgress.find_by(user: current_user, chain: chain)
+    progress&.destroy if progress&.favorite?
+
+    redirect_back fallback_location: chain_path(chain), notice: "Chain removed from your library."
   end
 
   private

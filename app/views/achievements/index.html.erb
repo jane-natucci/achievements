@@ -23,6 +23,15 @@
             label_all: "All Chains",
             filter_path: ->(game) { chains_path(game: game.id) } %>
     </section>
+
+    <% if current_user %>
+      <section class="sidebar-section">
+        <h3>Library</h3>
+        <div class="game-filter-list">
+          <%= link_to "Saved Chains", chains_path(favorites: 1), class: "game-filter-chip" %>
+        </div>
+      </section>
+    <% end %>
   </div>
 <% end %>
 

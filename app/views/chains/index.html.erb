@@ -32,6 +32,17 @@
             label_all: "All Games",
             filter_path: ->(game) { chains_path(game: game.id) } %>
     </section>
+
+    <% if current_user %>
+      <section class="sidebar-section">
+        <h3>Library</h3>
+        <div class="game-filter-list">
+          <%= link_to "Saved Chains",
+                chains_path(favorites: 1, game: @active_game&.id),
+                class: ["game-filter-chip", (@favorites_only ? "game-filter-chip--active" : nil)].compact.join(" ") %>
+        </div>
+      </section>
+    <% end %>
   </div>
 <% end %>
 
@@ -43,6 +54,9 @@
       Explore curated achievement routes, with each chain ordered into a clear progression from first unlock to final target.
       <% if @active_game %>
         Showing chains for <strong><%= @active_game.name %></strong>.
+      <% end %>
+      <% if @favorites_only %>
+        Showing only chains saved to your library.
       <% end %>
     </p>
   </header>
