@@ -4,22 +4,9 @@
   first_node = display_nodes.first
   last_node = display_nodes.last
   last_icon_url = last_node&.achievement&.icon_unlocked || last_node&.icon_unlocked
-  favorited = current_user.present? && @favorite_chain_ids.include?(chain.id)
 %>
 
 <article class="chain-card">
-  <% if current_user %>
-    <%= button_to favorited ? favorite_chain_path(chain) : favorite_chain_path(chain),
-          method: favorited ? :delete : :post,
-          form_class: "chain-favorite-form chain-favorite-form--corner",
-          class: ["chain-favorite-button", "chain-favorite-button--corner", (favorited ? "chain-favorite-button--active" : nil)].compact.join(" "),
-          aria: { label: favorited ? "Remove from library" : "Save to library" } do %>
-      <svg viewBox="0 0 24 24" fill="<%= favorited ? 'currentColor' : 'none' %>" aria-hidden="true">
-        <path d="M12 3.7L14.55 8.87L20.25 9.7L16.12 13.72L17.1 19.4L12 16.72L6.9 19.4L7.88 13.72L3.75 9.7L9.45 8.87L12 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-      </svg>
-    <% end %>
-  <% end %>
-
   <div class="chain-card__top">
     <div class="chain-card__lead">
       <div class="chain-card__icon-stack">

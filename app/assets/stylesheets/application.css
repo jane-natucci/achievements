@@ -756,23 +756,6 @@ a {
   background: rgba(255, 206, 97, 0.12);
 }
 
-.chain-favorite-form--corner {
-  position: absolute;
-  top: 0.8rem;
-  right: 0.8rem;
-  z-index: 2;
-  margin: 0;
-}
-
-.chain-favorite-button--corner {
-  width: 1.6rem;
-  min-width: 1.6rem;
-  height: 1.6rem;
-  border-color: rgba(9, 16, 23, 0.85);
-  background: rgba(12, 18, 25, 0.92);
-  box-shadow: 0 0 0 1px rgba(255, 206, 97, 0.06);
-}
-
 .chain-card__meta {
   margin: 0.35rem 0 0;
   color: var(--text-muted);
