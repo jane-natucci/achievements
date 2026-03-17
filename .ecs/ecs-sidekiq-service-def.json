@@ -1,0 +1,19 @@
+{
+  "deploymentConfiguration": {
+    "deploymentCircuitBreaker": {
+      "enable": false,
+      "rollback": false
+    },
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 100
+  },
+  "deploymentController": {
+    "type": "ECS"
+  },
+  "desiredCount": 1,
+  "enableECSManagedTags": false,
+  "enableExecuteCommand": false,
+  "launchType": "",
+  "propagateTags": "NONE",
+  "schedulingStrategy": "REPLICA"
+}

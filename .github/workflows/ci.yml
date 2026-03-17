@@ -143,4 +143,6 @@ jobs:
         uses: kayac/ecspresso@v2
       - name: Deploy App
         run: ecspresso deploy --config ./ecs-app.yml
+      - name: Deploy Sidekiq
+        run: ecspresso deploy --config ./ecs-sidekiq.yml
       - run: echo "🍏 This job's status is ${{ job.status }}."

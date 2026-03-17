@@ -1,0 +1,6 @@
+region: eu-central-1
+cluster: cool-fish
+service: achievements-sidekiq
+service_definition: ./.ecs/ecs-sidekiq-service-def.json
+task_definition: ./.ecs/ecs-sidekiq-task-def.json
+timeout: "10m0s"
