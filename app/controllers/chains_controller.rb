@@ -8,12 +8,6 @@ class ChainsController < ApplicationController
     if @favorites_only
       @chains = Chain.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
     end
-    @favorite_chain_ids =
-      if current_user
-        current_user.user_chain_progresses.where(chain_id: @chains.map(&:id), favorite: true).pluck(:chain_id)
-      else
-        []
-      end
   end
 
   def show
