@@ -33,6 +33,7 @@ GAMES_TO_IMPORT = [
   { name: "Darkest Dungeon", steam_app_id: 262_060 },
   { name: "Path of Exile", steam_app_id: 238_960 },
   { name: "Grim Dawn", steam_app_id: 219_990 },
+  { name: "Half-Life 2", steam_app_id: 220 },
   { name: "Alien Swarm", steam_app_id: 630 },
   { name: "Northgard", steam_app_id: 466_560 },
   { name: "Men of War: Assault Squad 2", steam_app_id: 244_450 },
@@ -45,6 +46,7 @@ GAMES_TO_IMPORT = [
   { name: "Europa Universalis V", steam_app_id: 3_450_310 },
   { name: "Hearts of Iron IV", steam_app_id: 394_360 },
   { name: "Warhammer 40,000: Rogue Trader", steam_app_id: 2_186_680 },
+  { name: "The Elder Scrolls IV: Oblivion Remastered", steam_app_id: 2_623_190 },
   { name: "Tomb Raider", steam_app_id: 203_160 },
   { name: "Halo: The Master Chief Collection", steam_app_id: 976_730 }
 ].freeze
