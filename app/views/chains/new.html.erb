@@ -69,6 +69,14 @@
           </div>
 
           <div class="chain-builder-panel__section">
+            <%= form.label :description, "Description", class: "chain-builder__label" %>
+            <%= form.text_area :description,
+                  class: "chain-builder__input chain-builder__textarea",
+                  rows: 4,
+                  placeholder: "Describe the idea behind this chain and what the player is trying to achieve." %>
+          </div>
+
+          <div class="chain-builder-panel__section">
             <%= form.label :game_id, "Game", class: "chain-builder__label" %>
             <%= form.select :game_id,
                   options_from_collection_for_select(@games, :id, :name, @chain.game_id),

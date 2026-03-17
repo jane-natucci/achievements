@@ -247,6 +247,11 @@ a {
   color: var(--text);
 }
 
+.chain-builder__textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
 .chain-builder__picker {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

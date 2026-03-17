@@ -40,6 +40,7 @@ GAMES_TO_IMPORT = [
   { name: "Stellaris", steam_app_id: 281_990 },
   { name: "Warhammer: End Times - Vermintide", steam_app_id: 235_540 },
   { name: "Barony", steam_app_id: 371_970 },
+  { name: "Baldur's Gate 3", steam_app_id: 1_086_940 },
   { name: "Titan Quest Anniversary Edition", steam_app_id: 475_150 },
   { name: "Crusader Kings II", steam_app_id: 203_770 },
   { name: "Crusader Kings III", steam_app_id: 1_158_310 },

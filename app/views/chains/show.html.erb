@@ -1,8 +1,6 @@
 <%
   total_nodes = @nodes.size
-  visible_nodes = @nodes.reject { |node| node.achievement&.hidden }
-  total_visible_nodes = visible_nodes.size
-  completion_rate = total_visible_nodes.positive? ? 100 : 0
+  completion_rate = total_nodes.positive? ? 100 : 0
 %>
 
 <% content_for :sidebar do %>
@@ -13,7 +11,7 @@
       <h3>Chain Stats</h3>
       <div class="sidebar-stat-grid">
         <div class="achievement-stat-card achievement-stat-card--sidebar">
-          <span class="achievement-stat-card__value"><%= total_visible_nodes %></span>
+          <span class="achievement-stat-card__value"><%= total_nodes %></span>
           <span class="achievement-stat-card__label">Achievements In Chain</span>
         </div>
         <div class="achievement-stat-card achievement-stat-card--sidebar">
@@ -55,12 +53,12 @@
   <section class="achievements-section">
     <div class="achievements-section__header">
       <h2>Achievements</h2>
-      <p class="achievements-section__meta"><%= total_visible_nodes %> of <%= total_nodes %> shown</p>
+      <p class="achievements-section__meta"><%= total_nodes %> of <%= total_nodes %> shown</p>
     </div>
 
-    <% if visible_nodes.any? %>
+    <% if @nodes.any? %>
       <div class="achievement-list">
-        <% visible_nodes.each_with_index do |node, index| %>
+        <% @nodes.each_with_index do |node, index| %>
           <% icon_url = node.achievement&.icon_unlocked || node.icon_unlocked %>
           <article class="achievement-row">
             <div class="achievement-row__icon-wrap">
