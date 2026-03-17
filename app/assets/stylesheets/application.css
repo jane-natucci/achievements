@@ -428,6 +428,18 @@ a {
   line-height: 1.55;
 }
 
+.help-page .chain-card {
+  gap: 0.45rem;
+}
+
+.help-page p {
+  margin: 0;
+}
+
+.help-page p + p {
+  margin-top: 0.25em;
+}
+
 .chain-show__header {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
