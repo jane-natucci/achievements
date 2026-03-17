@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   scope path: "achievements" do
     root "achievements#index"
+    get "help", to: "achievements#help"
     resources :achievements
     resources :chains
   end

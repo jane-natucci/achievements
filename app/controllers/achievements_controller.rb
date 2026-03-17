@@ -4,4 +4,7 @@ class AchievementsController < ApplicationController
     @total_chains = @chains.size
     @total_achievements = @chains.sum { |chain| chain.chain_nodes.size }
   end
+
+  def help
+  end
 end
