@@ -140,7 +140,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Setup ecspresso
-        uses: kayac/ecspresso@v2
+        uses: kayac/ecspresso@v3
       - name: Deploy App
         run: ecspresso deploy --config ./ecs-app.yml
       - name: Deploy Sidekiq
