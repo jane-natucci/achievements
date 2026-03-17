@@ -2,7 +2,7 @@
   "containerDefinitions": [
     {
       "command": [
-        "./bin/bundle",
+        "/usr/local/bin/bundle",
         "exec",
         "sidekiq"
       ],
