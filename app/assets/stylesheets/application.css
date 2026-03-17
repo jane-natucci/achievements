@@ -796,7 +796,7 @@ a {
 .achievement-row__body {
   position: relative;
   min-height: 64px;
-  padding: 0.38rem 0.45rem 0.42rem;
+  padding: 0.38rem 11.5rem 0.42rem 0.45rem;
   background: var(--steam-strip);
   display: flex;
   flex-direction: column;
@@ -827,6 +827,17 @@ a {
   font-size: 0.66rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.achievement-row__unlock-time {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  color: #8fa0b0;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .achievement-row__description {
@@ -896,7 +907,16 @@ a {
   }
 
   .achievement-row__body {
+    padding-right: 0.45rem;
     min-height: 0;
+  }
+
+  .achievement-row__unlock-time {
+    position: static;
+    transform: none;
+    width: 100%;
+    margin-top: 0.35rem;
+    text-align: left;
   }
 
   .chain-builder__picker,

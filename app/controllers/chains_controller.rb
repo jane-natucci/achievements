@@ -6,6 +6,12 @@ class ChainsController < ApplicationController
   def show
     @chain = Chain.find_by!(id: params[:id])
     @nodes = @chain.nodes_in_order
+    @node_progress_by_node_id =
+      if current_user
+        UserNodeProgress.where(user: current_user, chain_node_id: @nodes.map(&:id), status: "completed").index_by(&:chain_node_id)
+      else
+        {}
+      end
   end
 
   def new

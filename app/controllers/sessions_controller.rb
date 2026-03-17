@@ -64,9 +64,9 @@ class SessionsController < ApplicationController
 
   def sync_progress_for_game!(user, game)
     player_stats = Steam::UserStats.player_achievements(game.steam_app_id, user.steam_id)
-    unlocked_api_names = Array(player_stats["achievements"])
+    unlocked_achievements = Array(player_stats["achievements"])
       .select { |entry| entry["achieved"].to_i == 1 }
-      .map { |entry| entry["apiname"] }
+      .index_by { |entry| entry["apiname"] }
 
     chain_nodes = ChainNode.joins(:chain)
                            .includes(:achievement)
@@ -75,11 +75,22 @@ class SessionsController < ApplicationController
     unlocked_chain_node_ids = chain_nodes.filter_map do |chain_node|
       achievement = chain_node.achievement
       next unless achievement
-      next unless unlocked_api_names.include?(achievement.steam_api_name)
+      steam_achievement = unlocked_achievements[achievement.steam_api_name]
+      next unless steam_achievement
 
-      UserNodeProgress.find_or_create_by!(user: user, chain_node: chain_node) do |progress|
-        progress.status = "completed"
-        progress.source = "steam"
+      unlocked_at =
+        if steam_achievement["unlocktime"].to_i.positive?
+          Time.zone.at(steam_achievement["unlocktime"].to_i)
+        end
+
+      progress = UserNodeProgress.find_or_initialize_by(user: user, chain_node: chain_node)
+      progress.status = "completed"
+      progress.source = "steam"
+      progress.unlocked_at = unlocked_at
+      progress.save! if progress.new_record? || progress.changed?
+
+      if progress.created_at.blank? && unlocked_at.present?
+        progress.update_column(:created_at, unlocked_at)
       end
 
       chain_node.id
