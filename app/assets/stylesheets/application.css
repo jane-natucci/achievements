@@ -905,15 +905,6 @@ a {
     grid-template-columns: 1fr;
   }
 
-  .achievement-row {
-    grid-template-columns: 1fr;
-  }
-
-  .achievement-row__icon-wrap {
-    justify-content: flex-start;
-    padding-top: 0;
-  }
-
   .achievement-row__body {
     padding-right: 0.45rem;
     min-height: 0;
@@ -934,6 +925,20 @@ a {
 }
 
 @media (max-width: 560px) {
+  .achievement-row {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 0.4rem;
+  }
+
+  .achievement-row__icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .achievement-row__body {
+    min-height: 56px;
+  }
+
   .chain-show__summary {
     grid-template-columns: 1fr;
   }
