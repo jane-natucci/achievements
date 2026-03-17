@@ -1,8 +1,8 @@
 class Chain < ApplicationRecord
   belongs_to :game
 
-  has_many :chain_nodes
-  has_many :chain_edges
+  has_many :chain_nodes, dependent: :destroy
+  has_many :chain_edges, dependent: :destroy
 
   def nodes
     chain_nodes.includes(:achievement)

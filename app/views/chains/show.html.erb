@@ -33,12 +33,6 @@
               <dd><%= @chain.game.name %></dd>
             </div>
           <% end %>
-          <% if @chain.description.present? %>
-            <div>
-              <dt>About</dt>
-              <dd><%= @chain.description %></dd>
-            </div>
-          <% end %>
         </dl>
       </section>
     <% end %>
@@ -90,7 +84,6 @@
               <p class="achievement-row__description"><%= node.description %></p>
 
               <div class="achievement-row__meta">
-                <span>Unlocked in chain</span>
                 <span>Step <%= index + 1 %> of <%= total_nodes %></span>
               </div>
             </div>
