@@ -24,7 +24,7 @@
         },
         {
           "name": "REDIS_URL",
-          "value": "redis://10.0.101.185:6379/0"
+          "value": "redis://10.0.101.185:6379/1"
         }
       ],
       "secrets": [
