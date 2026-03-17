@@ -27,10 +27,14 @@
     <header class="topbar">
       <div class="topbar__inner">
         <div class="topbar__brand">
-          <%= link_to "/achievements/profile/", class: "topbar__avatar-link", aria: { label: "Profile" } do %>
+          <%= link_to(current_user ? "/achievements/profile/" : "/achievements/login/", class: "topbar__avatar-link", aria: { label: current_user ? "Profile" : "Log In" }) do %>
             <div class="topbar__avatar-slot">
               <span class="topbar__avatar-status"></span>
-              <span class="topbar__avatar-initial">J</span>
+              <% if current_user&.avatar_url.present? %>
+                <%= image_tag current_user.avatar_url, alt: "", class: "topbar__avatar-image" %>
+              <% else %>
+                <span class="topbar__avatar-initial"><%= current_user&.display_name&.first&.upcase || "A" %></span>
+              <% end %>
             </div>
           <% end %>
 
@@ -40,6 +44,7 @@
         </div>
 
         <nav class="topbar__nav" aria-label="Primary">
+          <a href="/achievements/login/">Log In</a>
           <a href="/achievements/">Home</a>
           <a href="/achievements/chains/">Chains</a>
           <a href="/achievements/help/">Help</a>
@@ -48,6 +53,17 @@
     </header>
 
     <main class="profile-shell">
+      <% if flash[:notice].present? || flash[:alert].present? %>
+        <div class="flash-stack">
+          <% if flash[:notice].present? %>
+            <div class="flash-banner flash-banner--notice"><%= flash[:notice] %></div>
+          <% end %>
+          <% if flash[:alert].present? %>
+            <div class="flash-banner flash-banner--alert"><%= flash[:alert] %></div>
+          <% end %>
+        </div>
+      <% end %>
+
       <div class="profile-grid">
         <aside class="panel summary-panel">
           <% if content_for?(:sidebar) %>

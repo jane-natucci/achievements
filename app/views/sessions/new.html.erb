@@ -1,0 +1,53 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back Home", "/achievements/", class: "sidebar-button" %>
+
+    <% if current_user %>
+      <section class="sidebar-section">
+        <h3>Current User</h3>
+        <dl class="summary-list">
+          <div>
+            <dt>Name</dt>
+            <dd><%= current_user.display_name %></dd>
+          </div>
+          <div>
+            <dt>Steam ID</dt>
+            <dd><%= current_user.steam_id %></dd>
+          </div>
+        </dl>
+        <%= button_to "Log Out", "/achievements/logout/", method: :delete, class: "sidebar-button sidebar-button--secondary" %>
+      </section>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="chain-index__header">
+    <p class="eyebrow">Impersonation</p>
+    <h1>Log In</h1>
+  </header>
+
+  <div class="chain-card login-card">
+    <p>
+      Warning! This is a WIP and there is no proper login at the moment, but there is a way to impersonate yourself as ANY profile. As this is only shared among friends, please impersonate only as yourself by posting your profile url (e.g. in full: https://steamcommunity.com/profiles/76561199079570785/) into the field below and click impersonate.
+    </p>
+
+    <p>
+      Warning! Your profile should have your games visible to allow for achievements to synchronize!
+    </p>
+
+    <%= form_with url: "/achievements/login/", method: :post, class: "login-form" do |form| %>
+      <div class="chain-builder-panel__section">
+        <%= form.label :profile_url, "Steam Profile URL", class: "chain-builder__label" %>
+        <%= form.text_field :profile_url,
+              value: params[:profile_url],
+              class: "chain-builder__input",
+              placeholder: "https://steamcommunity.com/profiles/76561199079570785/" %>
+      </div>
+
+      <div class="chain-builder-panel__section">
+        <%= form.submit "Impersonate", class: "sidebar-button chain-builder__submit" %>
+      </div>
+    <% end %>
+  </div>
+</section>
