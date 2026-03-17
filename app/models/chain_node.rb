@@ -2,6 +2,7 @@ class ChainNode < ApplicationRecord
   belongs_to :chain
 
   belongs_to :achievement, foreign_key: :ref_id
+  has_many :user_node_progresses, dependent: :destroy
 
   before_save :sync_with_achievement
 

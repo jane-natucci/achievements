@@ -66,6 +66,17 @@ class ChainsController < ApplicationController
     render :new, status: :unprocessable_entity
   end
 
+  def destroy
+    chain = Chain.find(params[:id])
+
+    unless chain.creator && current_user && chain.creator_user_id == current_user.id
+      return redirect_to chain_path(chain), alert: "Only the chain creator can delete this chain."
+    end
+
+    chain.destroy!
+    redirect_to chains_path, notice: "Chain deleted."
+  end
+
   private
 
   def chain_params

@@ -499,9 +499,41 @@ a {
   text-align: center;
 }
 
+.sidebar-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.sidebar-actions .sidebar-button {
+  flex: 1 1 auto;
+}
+
+.sidebar-icon-button {
+  width: 2.7rem;
+  min-width: 2.7rem;
+  min-height: 2.7rem;
+  padding: 0;
+  border: 1px solid rgba(255, 116, 116, 0.28);
+  background: linear-gradient(180deg, rgba(88, 36, 36, 0.94), rgba(54, 20, 20, 0.98));
+  color: #ffd7d7;
+  cursor: pointer;
+}
+
+.sidebar-icon-button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
 .sidebar-button:hover,
-.sidebar-button:focus-visible {
+.sidebar-button:focus-visible,
+.sidebar-icon-button:hover,
+.sidebar-icon-button:focus-visible {
   background: linear-gradient(180deg, rgba(69, 123, 154, 0.94), rgba(36, 77, 105, 0.98));
+}
+
+.sidebar-icon-button:hover,
+.sidebar-icon-button:focus-visible {
+  background: linear-gradient(180deg, rgba(112, 45, 45, 0.96), rgba(70, 25, 25, 0.99));
 }
 
 .sidebar-button--secondary {

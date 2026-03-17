@@ -6,7 +6,20 @@
 
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
-    <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+    <div class="sidebar-actions">
+      <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+      <% if current_user && @chain.creator_user_id == current_user.id %>
+        <%= button_to chain_path(@chain), method: :delete, class: "sidebar-icon-button", form: { data: { turbo_confirm: "Delete this chain?" } }, aria: { label: "Delete chain" } do %>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M9.5 3.5H14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M7 7L8 19C8.06 19.77 8.7 20.36 9.47 20.36H14.53C15.3 20.36 15.94 19.77 16 19L17 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 10.25V16.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M14 10.25V16.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
 
     <section class="sidebar-section">
       <h3>Chain Stats</h3>
