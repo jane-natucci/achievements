@@ -1,7 +1,6 @@
 <%
   ordered_nodes = chain.nodes_in_order
   display_nodes = ordered_nodes.presence || chain.chain_nodes.to_a
-  visible_count = display_nodes.count { |node| !node.achievement&.hidden }
   first_node = display_nodes.first
   last_node = display_nodes.last
   last_icon_url = last_node&.achievement&.icon_unlocked || last_node&.icon_unlocked
@@ -31,7 +30,7 @@
 
     <div class="chain-card__stats">
       <div class="chain-card__stat">
-        <span class="chain-card__stat-value"><%= visible_count %></span>
+        <span class="chain-card__stat-value"><%= display_nodes.size %></span>
         <span class="chain-card__stat-label">Achievements</span>
       </div>
     </div>
