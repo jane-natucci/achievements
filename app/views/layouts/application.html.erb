@@ -44,7 +44,11 @@
         </div>
 
         <nav class="topbar__nav" aria-label="Primary">
-          <a href="/achievements/login/">Log In</a>
+          <% if current_user %>
+            <%= button_to "Log Out", "/achievements/logout/", method: :delete, class: "topbar__nav-button" %>
+          <% else %>
+            <a href="/achievements/login/">Log In</a>
+          <% end %>
           <a href="/achievements/">Home</a>
           <a href="/achievements/chains/">Chains</a>
           <a href="/achievements/help/">Help</a>

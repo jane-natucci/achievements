@@ -148,8 +148,19 @@ a {
   font-size: 0.95rem;
 }
 
+.topbar__nav-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
 .topbar__nav a:hover,
-.topbar__nav a:focus-visible {
+.topbar__nav a:focus-visible,
+.topbar__nav-button:hover,
+.topbar__nav-button:focus-visible {
   color: var(--text);
 }
 
