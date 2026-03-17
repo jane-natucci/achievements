@@ -6,7 +6,7 @@ class SessionsController < ApplicationController
     steam_id = extract_steam_id(params[:profile_url].to_s)
 
     if steam_id.blank?
-      flash.now[:alert] = "Enter a valid Steam profile URL."
+      flash.now[:alert] = "Enter a valid Steam profile URL, vanity URL, or SteamID64."
       return render :new, status: :unprocessable_entity
     end
 
@@ -43,15 +43,17 @@ class SessionsController < ApplicationController
 
     value = raw_value.strip
 
-    if (match = value.match(%r{\Ahttps?://steamcommunity\.com/profiles/(\d+)/?\z}i))
+    if value.match?(/\A\d{17}\z/)
+      return value
+    end
+
+    if (match = value.match(%r{\Ahttps?://steamcommunity\.com/profiles/(\d{17})/?(?:\?.*)?\z}i))
       return match[1]
     end
 
-    if (match = value.match(%r{\Ahttps?://steamcommunity\.com/id/([^/]+)/?\z}i))
-      return Steam::User.vanity_to_steamid(match[1])
+    if (match = value.match(%r{\Ahttps?://steamcommunity\.com/id/([^/?#]+)/?(?:\?.*)?\z}i))
+      Steam::User.vanity_to_steamid(match[1])
     end
-
-    value if value.match?(/\A\d{17}\z/)
   end
 
   def sync_user_progress!(user)

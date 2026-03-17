@@ -36,13 +36,24 @@
       Warning! Your profile should have your games visible to allow for achievements to synchronize!
     </p>
 
+    <p>
+      (Don't worry: when you're impersonating someone you can only create chains on their behalf, you can't break / remove anything.)
+    </p>
+
+    <p>
+      Also why log in at all? When you log in you can see your progress in existing chains and create new ones.
+    </p>
+
     <%= form_with url: "/achievements/login/", method: :post, class: "login-form" do |form| %>
       <div class="chain-builder-panel__section">
-        <%= form.label :profile_url, "Steam Profile URL", class: "chain-builder__label" %>
+        <%= form.label :profile_url, "Steam Profile URL Or SteamID64", class: "chain-builder__label" %>
         <%= form.text_field :profile_url,
               value: params[:profile_url],
               class: "chain-builder__input",
               placeholder: "https://steamcommunity.com/profiles/76561199079570785/" %>
+        <p class="chain-builder__hint">
+          Accepted: full <code>/profiles/...</code> URL, full <code>/id/...</code> vanity URL, or a raw 17-digit SteamID64.
+        </p>
       </div>
 
       <div class="chain-builder-panel__section">
