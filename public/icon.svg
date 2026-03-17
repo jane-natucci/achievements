@@ -1,3 +1,19 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Achievement badge favicon">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffe08a"/>
+      <stop offset="55%" stop-color="#f5b942"/>
+      <stop offset="100%" stop-color="#c97a12"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2b3345"/>
+      <stop offset="100%" stop-color="#161b25"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#dark)"/>
+  <circle cx="32" cy="30" r="17" fill="none" stroke="url(#gold)" stroke-width="4"/>
+  <path d="M32 17l3.6 7.3 8.1 1.2-5.9 5.7 1.4 8-7.2-3.8-7.2 3.8 1.4-8-5.9-5.7 8.1-1.2z"
+        fill="url(#gold)"/>
+  <path d="M24 44h5l3 8 3-8h5l-4.2 12h-7.6z" fill="url(#gold)"/>
 </svg>
