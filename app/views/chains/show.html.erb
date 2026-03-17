@@ -1,6 +1,7 @@
 <%
   total_nodes = @nodes.size
-  completion_rate = total_nodes.positive? ? 100 : 0
+  unlocked_nodes = current_user ? @node_progress_by_node_id.size : total_nodes
+  completion_rate = total_nodes.positive? ? ((unlocked_nodes.to_f / total_nodes) * 100).round : 0
 %>
 
 <% content_for :sidebar do %>
