@@ -69,3 +69,6 @@ gem "sidekiq", "~> 8.1"
 gem "sidekiq-scheduler", "~> 6.0"
 
 gem "steam-api", "~> 1.2"
+
+gem "sentry-ruby"
+gem "sentry-rails"
