@@ -1,4 +1,8 @@
 class ChainsController < ApplicationController
+  before_action :set_chain, only: [:show, :edit, :update, :destroy]
+  before_action :load_games, only: [:new, :create, :edit, :update]
+  before_action :require_chain_creator!, only: [:edit, :update, :destroy]
+
   def index
     @filter_games = Game.joins(:chains).distinct.order(:name)
     @active_game = @filter_games.find_by(id: params[:game])
@@ -11,7 +15,6 @@ class ChainsController < ApplicationController
   end
 
   def show
-    @chain = Chain.includes(:game, :creator).find_by!(id: params[:id])
     @nodes = @chain.nodes_in_order
     @node_progress_by_node_id =
       if current_user
@@ -23,50 +26,25 @@ class ChainsController < ApplicationController
   end
 
   def new
-    load_games
     @chain = Chain.new
+    @selected_achievement_ids = []
+  end
+
+  def edit
+    @selected_achievement_ids = ordered_achievement_ids(@chain)
   end
 
   def create
-    load_games
     @chain = Chain.new(chain_params)
     @chain.creator = current_user
     selected_achievement_ids = parse_selected_achievement_ids
 
-    if @chain.title.blank?
-      @chain.errors.add(:title, "can't be blank")
-      return render :new, status: :unprocessable_entity
-    end
-
-    if selected_achievement_ids.empty?
-      @chain.errors.add(:base, "Select at least one achievement for the chain.")
-      return render :new, status: :unprocessable_entity
-    end
-
-    @chain.game = @games.find_by(id: @chain.game_id)
-
-    unless @chain.game
-      @chain.errors.add(:game, "must be selected.")
-      return render :new, status: :unprocessable_entity
-    end
-
-    achievements = @chain.game.achievements.where(id: selected_achievement_ids).index_by(&:id)
-
-    if achievements.size != selected_achievement_ids.size
-      @chain.errors.add(:base, "One or more selected achievements are invalid for the chosen game.")
-      return render :new, status: :unprocessable_entity
-    end
+    achievements = validate_chain_selection(@chain, selected_achievement_ids)
+    return render :new, status: :unprocessable_entity unless achievements
 
     ActiveRecord::Base.transaction do
       @chain.save!
-
-      created_nodes = selected_achievement_ids.map do |achievement_id|
-        @chain.chain_nodes.create!(ref_id: achievement_id)
-      end
-
-      created_nodes.each_cons(2) do |from_node, to_node|
-        @chain.chain_edges.create!(from_node: from_node.id, to_node: to_node.id, edge_type: "sequence")
-      end
+      rebuild_chain_sequence!(@chain, selected_achievement_ids)
     end
 
     redirect_to chain_path(@chain)
@@ -74,14 +52,25 @@ class ChainsController < ApplicationController
     render :new, status: :unprocessable_entity
   end
 
-  def destroy
-    chain = Chain.find(params[:id])
+  def update
+    selected_achievement_ids = parse_selected_achievement_ids
+    @chain.assign_attributes(chain_params)
 
-    unless chain.creator && current_user && chain.creator_user_id == current_user.id
-      return redirect_to chain_path(chain), alert: "Only the chain creator can delete this chain."
+    achievements = validate_chain_selection(@chain, selected_achievement_ids)
+    return render :edit, status: :unprocessable_entity unless achievements
+
+    ActiveRecord::Base.transaction do
+      @chain.save!
+      rebuild_chain_sequence!(@chain, selected_achievement_ids)
     end
 
-    chain.destroy!
+    redirect_to chain_path(@chain), notice: "Chain updated."
+  rescue ActiveRecord::RecordInvalid
+    render :edit, status: :unprocessable_entity
+  end
+
+  def destroy
+    @chain.destroy!
     redirect_to chains_path, notice: "Chain deleted."
   end
 
@@ -108,6 +97,10 @@ class ChainsController < ApplicationController
 
   private
 
+  def set_chain
+    @chain = Chain.includes(:game, :creator).find_by!(id: params[:id])
+  end
+
   def chain_params
     params.require(:chain).permit(:title, :game_id, :description)
   end
@@ -125,5 +118,58 @@ class ChainsController < ApplicationController
     end.uniq
   rescue JSON::ParserError
     []
+  end
+
+  def validate_chain_selection(chain, selected_achievement_ids)
+    if chain.title.blank?
+      chain.errors.add(:title, "can't be blank")
+      return nil
+    end
+
+    if selected_achievement_ids.empty?
+      chain.errors.add(:base, "Select at least one achievement for the chain.")
+      return nil
+    end
+
+    chain.game = @games.find_by(id: chain.game_id)
+
+    unless chain.game
+      chain.errors.add(:game, "must be selected.")
+      return nil
+    end
+
+    achievements = chain.game.achievements.where(id: selected_achievement_ids).index_by(&:id)
+
+    if achievements.size != selected_achievement_ids.size
+      chain.errors.add(:base, "One or more selected achievements are invalid for the chosen game.")
+      return nil
+    end
+
+    achievements
+  end
+
+  def rebuild_chain_sequence!(chain, selected_achievement_ids)
+    chain.chain_edges.delete_all
+    chain.chain_nodes.destroy_all
+
+    created_nodes = selected_achievement_ids.map do |achievement_id|
+      chain.chain_nodes.create!(ref_id: achievement_id)
+    end
+
+    created_nodes.each_cons(2) do |from_node, to_node|
+      chain.chain_edges.create!(from_node: from_node.id, to_node: to_node.id, edge_type: "sequence")
+    end
+  end
+
+  def ordered_achievement_ids(chain)
+    ordered_nodes = chain.nodes_in_order
+    nodes = ordered_nodes.presence || chain.chain_nodes
+    nodes.map(&:ref_id)
+  end
+
+  def require_chain_creator!
+    return if @chain.creator && current_user && @chain.creator_user_id == current_user.id
+
+    redirect_to chain_path(@chain), alert: "Only the chain creator can edit or delete this chain."
   end
 end

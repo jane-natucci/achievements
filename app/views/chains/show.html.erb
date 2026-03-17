@@ -7,19 +7,32 @@
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
     <div class="sidebar-actions">
-      <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+      <%= link_to chains_path, class: "sidebar-icon-button sidebar-icon-button--nav", title: "Back to all chains", aria: { label: "Back to all chains" } do %>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M14.75 5.5L8.25 12L14.75 18.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      <% end %>
+      <% if current_user && @chain.creator_user_id == current_user.id %>
+        <%= link_to edit_chain_path(@chain), class: "sidebar-icon-button sidebar-icon-button--edit", title: "Edit this chain", aria: { label: "Edit this chain" } do %>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 20H8.5L18 10.5C18.83 9.67 18.83 8.33 18 7.5L16.5 6C15.67 5.17 14.33 5.17 13.5 6L4 15.5V20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M12.5 7L17 11.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        <% end %>
+      <% end %>
       <% if current_user %>
         <%= button_to @favorited ? favorite_chain_path(@chain) : favorite_chain_path(@chain),
               method: @favorited ? :delete : :post,
               class: ["sidebar-icon-button", "sidebar-icon-button--star", (@favorited ? "sidebar-icon-button--star-active" : nil)].compact.join(" "),
-              aria: { label: @favorited ? "Remove from library" : "Save to library" } do %>
+              title: @favorited ? "Remove from favorites" : "Add to favorites",
+              aria: { label: @favorited ? "Remove from favorites" : "Add to favorites" } do %>
           <svg viewBox="0 0 24 24" fill="<%= @favorited ? 'currentColor' : 'none' %>" aria-hidden="true">
             <path d="M12 3.7L14.55 8.87L20.25 9.7L16.12 13.72L17.1 19.4L12 16.72L6.9 19.4L7.88 13.72L3.75 9.7L9.45 8.87L12 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
           </svg>
         <% end %>
       <% end %>
       <% if current_user && @chain.creator_user_id == current_user.id %>
-        <%= button_to chain_path(@chain), method: :delete, class: "sidebar-icon-button", form: { data: { turbo_confirm: "Delete this chain?" } }, aria: { label: "Delete chain" } do %>
+        <%= button_to chain_path(@chain), method: :delete, class: "sidebar-icon-button sidebar-icon-button--danger", form: { data: { turbo_confirm: "Delete this chain?" } }, title: "Delete this chain", aria: { label: "Delete this chain" } do %>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M9.5 3.5H14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>

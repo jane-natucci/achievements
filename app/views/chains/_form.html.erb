@@ -1,0 +1,144 @@
+<%
+  submit_label = local_assigns.fetch(:submit_label)
+  heading_eyebrow = local_assigns.fetch(:heading_eyebrow)
+  heading_title = local_assigns.fetch(:heading_title)
+  heading_description = local_assigns.fetch(:heading_description)
+  error_title = local_assigns.fetch(:error_title)
+  form_url = local_assigns.fetch(:form_url)
+  selected_ids_json = params.dig(:chain, :selected_achievement_ids).presence || Array(@selected_achievement_ids).to_json
+  games_payload = @games.map do |game|
+    {
+      id: game.id,
+      name: game.name,
+      achievements: game.achievements.sort_by(&:title).map do |achievement|
+        {
+          id: achievement.id,
+          title: achievement.title,
+          description: achievement.description
+        }
+      end
+    }
+  end
+%>
+
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+
+    <section class="sidebar-section">
+      <h3>Builder</h3>
+      <dl class="summary-list">
+        <div>
+          <dt>Flow</dt>
+          <dd>Select a game, then add achievements one by one into the chain order by clicking the 'Add &gt;' button.</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+<% end %>
+
+<section class="chain-builder-page">
+  <header class="chain-index__header">
+    <p class="eyebrow"><%= heading_eyebrow %></p>
+    <h1><%= heading_title %></h1>
+    <p class="chain-index__description"><%= heading_description %></p>
+  </header>
+
+  <% if @chain.errors.any? %>
+    <div class="form-errors">
+      <h3><%= error_title %></h3>
+      <ul>
+        <% @chain.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div
+    class="chain-builder"
+    data-controller="chain-builder"
+    data-chain-builder-games-value="<%= json_escape(games_payload.to_json) %>"
+  >
+    <%= form_with model: @chain, url: form_url, class: "chain-builder__form" do |form| %>
+      <div class="chain-builder__layout">
+        <section class="panel chain-builder-panel">
+          <div class="chain-builder-panel__section">
+            <%= form.label :title, "Chain Name", class: "chain-builder__label" %>
+            <%= form.text_field :title, class: "chain-builder__input", placeholder: "Freeman's Journey Through City 17" %>
+          </div>
+
+          <div class="chain-builder-panel__section">
+            <%= form.label :description, "Description", class: "chain-builder__label" %>
+            <%= form.text_area :description,
+                  class: "chain-builder__input chain-builder__textarea",
+                  rows: 4,
+                  placeholder: "Describe the idea behind this chain and what the player is trying to achieve." %>
+          </div>
+
+          <div class="chain-builder-panel__section">
+            <%= form.label :game_id, "Game", class: "chain-builder__label" %>
+            <%= form.select :game_id,
+                  options_from_collection_for_select(@games, :id, :name, @chain.game_id),
+                  { prompt: "Select a game" },
+                  {
+                    class: "chain-builder__select",
+                    data: {
+                      chain_builder_target: "gameSelect",
+                      action: "change->chain-builder#changeGame"
+                    }
+                  } %>
+          </div>
+
+          <div class="chain-builder-panel__section">
+            <label class="chain-builder__label" for="chain_builder_achievement">Achievement</label>
+            <div class="chain-builder__picker">
+              <select
+                id="chain_builder_achievement"
+                class="chain-builder__select"
+                data-chain-builder-target="achievementSelect"
+              ></select>
+              <button
+                type="button"
+                class="sidebar-button chain-builder__add-button"
+                data-action="click->chain-builder#addAchievement"
+              >
+                Add &gt;
+              </button>
+            </div>
+            <p class="chain-builder__hint">
+              Added achievements disappear from the dropdown and are preserved in the order shown on the right.
+            </p>
+          </div>
+
+          <%= form.hidden_field :selected_achievement_ids,
+                value: selected_ids_json,
+                data: { chain_builder_target: "hiddenInput" } %>
+
+          <div class="chain-builder-panel__section">
+            <%= form.submit submit_label, class: "sidebar-button chain-builder__submit" %>
+          </div>
+        </section>
+
+        <section class="panel chain-builder-preview">
+          <div class="chain-builder-preview__header">
+            <div>
+              <p class="eyebrow">Preview</p>
+              <h2>Chain Order</h2>
+            </div>
+            <p class="chain-builder-preview__count" data-chain-builder-target="count">0 selected</p>
+          </div>
+
+          <div
+            class="chain-builder-preview__empty"
+            data-chain-builder-target="emptyState"
+          >
+            Add achievements to begin building the chain.
+          </div>
+
+          <ol class="chain-builder-preview__list" data-chain-builder-target="list"></ol>
+        </section>
+      </div>
+    <% end %>
+  </div>
+</section>

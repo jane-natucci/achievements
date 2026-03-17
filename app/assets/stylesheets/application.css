@@ -504,11 +504,9 @@ a {
   gap: 0.6rem;
 }
 
-.sidebar-actions .sidebar-button {
-  flex: 1 1 auto;
-}
-
 .sidebar-icon-button {
+  display: inline-grid;
+  place-items: center;
   width: 2.7rem;
   min-width: 2.7rem;
   min-height: 2.7rem;
@@ -524,6 +522,18 @@ a {
   height: 1.1rem;
 }
 
+.sidebar-icon-button--nav {
+  border-color: rgba(102, 192, 244, 0.18);
+  background: linear-gradient(180deg, rgba(57, 107, 136, 0.9), rgba(31, 66, 91, 0.95));
+  color: #e8f6ff;
+}
+
+.sidebar-icon-button--edit {
+  border-color: rgba(210, 216, 227, 0.2);
+  background: linear-gradient(180deg, rgba(62, 72, 83, 0.94), rgba(35, 42, 50, 0.98));
+  color: #e3eaf2;
+}
+
 .sidebar-icon-button--star {
   border-color: rgba(255, 210, 110, 0.26);
   background: linear-gradient(180deg, rgba(76, 63, 25, 0.94), rgba(49, 39, 12, 0.98));
@@ -536,20 +546,24 @@ a {
 
 .sidebar-button:hover,
 .sidebar-button:focus-visible,
-.sidebar-icon-button:hover,
-.sidebar-icon-button:focus-visible {
+.sidebar-icon-button--nav:hover,
+.sidebar-icon-button--nav:focus-visible {
   background: linear-gradient(180deg, rgba(69, 123, 154, 0.94), rgba(36, 77, 105, 0.98));
 }
 
-.sidebar-icon-button:hover,
-.sidebar-icon-button:focus-visible {
+.sidebar-icon-button--edit:hover,
+.sidebar-icon-button--edit:focus-visible {
+  background: linear-gradient(180deg, rgba(76, 88, 101, 0.96), rgba(44, 52, 60, 0.99));
+}
+
+.sidebar-icon-button--danger:hover,
+.sidebar-icon-button--danger:focus-visible {
   background: linear-gradient(180deg, rgba(112, 45, 45, 0.96), rgba(70, 25, 25, 0.99));
 }
 
-.sidebar-button--secondary {
-  width: 100%;
-  margin-top: 0.8rem;
-  background: linear-gradient(180deg, rgba(62, 72, 83, 0.94), rgba(35, 42, 50, 0.98));
+.sidebar-icon-button--star:hover,
+.sidebar-icon-button--star:focus-visible {
+  background: linear-gradient(180deg, rgba(98, 82, 33, 0.96), rgba(61, 49, 16, 0.99));
 }
 
 .game-filter-list {
