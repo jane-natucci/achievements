@@ -40,6 +40,15 @@
     <p class="chain-card__description"><%= chain.description %></p>
   <% end %>
 
+  <p class="chain-card__byline">
+    <% if chain.creator&.display_name.present? %>
+      Created by <%= chain.creator.display_name %>
+    <% else %>
+      Created by unknown
+    <% end %>
+    on <%= chain.created_at.utc.strftime("%-d %b %Y @ %-I:%M%P UTC") %>
+  </p>
+
   <div class="chain-card__details">
     <div class="chain-card__detail">
       <span class="chain-card__detail-label">Starts With</span>

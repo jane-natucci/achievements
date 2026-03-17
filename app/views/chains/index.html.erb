@@ -5,6 +5,10 @@
 
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
+    <% if current_user %>
+      <%= link_to "New Chain", new_chain_path, class: "sidebar-button" %>
+    <% end %>
+
     <section class="sidebar-section">
       <h3>Chain Library</h3>
       <div class="sidebar-stat-grid">

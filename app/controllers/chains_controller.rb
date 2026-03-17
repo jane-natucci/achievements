@@ -1,10 +1,10 @@
 class ChainsController < ApplicationController
   def index
-    @chains = Chain.includes(:game, chain_nodes: :achievement).order(created_at: :desc)
+    @chains = Chain.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
   end
 
   def show
-    @chain = Chain.find_by!(id: params[:id])
+    @chain = Chain.includes(:game, :creator).find_by!(id: params[:id])
     @nodes = @chain.nodes_in_order
     @node_progress_by_node_id =
       if current_user
@@ -22,6 +22,7 @@ class ChainsController < ApplicationController
   def create
     load_games
     @chain = Chain.new(chain_params)
+    @chain.creator = current_user
     selected_achievement_ids = parse_selected_achievement_ids
 
     if @chain.title.blank?

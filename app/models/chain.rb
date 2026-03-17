@@ -1,5 +1,6 @@
 class Chain < ApplicationRecord
   belongs_to :game
+  belongs_to :creator, class_name: "User", foreign_key: :creator_user_id, optional: true
 
   has_many :chain_nodes, dependent: :destroy
   has_many :chain_edges, dependent: :destroy

@@ -44,6 +44,14 @@
       <% if @chain.game&.name.present? %>
         <p class="chain-show__game"><%= @chain.game.name %></p>
       <% end %>
+      <p class="chain-show__byline">
+        <% if @chain.creator&.display_name.present? %>
+          Created by <%= @chain.creator.display_name %>
+        <% else %>
+          Created by unknown
+        <% end %>
+        on <%= @chain.created_at.utc.strftime("%-d %b %Y @ %-I:%M%P UTC") %>
+      </p>
       <% if @chain.description.present? %>
         <p class="chain-show__description"><%= @chain.description %></p>
       <% end %>
