@@ -45,7 +45,7 @@ class ChainsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       @chain.save!
-      rebuild_chain_sequence!(@chain, selected_achievements)
+      sync_chain_sequence!(@chain, selected_achievements)
     end
 
     enqueue_current_user_achievement_sync!
@@ -64,7 +64,7 @@ class ChainsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       @chain.save!
-      rebuild_chain_sequence!(@chain, selected_achievements)
+      sync_chain_sequence!(@chain, selected_achievements)
     end
 
     enqueue_current_user_achievement_sync!
@@ -168,15 +168,20 @@ class ChainsController < ApplicationController
     achievements
   end
 
-  def rebuild_chain_sequence!(chain, selected_achievements)
-    chain.chain_edges.delete_all
-    chain.chain_nodes.destroy_all
+  def sync_chain_sequence!(chain, selected_achievements)
+    existing_nodes_by_ref_id = chain.chain_nodes.index_by(&:ref_id)
 
-    created_nodes = selected_achievements.map do |item|
-      chain.chain_nodes.create!(ref_id: item[:id], note: item[:note])
+    ordered_nodes = selected_achievements.map do |item|
+      node = existing_nodes_by_ref_id.delete(item[:id]) || chain.chain_nodes.build(ref_id: item[:id])
+      node.note = item[:note]
+      node.save! if node.new_record? || node.changed?
+      node
     end
 
-    created_nodes.each_cons(2) do |from_node, to_node|
+    existing_nodes_by_ref_id.each_value(&:destroy!)
+
+    chain.chain_edges.delete_all
+    ordered_nodes.each_cons(2) do |from_node, to_node|
       chain.chain_edges.create!(from_node: from_node.id, to_node: to_node.id, edge_type: "sequence")
     end
   end
