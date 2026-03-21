@@ -48,6 +48,7 @@ class ChainsController < ApplicationController
       rebuild_chain_sequence!(@chain, selected_achievements)
     end
 
+    enqueue_current_user_achievement_sync!
     redirect_to chain_path(@chain)
   rescue ActiveRecord::RecordInvalid
     render :new, status: :unprocessable_entity
@@ -66,6 +67,7 @@ class ChainsController < ApplicationController
       rebuild_chain_sequence!(@chain, selected_achievements)
     end
 
+    enqueue_current_user_achievement_sync!
     redirect_to chain_path(@chain), notice: "Chain updated."
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_entity
@@ -194,5 +196,11 @@ class ChainsController < ApplicationController
     return if @chain.creator && current_user && @chain.creator_user_id == current_user.id
 
     redirect_to chain_path(@chain), alert: "Only the chain creator can edit or delete this chain."
+  end
+
+  def enqueue_current_user_achievement_sync!
+    return unless current_user
+
+    SyncUserAchievementProgressWorker.perform_async(current_user.id)
   end
 end
