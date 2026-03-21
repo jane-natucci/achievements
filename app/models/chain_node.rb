@@ -17,6 +17,10 @@ class ChainNode < ApplicationRecord
     achievement&.description || self[:description] || "No description available"
   end
 
+  def display_description
+    note.presence || description
+  end
+
   def sync_with_achievement
     return unless achievement
 

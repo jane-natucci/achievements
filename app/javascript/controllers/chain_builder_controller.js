@@ -30,7 +30,7 @@ export default class extends Controller {
       return
     }
 
-    this.selectedAchievements.push(achievement)
+    this.selectedAchievements.push({ ...achievement, note: "" })
     this.syncAchievementOptions()
     this.render()
   }
@@ -42,18 +42,33 @@ export default class extends Controller {
     this.render()
   }
 
+  updateNote(event) {
+    const achievementId = Number(event.currentTarget.dataset.achievementId)
+    const achievement = this.selectedAchievements.find((item) => item.id === achievementId)
+
+    if (!achievement) {
+      return
+    }
+
+    achievement.note = event.currentTarget.value
+    this.syncHiddenInput()
+  }
+
   currentGame() {
     const gameId = Number(this.gameSelectTarget.value)
     return this.gamesValue.find((game) => game.id === gameId)
   }
 
   initialSelectedAchievements() {
-    const selectedIds = this.parseHiddenIds()
+    const selectedPayload = this.parseHiddenPayload()
     const currentAchievements = this.currentGame()?.achievements || []
     const achievementMap = new Map(currentAchievements.map((achievement) => [achievement.id, achievement]))
 
-    return selectedIds
-      .map((id) => achievementMap.get(id))
+    return selectedPayload
+      .map((item) => {
+        const achievement = achievementMap.get(item.id)
+        return achievement ? { ...achievement, note: item.note || "" } : null
+      })
       .filter(Boolean)
   }
 
@@ -84,18 +99,31 @@ export default class extends Controller {
   }
 
   render() {
-    this.hiddenInputTarget.value = JSON.stringify(this.selectedAchievements.map((item) => item.id))
+    this.syncHiddenInput()
     this.listTarget.innerHTML = ""
 
     this.selectedAchievements.forEach((achievement, index) => {
       const item = document.createElement("li")
       item.className = "chain-builder-item"
 
+      const iconMarkup = achievement.icon_unlocked
+        ? `<img src="${this.escapeHtml(achievement.icon_unlocked)}" alt="" class="chain-builder-item__icon">`
+        : `<div class="chain-builder-item__icon chain-builder-item__icon--placeholder">${index + 1}</div>`
+
       item.innerHTML = `
-        <div class="chain-builder-item__order">${index + 1}</div>
+        <div class="chain-builder-item__media">${iconMarkup}</div>
         <div class="chain-builder-item__body">
           <h3>${this.escapeHtml(achievement.title)}</h3>
           <p>${this.escapeHtml(achievement.description || "No description available.")}</p>
+          <label class="chain-builder-item__note-label" for="chain_builder_note_${achievement.id}">Narration note</label>
+          <textarea
+            id="chain_builder_note_${achievement.id}"
+            class="chain-builder-item__note"
+            rows="3"
+            data-action="input->chain-builder#updateNote"
+            data-achievement-id="${achievement.id}"
+            placeholder="Add the journey text for this step."
+          >${this.escapeHtml(achievement.note || "")}</textarea>
         </div>
         <button
           type="button"
@@ -114,10 +142,33 @@ export default class extends Controller {
     this.emptyStateTarget.hidden = this.selectedAchievements.length > 0
   }
 
-  parseHiddenIds() {
+  syncHiddenInput() {
+    this.hiddenInputTarget.value = JSON.stringify(
+      this.selectedAchievements.map((item) => ({
+        id: item.id,
+        note: item.note || "",
+      })),
+    )
+  }
+
+  parseHiddenPayload() {
     try {
       const parsed = JSON.parse(this.hiddenInputTarget.value || "[]")
-      return Array.isArray(parsed) ? parsed.map((value) => Number(value)).filter((value) => Number.isInteger(value)) : []
+      if (!Array.isArray(parsed)) {
+        return []
+      }
+
+      return parsed.flatMap((value) => {
+        if (Number.isInteger(Number(value))) {
+          return [{ id: Number(value), note: "" }]
+        }
+
+        if (value && Number.isInteger(Number(value.id))) {
+          return [{ id: Number(value.id), note: String(value.note || "") }]
+        }
+
+        return []
+      })
     } catch {
       return []
     }

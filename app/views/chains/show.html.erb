@@ -111,35 +111,43 @@
                         else
                           node.achievement&.icon_locked || node.icon_locked || node.achievement&.icon_unlocked || node.icon_unlocked
                         end %>
-          <article class="achievement-row">
-            <div class="achievement-row__icon-wrap">
-              <% if icon_url.present? %>
-                <%= image_tag icon_url, alt: "", class: "achievement-row__icon" %>
-              <% else %>
-                <div class="achievement-row__icon achievement-row__icon--placeholder" aria-hidden="true">
-                  <span><%= index + 1 %></span>
-                </div>
-              <% end %>
-            </div>
+          <article class="achievement-step">
+            <% if node.note.present? %>
+              <div class="achievement-note">
+                <p class="achievement-note__body"><%= node.note %></p>
+              </div>
+            <% end %>
 
-            <div class="achievement-row__body">
-              <% if progress&.unlocked_at.present? %>
-                <span class="achievement-row__unlock-time">
-                  Unlocked <%= progress.unlocked_at.in_time_zone.strftime("%-d %b, %Y @ %-I:%M%P") %>
-                </span>
-              <% end %>
-
-              <div class="achievement-row__title-line">
-                <h3><%= node.title %></h3>
-                <% if node.node_type.present? %>
-                  <span class="achievement-row__type"><%= node.node_type.humanize %></span>
+            <div class="achievement-row">
+              <div class="achievement-row__icon-wrap">
+                <% if icon_url.present? %>
+                  <%= image_tag icon_url, alt: "", class: "achievement-row__icon" %>
+                <% else %>
+                  <div class="achievement-row__icon achievement-row__icon--placeholder" aria-hidden="true">
+                    <span><%= index + 1 %></span>
+                  </div>
                 <% end %>
               </div>
 
-              <p class="achievement-row__description"><%= node.description %></p>
+              <div class="achievement-row__body">
+                <% if progress&.unlocked_at.present? %>
+                  <span class="achievement-row__unlock-time">
+                    Unlocked <%= progress.unlocked_at.in_time_zone.strftime("%-d %b, %Y @ %-I:%M%P") %>
+                  </span>
+                <% end %>
 
-              <div class="achievement-row__meta">
-                <span>Step <%= index + 1 %> of <%= total_nodes %></span>
+                <div class="achievement-row__title-line">
+                  <h3><%= node.title %></h3>
+                  <% if node.node_type.present? %>
+                    <span class="achievement-row__type"><%= node.node_type.humanize %></span>
+                  <% end %>
+                </div>
+
+                <p class="achievement-row__description"><%= node.description %></p>
+
+                <div class="achievement-row__meta">
+                  <span>Step <%= index + 1 %> of <%= total_nodes %></span>
+                </div>
               </div>
             </div>
           </article>

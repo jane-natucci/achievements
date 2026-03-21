@@ -5,7 +5,7 @@
   heading_description = local_assigns.fetch(:heading_description)
   error_title = local_assigns.fetch(:error_title)
   form_url = local_assigns.fetch(:form_url)
-  selected_ids_json = params.dig(:chain, :selected_achievement_ids).presence || Array(@selected_achievement_ids).to_json
+  selected_achievements_json = params.dig(:chain, :selected_achievement_ids).presence || Array(@selected_achievements_payload).to_json
   games_payload = @games.map do |game|
     {
       id: game.id,
@@ -14,7 +14,8 @@
         {
           id: achievement.id,
           title: achievement.title,
-          description: achievement.description
+          description: achievement.description,
+          icon_unlocked: achievement.icon_unlocked
         }
       end
     }
@@ -30,7 +31,7 @@
       <dl class="summary-list">
         <div>
           <dt>Flow</dt>
-          <dd>Select a game, then add achievements one by one into the chain order by clicking the 'Add &gt;' button.</dd>
+          <dd>Select a game, add achievements one by one, then write a narration note for any step that needs context.</dd>
         </div>
       </dl>
     </section>
@@ -112,7 +113,7 @@
           </div>
 
           <%= form.hidden_field :selected_achievement_ids,
-                value: selected_ids_json,
+                value: selected_achievements_json,
                 data: { chain_builder_target: "hiddenInput" } %>
 
           <div class="chain-builder-panel__section">
