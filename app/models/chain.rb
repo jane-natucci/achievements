@@ -1,4 +1,6 @@
 class Chain < ApplicationRecord
+  include Discard::Model
+
   belongs_to :game
   belongs_to :creator, class_name: "User", foreign_key: :creator_user_id, optional: true
 

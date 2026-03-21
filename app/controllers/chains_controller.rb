@@ -7,10 +7,10 @@ class ChainsController < ApplicationController
     @filter_games = Game.joins(:chains).distinct.order(:name)
     @active_game = @filter_games.find_by(id: params[:game])
     @favorites_only = current_user.present? && params[:favorites] == "1"
-    @chains = Chain.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
+    @chains = Chain.kept.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
     @chains = @chains.where(game: @active_game) if @active_game
     if @favorites_only
-      @chains = Chain.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
+      @chains = @chains.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
     end
   end
 
@@ -74,14 +74,14 @@ class ChainsController < ApplicationController
   end
 
   def destroy
-    @chain.destroy!
+    @chain.discard!
     redirect_to chains_path, notice: "Chain deleted."
   end
 
   def favorite
     return redirect_to("/achievements/login/", alert: "Log in to save chains.") unless current_user
 
-    chain = Chain.find(params[:id])
+    chain = Chain.kept.find(params[:id])
     progress = UserChainProgress.find_or_initialize_by(user: current_user, chain: chain)
     progress.favorite = true
     progress.save!
@@ -92,7 +92,7 @@ class ChainsController < ApplicationController
   def unfavorite
     return redirect_to("/achievements/login/", alert: "Log in to manage saved chains.") unless current_user
 
-    chain = Chain.find(params[:id])
+    chain = Chain.kept.find(params[:id])
     progress = UserChainProgress.find_by(user: current_user, chain: chain)
     progress&.destroy if progress&.favorite?
 
@@ -102,7 +102,7 @@ class ChainsController < ApplicationController
   private
 
   def set_chain
-    @chain = Chain.includes(:game, :creator).find_by!(id: params[:id])
+    @chain = Chain.kept.includes(:game, :creator).find_by!(id: params[:id])
   end
 
   def chain_params
