@@ -49,7 +49,7 @@ class ChainsController < ApplicationController
     end
 
     enqueue_current_user_achievement_sync!
-    redirect_to chain_path(@chain)
+    redirect_to chain_path(@chain), notice: "Chain created. Unlock status of achievements in this chain will synchronize shortly."
   rescue ActiveRecord::RecordInvalid
     render :new, status: :unprocessable_entity
   end
@@ -68,7 +68,7 @@ class ChainsController < ApplicationController
     end
 
     enqueue_current_user_achievement_sync!
-    redirect_to chain_path(@chain), notice: "Chain updated."
+    redirect_to chain_path(@chain), notice: "Chain updated. Status of newly added achievements will synchronize shortly."
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_entity
   end
