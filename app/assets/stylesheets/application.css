@@ -499,6 +499,14 @@ a {
   line-height: 1.6;
 }
 
+.chain-show__description p {
+  margin: 0;
+}
+
+.chain-show__description p + p {
+  margin-top: 0.9rem;
+}
+
 .chain-show__summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -815,6 +823,14 @@ a {
   line-height: 1.55;
 }
 
+.chain-card__description p {
+  margin: 0;
+}
+
+.chain-card__description p + p {
+  margin-top: 0.8rem;
+}
+
 .chain-card__details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -950,10 +966,17 @@ a {
 }
 
 .achievement-note__body {
-  margin: 0;
   color: #c5d2df;
   line-height: 1.35;
   font-size: 0.79rem;
+}
+
+.achievement-note__body p {
+  margin: 0;
+}
+
+.achievement-note__body p + p {
+  margin-top: 0.75rem;
 }
 
 .achievement-row__body {
@@ -1008,6 +1031,14 @@ a {
   color: #c5d2df;
   line-height: 1.3;
   font-size: 0.79rem;
+}
+
+.achievement-row__description p {
+  margin: 0;
+}
+
+.achievement-row__description p + p {
+  margin-top: 0.7rem;
 }
 
 .achievement-row__description--secondary {

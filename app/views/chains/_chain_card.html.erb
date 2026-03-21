@@ -32,7 +32,7 @@
   </div>
 
   <% if chain.description.present? %>
-    <p class="chain-card__description"><%= chain.description %></p>
+    <div class="chain-card__description"><%= simple_format(chain.description) %></div>
   <% end %>
 
   <p class="chain-card__byline">

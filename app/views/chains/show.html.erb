@@ -90,7 +90,7 @@
         on <%= @chain.created_at.utc.strftime("%-d %b %Y @ %-I:%M%P UTC") %>
       </p>
       <% if @chain.description.present? %>
-        <p class="chain-show__description"><%= @chain.description %></p>
+        <div class="chain-show__description"><%= simple_format(@chain.description) %></div>
       <% end %>
     </div>
   </header>
@@ -114,7 +114,7 @@
           <article class="achievement-step">
             <% if node.note.present? %>
               <div class="achievement-note">
-                <p class="achievement-note__body"><%= node.note %></p>
+                <div class="achievement-note__body"><%= simple_format(node.note) %></div>
               </div>
             <% end %>
 
@@ -143,7 +143,7 @@
                   <% end %>
                 </div>
 
-                <p class="achievement-row__description"><%= node.description %></p>
+                <div class="achievement-row__description"><%= simple_format(node.description) %></div>
 
                 <div class="achievement-row__meta">
                   <span>Step <%= index + 1 %> of <%= total_nodes %></span>
