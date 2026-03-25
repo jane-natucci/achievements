@@ -5,11 +5,15 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  helper_method :current_user
+  helper_method :current_user, :random_header_achievement_icon_url
 
   private
 
   def current_user
     @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+  end
+
+  def random_header_achievement_icon_url
+    @random_header_achievement_icon_url ||= Achievement.where.not(icon_unlocked: [nil, ""]).order(Arel.sql("RANDOM()")).pick(:icon_unlocked)
   end
 end
