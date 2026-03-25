@@ -5,7 +5,7 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  helper_method :current_user, :random_header_achievement_icon_url
+  helper_method :current_user, :header_avatar_link_path, :header_avatar_link_label, :random_header_achievement_icon_url
 
   private
 
@@ -14,6 +14,24 @@ class ApplicationController < ActionController::Base
   end
 
   def random_header_achievement_icon_url
-    @random_header_achievement_icon_url ||= Achievement.where.not(icon_unlocked: [nil, ""]).order(Arel.sql("RANDOM()")).pick(:icon_unlocked)
+    random_header_achievement&.icon_unlocked
+  end
+
+  def header_avatar_link_path
+    return "/achievements/" if current_user
+    return achievement_path(random_header_achievement) if random_header_achievement
+
+    "/achievements/login/"
+  end
+
+  def header_avatar_link_label
+    return "Home" if current_user
+    return "Open random achievement" if random_header_achievement
+
+    "Log In"
+  end
+
+  def random_header_achievement
+    @random_header_achievement ||= Achievement.where.not(icon_unlocked: [nil, ""]).order(Arel.sql("RANDOM()")).first
   end
 end

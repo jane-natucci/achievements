@@ -6,6 +6,11 @@ class AchievementsController < ApplicationController
     @filter_games = Game.joins(:chains).distinct.order(:name)
   end
 
+  def show
+    @achievement = Achievement.includes(:game).find(params[:id])
+    @chain_nodes = @achievement.chain_nodes.includes(chain: :game).joins(:chain).merge(Chain.kept).order(created_at: :asc)
+  end
+
   def help
   end
 end

@@ -28,7 +28,7 @@
     <header class="topbar">
       <div class="topbar__inner">
         <div class="topbar__brand">
-          <%= link_to(current_user ? "/achievements/" : "/achievements/login/", class: "topbar__avatar-link", aria: { label: current_user ? "Home" : "Log In" }) do %>
+          <%= link_to(header_avatar_link_path, class: "topbar__avatar-link", aria: { label: header_avatar_link_label }) do %>
             <div class="topbar__avatar-slot">
               <span class="topbar__avatar-status"></span>
               <% if current_user&.avatar_url.present? %>

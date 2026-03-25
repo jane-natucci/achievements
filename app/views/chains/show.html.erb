@@ -120,12 +120,14 @@
 
             <div class="achievement-row">
               <div class="achievement-row__icon-wrap">
-                <% if icon_url.present? %>
-                  <%= image_tag icon_url, alt: "", class: "achievement-row__icon" %>
-                <% else %>
-                  <div class="achievement-row__icon achievement-row__icon--placeholder" aria-hidden="true">
-                    <span><%= index + 1 %></span>
-                  </div>
+                <%= link_to achievement_path(node.achievement), class: "achievement-row__link", aria: { label: node.title } do %>
+                  <% if icon_url.present? %>
+                    <%= image_tag icon_url, alt: "", class: "achievement-row__icon" %>
+                  <% else %>
+                    <div class="achievement-row__icon achievement-row__icon--placeholder" aria-hidden="true">
+                      <span><%= index + 1 %></span>
+                    </div>
+                  <% end %>
                 <% end %>
               </div>
 
@@ -137,7 +139,7 @@
                 <% end %>
 
                 <div class="achievement-row__title-line">
-                  <h3><%= node.title %></h3>
+                  <h3><%= link_to node.title, achievement_path(node.achievement), class: "achievement-row__title-link" %></h3>
                   <% if node.node_type.present? %>
                     <span class="achievement-row__type"><%= node.node_type.humanize %></span>
                   <% end %>

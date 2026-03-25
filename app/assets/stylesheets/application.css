@@ -507,6 +507,100 @@ a {
   margin-top: 0.9rem;
 }
 
+.achievement-detail {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.achievement-detail__header {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.achievement-detail__icon-wrap {
+  width: 96px;
+  height: 96px;
+}
+
+.achievement-detail__icon {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  background: #0f1721;
+}
+
+.achievement-detail__icon--placeholder {
+  background: linear-gradient(135deg, rgba(102, 192, 244, 0.2), rgba(7, 12, 18, 0.9));
+}
+
+.achievement-detail__copy h1 {
+  margin: 0;
+}
+
+.achievement-detail__game,
+.achievement-link-card__game {
+  margin: 0.3rem 0 0;
+  color: var(--accent);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.achievement-detail__description {
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.achievement-detail__description p {
+  margin: 0;
+}
+
+.achievement-detail__description p + p {
+  margin-top: 0.9rem;
+}
+
+.achievement-detail__chains {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.achievement-link-card {
+  padding: 0.9rem 1rem;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.achievement-link-card__body h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.achievement-link-card__body h3 a:hover,
+.achievement-link-card__body h3 a:focus-visible,
+.achievement-row__title-link:hover,
+.achievement-row__title-link:focus-visible {
+  color: var(--accent);
+}
+
+.achievement-link-card__note {
+  margin-top: 0.55rem;
+  color: #c5d2df;
+  line-height: 1.45;
+  font-size: 0.84rem;
+}
+
+.achievement-link-card__note p {
+  margin: 0;
+}
+
+.achievement-link-card__note p + p {
+  margin-top: 0.75rem;
+}
+
 .chain-show__summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -937,6 +1031,16 @@ a {
   padding-top: 1px;
 }
 
+.achievement-row__link {
+  display: block;
+  line-height: 0;
+}
+
+.achievement-row__link:focus-visible {
+  outline: 2px solid rgba(102, 192, 244, 0.95);
+  outline-offset: 2px;
+}
+
 .achievement-row__icon {
   width: 64px;
   height: 64px;
@@ -1001,6 +1105,10 @@ a {
   margin: 0;
   font-size: 0.94rem;
   line-height: 1.2;
+}
+
+.achievement-row__title-link {
+  color: inherit;
 }
 
 .achievement-row__type {

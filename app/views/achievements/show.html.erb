@@ -1,0 +1,65 @@
+<%
+  chains = @chain_nodes.map(&:chain).uniq
+%>
+
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+
+    <section class="sidebar-section">
+      <h3>Achievement</h3>
+      <div class="sidebar-stat-grid">
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= chains.size %></span>
+          <span class="achievement-stat-card__label">Chains Using This</span>
+        </div>
+      </div>
+    </section>
+  </div>
+<% end %>
+
+<section class="achievement-detail">
+  <header class="achievement-detail__header">
+    <div class="achievement-detail__icon-wrap">
+      <% if @achievement.icon_unlocked.present? %>
+        <%= image_tag @achievement.icon_unlocked, alt: "", class: "achievement-detail__icon" %>
+      <% else %>
+        <div class="achievement-detail__icon achievement-detail__icon--placeholder" aria-hidden="true"></div>
+      <% end %>
+    </div>
+
+    <div class="achievement-detail__copy">
+      <p class="eyebrow">Achievement</p>
+      <h1><%= @achievement.title %></h1>
+      <% if @achievement.game&.name.present? %>
+        <p class="achievement-detail__game"><%= @achievement.game.name %></p>
+      <% end %>
+      <% if @achievement.description.present? %>
+        <div class="achievement-detail__description"><%= simple_format(@achievement.description) %></div>
+      <% end %>
+    </div>
+  </header>
+
+  <% if @chain_nodes.any? %>
+    <section class="achievements-section">
+      <div class="achievements-section__header">
+        <h2>Used In Chains</h2>
+        <p class="achievements-section__meta"><%= pluralize(chains.size, "chain") %></p>
+      </div>
+
+      <div class="achievement-detail__chains">
+        <% @chain_nodes.each do |node| %>
+          <article class="achievement-link-card">
+            <div class="achievement-link-card__body">
+              <h3><%= link_to node.chain.title, chain_path(node.chain) %></h3>
+              <p class="achievement-link-card__game"><%= node.chain.game&.name || "Unknown Game" %></p>
+              <% if node.note.present? %>
+                <div class="achievement-link-card__note"><%= simple_format(node.note) %></div>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</section>
