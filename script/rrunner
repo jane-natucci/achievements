@@ -1,0 +1,10 @@
+#!/bin/bash
+CONTAINER="$(docker ps | grep achievements | head -n 1 | awk '{ print $1 }')"
+
+if [ -n "${CONTAINER}" ]; then
+  # docker exec -it ${CONTAINER} /usr/local/bin/bundle exec rails runner script/import_requested_steam_games.rb
+  # docker exec -it ${CONTAINER} /usr/local/bin/bundle exec rails runner script/create_freemans_journey_chain.rb
+  # docker exec -it ${CONTAINER} /usr/local/bin/bundle exec rails runner script/import_games_over_15_hours_with_achievements.rb
+  docker exec -it ${CONTAINER} /usr/local/bin/bundle exec rails runner script/import_synthetik_games.rb
+fi
+

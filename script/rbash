@@ -1,0 +1,7 @@
+#!/bin/bash
+CONTAINER="$(docker ps | grep achievements | head -n 1 | awk '{ print $1 }')"
+
+if [ -n "${CONTAINER}" ]; then
+  docker exec -it ${CONTAINER} /bin/bash
+fi
+
