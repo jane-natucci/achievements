@@ -484,6 +484,22 @@ a {
   font-size: 1rem;
 }
 
+.chain-show__game-link:hover,
+.chain-show__game-link:focus-visible {
+  color: #9ad9ff;
+}
+
+.chain-show__steam-link {
+  margin-left: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.chain-show__steam-link:hover,
+.chain-show__steam-link:focus-visible {
+  color: var(--accent);
+}
+
 .chain-show__byline,
 .chain-card__byline {
   margin: 0.45rem 0 0;

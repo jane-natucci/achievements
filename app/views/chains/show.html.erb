@@ -79,7 +79,29 @@
     <div>
       <h1><%= @chain.title %></h1>
       <% if @chain.game&.name.present? %>
-        <p class="chain-show__game"><%= @chain.game.name %></p>
+        <p class="chain-show__game">
+          <%= link_to @chain.game.name,
+                chains_path(game: @chain.game.id),
+                class: "chain-show__game-link",
+                title: "See all chains for this game",
+                aria: { label: "See all chains for this game" } %>
+          <% if @chain.game.steam_app_id.present? %>
+            <%= link_to "Open on Steam ↗",
+                  "https://store.steampowered.com/app/#{@chain.game.steam_app_id}/",
+                  class: "chain-show__steam-link",
+                  title: "Open on Steam",
+                  target: "_blank",
+                  rel: "noopener noreferrer" %>
+            <% if current_user&.steam_id.present? %>
+              <%= link_to "See my achievements on Steam ↗",
+                    "https://steamcommunity.com/profiles/#{current_user.steam_id}/stats/#{@chain.game.steam_app_id}/?tab=achievements",
+                    class: "chain-show__steam-link",
+                    title: "See my achievements on Steam",
+                    target: "_blank",
+                    rel: "noopener noreferrer" %>
+            <% end %>
+          <% end %>
+        </p>
       <% end %>
       <p class="chain-show__byline">
         <% if @chain.creator&.display_name.present? %>
