@@ -61,6 +61,7 @@
         {
           "appProtocol": "http",
           "containerPort": 4000,
+          "hostPort": 4000,
           "protocol": "tcp"
         }
       ]

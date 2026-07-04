@@ -15,13 +15,7 @@
   "enableExecuteCommand": false,
   "healthCheckGracePeriodSeconds": 0,
   "launchType": "",
-  "loadBalancers": [
-    {
-      "containerName": "achievements-web",
-      "containerPort": 4000,
-      "targetGroupArn": "arn:aws:elasticloadbalancing:eu-central-1:949665810427:targetgroup/achievements-target-group/ba1797f6d24d2381"
-    }
-  ],
+  "loadBalancers": [],
   "propagateTags": "NONE",
   "schedulingStrategy": "REPLICA"
 }
