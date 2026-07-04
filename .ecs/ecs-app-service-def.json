@@ -4,8 +4,8 @@
       "enable": false,
       "rollback": false
     },
-    "maximumPercent": 200,
-    "minimumHealthyPercent": 100
+    "maximumPercent": 100,
+    "minimumHealthyPercent": 0
   },
   "deploymentController": {
     "type": "ECS"
