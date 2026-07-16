@@ -23,22 +23,15 @@
 
 <section class="chain-index">
   <header class="chain-index__header">
-    <p class="eyebrow">Impersonation</p>
+    <p class="eyebrow">Steam Progress</p>
     <h1>Log In</h1>
   </header>
 
   <div class="chain-card login-card">
-    <p>
-      Warning! This is a WIP and there is no proper login at the moment, but there is a way to impersonate yourself as ANY profile. As this is only shared among friends, please impersonate only as yourself by posting your profile url (e.g. in full: https://steamcommunity.com/profiles/76561199079570785/) into the field below and click impersonate.
-    </p>
-
-    <p>
-      Warning! Your profile should have your games visible to allow for achievements to synchronize!
-    </p>
-
-    <p>
-      Also why log in at all? When you log in you can see your progress in existing chains and create new ones, as well as manage your favorite chains.
-    </p>
+    <div>
+      <p>Log in to create your own achievement chains and see your progress.</p>
+      <p class="chain-builder__hint">Your games must be public on Steam so achievements can sync.</p>
+    </div>
 
     <%= form_with url: "/achievements/login/", method: :post, class: "login-form" do |form| %>
       <div class="chain-builder-panel__section">
@@ -53,7 +46,7 @@
       </div>
 
       <div class="chain-builder-panel__section">
-        <%= form.submit "Impersonate", class: "sidebar-button chain-builder__submit" %>
+        <%= form.submit "Log In", class: "sidebar-button chain-builder__submit" %>
       </div>
     <% end %>
   </div>
