@@ -787,9 +787,9 @@ a {
   gap: 0.95rem;
   position: relative;
   padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 2px;
-  background: linear-gradient(180deg, rgba(27, 40, 55, 0.96), rgba(14, 21, 29, 0.98));
+  background: linear-gradient(180deg, rgba(15, 23, 32, 0.98), rgba(9, 14, 20, 0.99));
 }
 
 .chain-card__top {
