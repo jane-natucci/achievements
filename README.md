@@ -1,24 +1,5 @@
-# README
+# Achievements
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Source code for [jane.berlin/achievements](https://jane.berlin/achievements).
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+Achievements is a small Rails app for tracking Steam achievement chains: curated routes through a game's achievements, notes about the intended order, and progress synced from Steam. It is mostly a personal project for making achievement hunting feel more structured, social, and a little less like staring at a giant checklist.

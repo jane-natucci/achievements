@@ -4,7 +4,7 @@
 #   bin/rails runner script/import_games_over_15_hours_with_achievements.rb
 #
 # This list was extracted from the saved Steam games page:
-#   /Users/eugen/Downloads/Steam Community __ Jane __ Games.html
+#   /Users/jane/Downloads/Steam Community __ Jane __ Games.html
 # using these filters:
 # - playtime_forever >= 900 minutes (15 hours)
 # - has_community_visible_stats = true
