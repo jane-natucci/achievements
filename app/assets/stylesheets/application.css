@@ -463,6 +463,17 @@ a {
   gap: 0.45rem;
 }
 
+.help-page h2 {
+  margin: 0.95rem 0 0;
+  color: var(--text);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.help-page h2:first-child {
+  margin-top: 0;
+}
+
 .help-page p {
   margin: 0;
 }
