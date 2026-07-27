@@ -7,7 +7,7 @@ class ChainsController < ApplicationController
     @filter_games = Game.joins(:chains).distinct.order(:name)
     @active_game = @filter_games.find_by(id: params[:game])
     @favorites_only = current_user.present? && params[:favorites] == "1"
-    @chains = Chain.kept.includes(:game, :creator, chain_nodes: :achievement).order(created_at: :desc)
+    @chains = Chain.kept.includes(:game, :creator, chain_nodes: :achievement, chain_edges: :achievement).order(created_at: :desc)
     @chains = @chains.where(game: @active_game) if @active_game
     if @favorites_only
       @chains = @chains.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
@@ -102,7 +102,7 @@ class ChainsController < ApplicationController
   private
 
   def set_chain
-    @chain = Chain.kept.includes(:game, :creator).find_by!(id: params[:id])
+    @chain = Chain.kept.includes(:game, :creator, chain_nodes: :achievement, chain_edges: :achievement).find_by!(id: params[:id])
   end
 
   def chain_params
