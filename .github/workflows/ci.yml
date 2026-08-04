@@ -153,6 +153,8 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/achievements:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/achievements:latest
+          build-args: |
+            GIT_COMMIT_SHA=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Setup ecspresso

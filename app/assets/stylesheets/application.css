@@ -143,9 +143,20 @@ a {
 .topbar__nav {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 1.25rem;
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+.topbar__build-link {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(102, 192, 244, 0.18);
+  background: rgba(6, 11, 17, 0.32);
+  color: #b7c7d6;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .topbar__nav-button {

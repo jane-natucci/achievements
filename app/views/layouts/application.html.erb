@@ -47,6 +47,9 @@
         </div>
 
         <nav class="topbar__nav" aria-label="Primary">
+          <% if build_commit_sha.present? %>
+            <%= link_to "Build #{build_commit_short_sha}", build_commit_url, class: "topbar__build-link", target: "_blank", rel: "noopener noreferrer", title: "View deployed source commit on GitHub" %>
+          <% end %>
           <% if current_user %>
             <%= button_to "Log Out", "/achievements/logout/", method: :delete, class: "topbar__nav-button" %>
           <% else %>
