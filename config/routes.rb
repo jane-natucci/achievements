@@ -16,6 +16,14 @@ Rails.application.routes.draw do
     get "login", to: "sessions#new"
     post "login", to: "sessions#create"
     delete "logout", to: "sessions#destroy"
+    get "wizard", to: "wizard#profile", as: :wizard
+    post "wizard", to: "wizard#create_profile"
+    get "wizard/syncing", to: "wizard#syncing", as: :wizard_syncing
+    get "wizard/sync_status", to: "wizard#sync_status", as: :wizard_sync_status
+    get "wizard/game", to: "wizard#game", as: :wizard_game
+    post "wizard/game", to: "wizard#set_game"
+    get "wizard/achievements/:step", to: "wizard#achievement", as: :wizard_achievement, constraints: { step: /[1-3]/ }
+    post "wizard/achievements/:step", to: "wizard#set_achievement", constraints: { step: /[1-3]/ }
     resources :achievements
     resources :chains do
       member do

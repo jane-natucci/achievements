@@ -1,5 +1,7 @@
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
+    <%= link_to "Build Your First Chain", wizard_path, class: "sidebar-button" %>
+
     <section class="sidebar-section">
       <h3>Overview</h3>
       <div class="sidebar-stat-grid">
@@ -52,6 +54,7 @@
     <div class="achievement-empty-state">
       <h3>No chains yet</h3>
       <p>Once chains are created, they will appear here with their progression details.</p>
+      <p><%= link_to "Build Your First Chain", wizard_path, class: "sidebar-button" %></p>
     </div>
   <% end %>
 </section>

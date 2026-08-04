@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Build Your First Chain" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Achievements">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <%= Sentry.get_trace_propagation_meta.html_safe %>
+  </head>
+
+  <body class="wizard-shell">
+    <%= link_to "✕", "/achievements/", class: "wizard-shell__close", aria: { label: "Exit" } %>
+
+    <main class="wizard-stage">
+      <% if flash[:notice].present? || flash[:alert].present? %>
+        <div class="wizard-flash-stack">
+          <% if flash[:notice].present? %>
+            <div class="flash-banner flash-banner--notice"><%= flash[:notice] %></div>
+          <% end %>
+          <% if flash[:alert].present? %>
+            <div class="flash-banner flash-banner--alert"><%= flash[:alert] %></div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>

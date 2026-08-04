@@ -1,0 +1,13 @@
+<p class="wizard-kicker">Build Your First Chain</p>
+<h1 class="wizard-title">Hi! What's your Steam profile URL?</h1>
+
+<%= form_with url: wizard_path, method: :post, class: "wizard-form" do |form| %>
+  <%= form.text_field :profile_url,
+        value: params[:profile_url],
+        class: "wizard-input",
+        placeholder: "https://steamcommunity.com/profiles/...",
+        autofocus: true %>
+  <%= form.submit "Continue", class: "wizard-button" %>
+<% end %>
+
+<p class="wizard-hint">Full profile URL, vanity URL, or a raw SteamID64. Your games need to be public so achievements can sync.</p>

@@ -1,0 +1,55 @@
+<%
+  step_copy = {
+    1 => ["Which one looks like a good place to start?", "How does the journey start?"],
+    2 => ["Which one is the middle of your journey?", "What is the culmination of this journey?"],
+    3 => ["Which one is the crowning achievement?", "How does the journey end?"]
+  }.fetch(@step, ["Which one comes next?", "Anything you'd say about it? (optional)"])
+  selected_achievement = @candidates.find { |achievement| achievement.id == @selected_id }
+  description_text = selected_achievement ? selected_achievement.description.presence || "No description available." : "Please select an achievement."
+%>
+
+<div class="wizard-progress">
+  <% @total_steps.times do |index| %>
+    <span class="wizard-progress__dot <%= "wizard-progress__dot--active" if index < @step %>"></span>
+  <% end %>
+</div>
+
+<h1 class="wizard-title"><%= step_copy.first %></h1>
+
+<div class="wizard-achievement-picker" data-controller="wizard-achievement-picker">
+  <div class="wizard-achievement-grid">
+    <% @candidates.each do |achievement| %>
+      <button
+        type="button"
+        class="wizard-achievement-card <%= "wizard-achievement-card--selected" if achievement.id == @selected_id %>"
+        data-wizard-achievement-picker-target="card"
+        data-achievement-id="<%= achievement.id %>"
+        data-description="<%= achievement.description %>"
+        data-action="click->wizard-achievement-picker#select"
+      >
+        <div class="wizard-achievement-card__icon-wrap">
+          <% if achievement.icon_unlocked.present? %>
+            <%= image_tag achievement.icon_unlocked, alt: "", class: "wizard-achievement-card__icon" %>
+          <% else %>
+            <div class="wizard-achievement-card__icon wizard-achievement-card__icon--placeholder" aria-hidden="true"></div>
+          <% end %>
+        </div>
+        <p class="wizard-achievement-card__title"><%= achievement.title %></p>
+      </button>
+    <% end %>
+  </div>
+
+  <p class="wizard-achievement-picker__description" data-wizard-achievement-picker-target="description"><%= description_text %></p>
+
+  <%= form_with url: wizard_achievement_path(step: @step), method: :post, class: "wizard-form" do |form| %>
+    <%= form.hidden_field :achievement_id, value: @selected_id, data: { wizard_achievement_picker_target: "hiddenInput" } %>
+    <%= form.text_area :note,
+          value: session.dig(:wizard, "notes", @selected_id.to_s),
+          class: "wizard-textarea",
+          placeholder: step_copy.second %>
+    <%= form.submit(@step < @total_steps ? "Next" : "Create My Chain",
+          class: "wizard-button",
+          disabled: @selected_id.blank?,
+          data: { wizard_achievement_picker_target: "submit" }) %>
+  <% end %>
+</div>

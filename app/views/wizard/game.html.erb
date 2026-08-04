@@ -1,0 +1,26 @@
+<p class="wizard-kicker">Build Your First Chain</p>
+<h1 class="wizard-title">Select a game to build your first chain for!</h1>
+
+<% if @owned_games.any? %>
+  <div class="wizard-game-grid">
+    <% @owned_games.each do |entry| %>
+      <%= button_to wizard_game_path(game_id: entry[:game].id), method: :post, class: "wizard-game-card" do %>
+        <% if entry[:icon_url].present? %>
+          <%= image_tag entry[:icon_url], alt: "", class: "wizard-game-card__icon" %>
+        <% else %>
+          <div class="wizard-game-card__icon wizard-game-card__icon--placeholder" aria-hidden="true">
+            <%= entry[:game].name.first %>
+          </div>
+        <% end %>
+        <div class="wizard-game-card__body">
+          <h3><%= entry[:game].name %></h3>
+          <% if entry[:playtime_forever] %>
+            <p class="wizard-game-card__meta"><%= number_with_delimiter((entry[:playtime_forever] / 60.0).round) %> hrs</p>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="wizard-empty">We don't track achievements for any games yet &mdash; check back soon.</p>
+<% end %>

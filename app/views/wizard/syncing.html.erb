@@ -1,0 +1,10 @@
+<p class="wizard-kicker">Build Your First Chain</p>
+<h1 class="wizard-title">Finding your games&hellip;</h1>
+
+<div class="wizard-syncing" data-controller="wizard-sync-status" data-wizard-sync-status-url-value="<%= wizard_sync_status_path %>">
+  <p class="wizard-achievement-picker__description" data-wizard-sync-status-target="message">This only takes a moment.</p>
+
+  <%= link_to "Next", wizard_game_path,
+        class: "wizard-button wizard-button--disabled",
+        data: { wizard_sync_status_target: "button", action: "click->wizard-sync-status#handleClick" } %>
+</div>

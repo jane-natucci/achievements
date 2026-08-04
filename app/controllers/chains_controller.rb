@@ -45,7 +45,7 @@ class ChainsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       @chain.save!
-      sync_chain_sequence!(@chain, selected_achievements)
+      SyncChainSequence.call(@chain, selected_achievements)
     end
 
     enqueue_current_user_achievement_sync!
@@ -64,7 +64,7 @@ class ChainsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       @chain.save!
-      sync_chain_sequence!(@chain, selected_achievements)
+      SyncChainSequence.call(@chain, selected_achievements)
     end
 
     enqueue_current_user_achievement_sync!
@@ -166,24 +166,6 @@ class ChainsController < ApplicationController
     end
 
     achievements
-  end
-
-  def sync_chain_sequence!(chain, selected_achievements)
-    existing_nodes_by_ref_id = chain.chain_nodes.index_by(&:ref_id)
-
-    ordered_nodes = selected_achievements.map do |item|
-      node = existing_nodes_by_ref_id.delete(item[:id]) || chain.chain_nodes.build(ref_id: item[:id])
-      node.note = item[:note]
-      node.save! if node.new_record? || node.changed?
-      node
-    end
-
-    existing_nodes_by_ref_id.each_value(&:destroy!)
-
-    chain.chain_edges.delete_all
-    ordered_nodes.each_cons(2) do |from_node, to_node|
-      chain.chain_edges.create!(from_node: from_node.id, to_node: to_node.id, edge_type: "sequence")
-    end
   end
 
   def ordered_achievements_payload(chain)
