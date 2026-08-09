@@ -18,14 +18,14 @@ class ApplicationController < ActionController::Base
   end
 
   def header_avatar_link_path
-    return "/achievements/" if current_user
+    return user_path(current_user) if current_user
     return achievement_path(random_header_achievement) if random_header_achievement
 
     "/achievements/login/"
   end
 
   def header_avatar_link_label
-    return "Home" if current_user
+    return "My Profile" if current_user
     return "Open random achievement" if random_header_achievement
 
     "Log In"

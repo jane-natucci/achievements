@@ -25,6 +25,8 @@ Rails.application.routes.draw do
     get "wizard/achievements/:step", to: "wizard#achievement", as: :wizard_achievement, constraints: { step: /[1-3]/ }
     post "wizard/achievements/:step", to: "wizard#set_achievement", constraints: { step: /[1-3]/ }
     get "wizard/summary", to: "wizard#summary", as: :wizard_summary
+    get "leaderboard", to: "users#index", as: :leaderboard
+    get "users/:id", to: "users#show", as: :user
     resources :achievements
     resources :chains do
       member do

@@ -1,0 +1,57 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back Home", "/achievements/", class: "sidebar-button" %>
+
+    <section class="sidebar-section">
+      <h3>Ranking</h3>
+      <dl class="summary-list">
+        <div>
+          <dt>Sorted by</dt>
+          <dd>Total XP, highest first.</dd>
+        </div>
+        <div>
+          <dt>Earn XP</dt>
+          <dd>By creating chains, adding descriptions and notes, and unlocking achievements.</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="chain-index__header">
+    <p class="eyebrow">Standings</p>
+    <h1>Leaderboard</h1>
+    <p class="chain-index__description">
+      Ranked by total XP earned across achievements and chains.
+    </p>
+  </header>
+
+  <% if @users.any? %>
+    <ol class="leaderboard-list">
+      <% @users.each_with_index do |user, index| %>
+        <li class="leaderboard-row <%= "leaderboard-row--me" if current_user == user %>">
+          <span class="leaderboard-row__rank">#<%= index + 1 %></span>
+
+          <%= link_to user_path(user), class: "leaderboard-row__identity" do %>
+            <span class="leaderboard-row__avatar-wrap">
+              <% if user.avatar_url.present? %>
+                <%= image_tag user.avatar_url, alt: "", class: "leaderboard-row__avatar" %>
+              <% else %>
+                <span class="leaderboard-row__avatar leaderboard-row__avatar--placeholder"><%= user.display_name&.first&.upcase || "?" %></span>
+              <% end %>
+            </span>
+            <span class="leaderboard-row__name"><%= user.display_name.presence || "Unknown Player" %></span>
+          <% end %>
+
+          <span class="leaderboard-row__xp"><%= number_with_delimiter(user.total_xp) %> xp</span>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No players yet</h3>
+      <p>Once someone logs in and starts earning XP, they'll show up here.</p>
+    </div>
+  <% end %>
+</section>

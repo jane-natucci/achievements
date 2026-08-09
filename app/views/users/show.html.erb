@@ -1,0 +1,64 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back to Leaderboard", leaderboard_path, class: "sidebar-button" %>
+
+    <section class="sidebar-section">
+      <h3>Player</h3>
+      <div class="sidebar-stat-grid">
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value">#<%= @rank %></span>
+          <span class="achievement-stat-card__label">Leaderboard Rank</span>
+        </div>
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= number_with_delimiter(@user.total_xp) %></span>
+          <span class="achievement-stat-card__label">Total XP</span>
+        </div>
+      </div>
+    </section>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="profile-header">
+    <div class="profile-header__avatar-wrap">
+      <% if @user.avatar_url.present? %>
+        <%= image_tag @user.avatar_url, alt: "", class: "profile-header__avatar" %>
+      <% else %>
+        <div class="profile-header__avatar profile-header__avatar--placeholder" aria-hidden="true">
+          <%= @user.display_name&.first&.upcase || "?" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="profile-header__copy">
+      <p class="eyebrow">Player Profile</p>
+      <h1><%= @user.display_name.presence || "Unknown Player" %></h1>
+      <p class="chain-index__description">
+        Rank #<%= @rank %> &middot; <%= number_with_delimiter(@user.total_xp) %> xp
+      </p>
+    </div>
+  </header>
+
+  <section class="achievements-section">
+    <div class="achievements-section__header">
+      <h2>Latest XP Gains</h2>
+      <p class="achievements-section__meta"><%= pluralize(@xp_events.size, "event") %></p>
+    </div>
+
+    <% if @xp_events.any? %>
+      <ul class="xp-feed">
+        <% @xp_events.each do |event| %>
+          <li class="xp-feed__row">
+            <span class="xp-feed__description"><%= xp_event_description(event) %></span>
+            <span class="xp-feed__time"><%= time_ago_in_words(event.created_at) %> ago</span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="achievement-empty-state">
+        <h3>No XP yet</h3>
+        <p>Once <%= @user.display_name.presence || "this player" %> creates a chain or unlocks an achievement, it'll show up here.</p>
+      </div>
+    <% end %>
+  </section>
+</section>

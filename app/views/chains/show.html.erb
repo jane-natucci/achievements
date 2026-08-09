@@ -105,7 +105,7 @@
       <% end %>
       <p class="chain-show__byline">
         <% if @chain.creator&.display_name.present? %>
-          Created by <%= @chain.creator.display_name %>
+          Created by <%= link_to @chain.creator.display_name, user_path(@chain.creator) %>
         <% else %>
           Created by unknown
         <% end %>
