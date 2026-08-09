@@ -25,6 +25,25 @@ RSpec.describe SteamProfileLogin do
         expect(result.user.steam_id).to eq('76561199079570785')
         expect(result.user.display_name).to eq('Jane')
       end
+
+      it 'awards profile-creation xp the first time this steam_id logs in' do
+        allow(Steam::User).to receive(:summary).with('76561199079570785').and_return('personaname' => 'Jane')
+
+        result = described_class.call('76561199079570785')
+
+        expect(result.user.total_xp).to eq(XpRules::PROFILE_CREATED)
+        expect(result.user.xp_events.pluck(:reason)).to eq(['profile_created'])
+      end
+
+      it 'does not re-award profile-creation xp on a returning login' do
+        allow(Steam::User).to receive(:summary).with('76561199079570785').and_return('personaname' => 'Jane')
+
+        described_class.call('76561199079570785')
+        result = described_class.call('76561199079570785')
+
+        expect(result.user.reload.total_xp).to eq(XpRules::PROFILE_CREATED)
+        expect(result.user.xp_events.where(reason: 'profile_created').count).to eq(1)
+      end
     end
 
     context 'with a full profile URL' do

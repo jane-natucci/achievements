@@ -77,13 +77,13 @@ RSpec.describe 'Wizard', type: :request do
 
     creator = chain.creator
     # wizard chains always get a description, all 3 wizard steps in this test include a note
-    expected_xp = XpRules::CHAIN_CREATED + XpRules::CHAIN_DESCRIPTION_BONUS +
-                  (3 * XpRules::ACHIEVEMENT_ADDED_TO_CHAIN) + (3 * XpRules::ACHIEVEMENT_NOTE_BONUS)
-    expect(creator.reload.total_xp).to eq(expected_xp)
+    chain_creation_xp = XpRules::CHAIN_CREATED + XpRules::CHAIN_DESCRIPTION_BONUS +
+                        (3 * XpRules::ACHIEVEMENT_ADDED_TO_CHAIN) + (3 * XpRules::ACHIEVEMENT_NOTE_BONUS)
+    expect(creator.reload.total_xp).to eq(XpRules::PROFILE_CREATED + chain_creation_xp)
 
     follow_redirect!
     expect(response.body).to include('Chain created')
-    expect(response.body).to include("Total: +#{expected_xp} xp")
+    expect(response.body).to include("Total: +#{chain_creation_xp} xp")
     expect(response.body).to include('See My Chain')
 
     get chain_path(chain)

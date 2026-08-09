@@ -45,12 +45,14 @@ RSpec.describe 'Users', type: :request do
       chain = create(:chain, game: game, creator: user, title: 'My Chain')
       node = create(:chain_node, chain: chain)
 
+      AwardXp.call(user: user, amount: 100, reason: 'profile_created')
       AwardXp.call(user: user, amount: 5, reason: 'achievement_unlocked', subject: node)
       AwardXp.call(user: user, amount: 50, reason: 'chain_created', subject: chain)
       AwardXp.call(user: user, amount: 100, reason: 'chain_completed', subject: chain)
 
       get user_path(user)
 
+      expect(response.body).to include('Created their profile!')
       expect(response.body).to include('Unlocked')
       expect(response.body).to include(node.achievement.title)
       expect(response.body).to include('Created')

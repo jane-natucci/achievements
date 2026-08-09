@@ -1,6 +1,8 @@
 module UsersHelper
   def xp_event_description(event)
     case event.reason
+    when "profile_created"
+      "Created their profile! (+#{event.amount} xp)"
     when "achievement_unlocked"
       safe_join(["Unlocked ", chain_node_link(event.subject), " (+#{event.amount} xp)"])
     when "achievement_added"

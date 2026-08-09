@@ -21,9 +21,12 @@ class SteamProfileLogin
     return Result.new(error: "Could not load that Steam profile.") unless summary
 
     user = User.find_or_initialize_by(steam_id: steam_id)
+    is_new_user = user.new_record?
     user.display_name = summary["personaname"]
     user.avatar_url = summary["avatarfull"].presence || summary["avatarmedium"].presence || summary["avatar"]
     user.save!
+
+    AwardXp.call(user: user, amount: XpRules::PROFILE_CREATED, reason: "profile_created") if is_new_user
 
     Result.new(user: user)
   rescue StandardError => error

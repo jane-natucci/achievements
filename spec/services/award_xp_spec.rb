@@ -40,4 +40,12 @@ RSpec.describe AwardXp do
 
     expect(event.subject).to be_nil
   end
+
+  it 'backdates the event when occurred_at is given, for backfilling historical xp' do
+    occurred_at = 3.days.ago
+
+    event = described_class.call(user: user, amount: 5, reason: 'achievement_unlocked', occurred_at: occurred_at)
+
+    expect(event.reload.created_at).to be_within(1.second).of(occurred_at)
+  end
 end
