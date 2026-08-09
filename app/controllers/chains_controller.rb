@@ -47,6 +47,7 @@ class ChainsController < ApplicationController
       @chain.save!
       SyncChainSequence.call(@chain, selected_achievements)
     end
+    AwardChainCreationXp.call(@chain)
 
     enqueue_current_user_achievement_sync!
     redirect_to chain_path(@chain), notice: "Chain created. Unlock status of achievements in this chain will synchronize shortly."

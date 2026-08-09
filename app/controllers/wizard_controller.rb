@@ -3,7 +3,7 @@ class WizardController < ApplicationController
 
   GAMES_TO_SHOW = 4
 
-  before_action :require_current_user!, only: [:syncing, :sync_status, :game, :set_game, :achievement, :set_achievement]
+  before_action :require_current_user!, only: [:syncing, :sync_status, :game, :set_game, :achievement, :set_achievement, :summary]
   before_action :require_wizard_state!, only: [:achievement, :set_achievement]
 
   def profile
@@ -78,10 +78,19 @@ class WizardController < ApplicationController
     if @step < wizard_candidate_ids.size
       redirect_to wizard_achievement_path(step: @step + 1)
     else
-      chain = build_chain_from_wizard!
+      build_chain_from_wizard!
       session.delete(:wizard)
-      redirect_to chain_path(chain), notice: "Your first chain is ready!"
+      redirect_to wizard_summary_path
     end
+  end
+
+  def summary
+    @chain = Chain.kept.find_by(id: session.dig(:wizard_summary, "chain_id"), creator_user_id: current_user.id)
+    return redirect_to wizard_game_path unless @chain
+
+    events = XpEvent.where(id: Array(session.dig(:wizard_summary, "event_ids")))
+    @rows = SummarizeXpEvents.call(events)
+    @total_xp = events.sum(&:amount)
   end
 
   private
@@ -162,6 +171,9 @@ class WizardController < ApplicationController
       chain.save!
       SyncChainSequence.call(chain, selected_achievements)
     end
+
+    events = AwardChainCreationXp.call(chain)
+    session[:wizard_summary] = { "chain_id" => chain.id, "event_ids" => events.map(&:id) }
 
     SyncUserAchievementProgressWorker.perform_async(current_user.id)
     chain

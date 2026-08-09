@@ -67,13 +67,24 @@ RSpec.describe 'Wizard', type: :request do
       .to change(Chain, :count).by(1)
 
     chain = Chain.last
-    expect(response).to redirect_to(chain_path(chain))
+    expect(response).to redirect_to(wizard_summary_path)
     expect(chain.creator.steam_id).to eq('76561199079570785')
     expect(chain.game).to eq(game)
 
     ordered = chain.nodes_in_order
     expect(ordered.map(&:ref_id)).to eq([achievements[0].id, achievements[2].id, achievements[4].id])
     expect(ordered.map(&:note)).to eq(['easy one to start', 'getting harder', 'the finale'])
+
+    creator = chain.creator
+    # wizard chains always get a description, all 3 wizard steps in this test include a note
+    expected_xp = XpRules::CHAIN_CREATED + XpRules::CHAIN_DESCRIPTION_BONUS +
+                  (3 * XpRules::ACHIEVEMENT_ADDED_TO_CHAIN) + (3 * XpRules::ACHIEVEMENT_NOTE_BONUS)
+    expect(creator.reload.total_xp).to eq(expected_xp)
+
+    follow_redirect!
+    expect(response.body).to include('Chain created')
+    expect(response.body).to include("Total: +#{expected_xp} xp")
+    expect(response.body).to include('See My Chain')
 
     get chain_path(chain)
     expect(response).to have_http_status(:ok)

@@ -26,7 +26,7 @@ class SyncUserAchievementProgress
       .index_by { |entry| entry["apiname"] }
 
     chain_nodes = ChainNode.joins(:chain)
-                           .includes(:achievement)
+                           .includes(:achievement, :chain)
                            .where(chains: { game_id: game.id })
 
     unlocked_chain_node_ids = chain_nodes.filter_map do |chain_node|
@@ -42,6 +42,7 @@ class SyncUserAchievementProgress
         end
 
       progress = UserNodeProgress.find_or_initialize_by(user: user, chain_node: chain_node)
+      already_completed = progress.persisted? && progress.status == "completed"
       progress.status = "completed"
       progress.source = "steam"
       progress.unlocked_at = unlocked_at
@@ -51,6 +52,10 @@ class SyncUserAchievementProgress
         progress.update_column(:created_at, unlocked_at)
       end
 
+      unless already_completed
+        AwardXp.call(user: user, amount: XpRules::ACHIEVEMENT_UNLOCKED, reason: "achievement_unlocked", subject: chain_node)
+      end
+
       chain_node.id
     end
 
@@ -58,5 +63,23 @@ class SyncUserAchievementProgress
         .where(source: "steam", chain_node_id: chain_nodes.select(:id))
         .where.not(chain_node_id: unlocked_chain_node_ids)
         .delete_all
+
+    award_chain_completion_bonuses!(chain_nodes, unlocked_chain_node_ids)
+  end
+
+  def award_chain_completion_bonuses!(chain_nodes, unlocked_chain_node_ids)
+    unlocked_set = unlocked_chain_node_ids.to_set
+
+    chain_nodes.group_by(&:chain_id).each_value do |nodes|
+      next unless nodes.all? { |node| unlocked_set.include?(node.id) }
+
+      chain = nodes.first.chain
+      progress = UserChainProgress.find_or_initialize_by(user: user, chain: chain)
+      next if progress.completed_at.present?
+
+      progress.completed_at = Time.current
+      progress.save!
+      AwardXp.call(user: user, amount: XpRules::CHAIN_COMPLETED, reason: "chain_completed", subject: chain)
+    end
   end
 end

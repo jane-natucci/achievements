@@ -1,0 +1,16 @@
+<p class="wizard-kicker">Build Your First Chain</p>
+<h1 class="wizard-title">Your chain earned&hellip;</h1>
+
+<div class="wizard-xp-summary" data-controller="wizard-xp-reveal">
+  <ul class="wizard-xp-summary__list">
+    <% @rows.each do |row| %>
+      <li class="wizard-xp-summary__row" data-wizard-xp-reveal-target="row"><%= row.label %></li>
+    <% end %>
+  </ul>
+
+  <p class="wizard-xp-summary__total" data-wizard-xp-reveal-target="total">Total: +<%= @total_xp %> xp</p>
+
+  <%= link_to "See My Chain", chain_path(@chain),
+        class: "wizard-button wizard-button--disabled",
+        data: { wizard_xp_reveal_target: "button", action: "click->wizard-xp-reveal#handleClick" } %>
+</div>

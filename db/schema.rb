@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_04_211713) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_191434) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -112,8 +112,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_211713) do
     t.string "display_name"
     t.datetime "games_synced_at"
     t.string "steam_id", null: false
+    t.integer "total_xp", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["steam_id"], name: "index_users_on_steam_id", unique: true
+  end
+
+  create_table "xp_events", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.datetime "created_at", null: false
+    t.string "reason", null: false
+    t.bigint "subject_id"
+    t.string "subject_type"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["subject_type", "subject_id"], name: "index_xp_events_on_subject"
+    t.index ["user_id", "created_at"], name: "index_xp_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_xp_events_on_user_id"
   end
 
   add_foreign_key "achievements", "games"
@@ -126,4 +140,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_211713) do
   add_foreign_key "user_chain_progresses", "users"
   add_foreign_key "user_node_progresses", "chain_nodes"
   add_foreign_key "user_node_progresses", "users"
+  add_foreign_key "xp_events", "users"
 end
