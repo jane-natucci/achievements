@@ -63,10 +63,12 @@ class ChainsController < ApplicationController
     achievements = validate_chain_selection(@chain, selected_achievement_ids)
     return render :edit, status: :unprocessable_entity unless achievements
 
+    ordered_nodes = nil
     ActiveRecord::Base.transaction do
       @chain.save!
-      SyncChainSequence.call(@chain, selected_achievements)
+      ordered_nodes = SyncChainSequence.call(@chain, selected_achievements)
     end
+    AwardChainNodeXp.call(@chain, ordered_nodes.select(&:previously_new_record?))
 
     enqueue_current_user_achievement_sync!
     redirect_to chain_path(@chain), notice: "Chain updated. Status of newly added achievements will synchronize shortly."
