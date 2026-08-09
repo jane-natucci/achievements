@@ -21,12 +21,15 @@
 <section class="chain-index">
   <header class="profile-header">
     <div class="profile-header__avatar-wrap">
-      <% if @user.avatar_url.present? %>
-        <%= image_tag @user.avatar_url, alt: "", class: "profile-header__avatar" %>
-      <% else %>
-        <div class="profile-header__avatar profile-header__avatar--placeholder" aria-hidden="true">
-          <%= @user.display_name&.first&.upcase || "?" %>
-        </div>
+      <%= link_to "https://steamcommunity.com/profiles/#{@user.steam_id}/",
+            target: "_blank", rel: "noopener noreferrer", title: "Open Steam profile", aria: { label: "Open Steam profile" } do %>
+        <% if @user.avatar_url.present? %>
+          <%= image_tag @user.avatar_url, alt: "", class: "profile-header__avatar" %>
+        <% else %>
+          <div class="profile-header__avatar profile-header__avatar--placeholder" aria-hidden="true">
+            <%= @user.display_name&.first&.upcase || "?" %>
+          </div>
+        <% end %>
       <% end %>
     </div>
 
@@ -35,6 +38,12 @@
       <h1><%= @user.display_name.presence || "Unknown Player" %></h1>
       <p class="chain-index__description">
         Rank #<%= @rank %> &middot; <%= number_with_delimiter(@user.total_xp) %> xp
+        <%= link_to "Open on Steam ↗",
+              "https://steamcommunity.com/profiles/#{@user.steam_id}/",
+              class: "chain-show__steam-link",
+              title: "Open on Steam",
+              target: "_blank",
+              rel: "noopener noreferrer" %>
       </p>
     </div>
   </header>
