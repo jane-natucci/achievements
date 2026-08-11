@@ -52,6 +52,44 @@ a {
   padding-bottom: 4rem;
 }
 
+.pull-refresh-indicator {
+  display: none;
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 100;
+  width: 2.1rem;
+  height: 2.1rem;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-40px);
+  pointer-events: none;
+}
+
+.pull-refresh-spinner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(102, 192, 244, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 999px;
+}
+
+.pull-refresh-indicator--spinning .pull-refresh-spinner {
+  animation: pull-refresh-spin 0.7s linear infinite;
+}
+
+@keyframes pull-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 800px) {
+  .pull-refresh-indicator {
+    display: block;
+  }
+}
+
 .topbar {
   background: linear-gradient(180deg, rgba(27, 40, 56, 0.96), rgba(23, 29, 37, 0.98));
   border-bottom: 1px solid var(--chrome-border);
@@ -79,6 +117,37 @@ a {
 
 .topbar__brand {
   gap: 0.85rem;
+}
+
+.topbar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topbar__menu-toggle {
+  display: none;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.topbar__menu-toggle-bar {
+  display: block;
+  width: 1.15rem;
+  height: 2px;
+  background: var(--text);
+  border-radius: 1px;
 }
 
 .topbar__avatar-link {
@@ -1987,12 +2056,48 @@ a {
 
 @media (max-width: 800px) {
   .topbar__inner {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
+  }
+
+  .topbar__row {
+    width: 100%;
+  }
+
+  .brand-lockup h1 {
+    font-size: 1.3rem;
+    white-space: nowrap;
+  }
+
+  .topbar__menu-toggle {
+    display: flex;
+  }
+
+  .build-popup-wrapper {
+    display: none;
+  }
+
+  .topbar__nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .topbar__nav--open {
+    display: flex;
   }
 
   .profile-grid {
     grid-template-columns: 1fr;
+  }
+
+  .steam-shell--dashboard .summary-panel {
+    display: none;
   }
 
   .achievement-row__body {
@@ -2036,5 +2141,36 @@ a {
   .achievements-section__header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: 1.75rem 1fr auto;
+    grid-template-areas:
+      "rank identity xp"
+      "rank stats stats";
+    row-gap: 0.5rem;
+    padding: 0.65rem 0.8rem;
+  }
+
+  .leaderboard-row__rank {
+    grid-area: rank;
+  }
+
+  .leaderboard-row__identity {
+    grid-area: identity;
+    min-width: 0;
+  }
+
+  .leaderboard-row__xp {
+    grid-area: xp;
+  }
+
+  .leaderboard-row__stats {
+    grid-area: stats;
+    justify-self: start;
+  }
+
+  .wizard-achievement-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

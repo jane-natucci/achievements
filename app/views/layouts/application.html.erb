@@ -24,31 +24,51 @@
     <%= Sentry.get_trace_propagation_meta.html_safe %>
   </head>
 
-  <body class="steam-shell">
-    <header class="topbar">
-      <div class="topbar__inner">
-        <div class="topbar__brand">
-          <%= link_to(header_avatar_link_path, class: "topbar__avatar-link", aria: { label: header_avatar_link_label }) do %>
-            <div class="topbar__avatar-slot">
-              <% if current_user %>
-                <span class="topbar__avatar-status"></span>
-              <% end %>
-              <% if current_user&.avatar_url.present? %>
-                <%= image_tag current_user.avatar_url, alt: "", class: "topbar__avatar-image" %>
-              <% elsif random_header_achievement_icon_url.present? %>
-                <%= image_tag random_header_achievement_icon_url, alt: "", class: "topbar__avatar-image" %>
-              <% else %>
-                <span class="topbar__avatar-initial"><%= current_user&.display_name&.first&.upcase || "A" %></span>
-              <% end %>
-            </div>
-          <% end %>
+  <body class="steam-shell<%= " steam-shell--dashboard" if controller_name == "achievements" && action_name == "index" %>" data-controller="pull-refresh">
+    <div class="pull-refresh-indicator" data-pull-refresh-target="indicator" aria-hidden="true">
+      <span class="pull-refresh-spinner"></span>
+    </div>
 
-          <div class="brand-lockup">
-            <h1><a href="/achievements/">Achievement ChainZ</a></h1>
+    <header class="topbar">
+      <div class="topbar__inner" data-controller="topbar-menu">
+        <div class="topbar__row">
+          <div class="topbar__brand">
+            <%= link_to(header_avatar_link_path, class: "topbar__avatar-link", aria: { label: header_avatar_link_label }) do %>
+              <div class="topbar__avatar-slot">
+                <% if current_user %>
+                  <span class="topbar__avatar-status"></span>
+                <% end %>
+                <% if current_user&.avatar_url.present? %>
+                  <%= image_tag current_user.avatar_url, alt: "", class: "topbar__avatar-image" %>
+                <% elsif random_header_achievement_icon_url.present? %>
+                  <%= image_tag random_header_achievement_icon_url, alt: "", class: "topbar__avatar-image" %>
+                <% else %>
+                  <span class="topbar__avatar-initial"><%= current_user&.display_name&.first&.upcase || "A" %></span>
+                <% end %>
+              </div>
+            <% end %>
+
+            <div class="brand-lockup">
+              <h1><a href="/achievements/">Achievement ChainZ</a></h1>
+            </div>
           </div>
+
+          <button
+            type="button"
+            class="topbar__menu-toggle"
+            data-topbar-menu-target="toggle"
+            data-action="click->topbar-menu#toggle"
+            aria-expanded="false"
+            aria-controls="topbar-nav"
+            aria-label="Toggle navigation menu"
+          >
+            <span class="topbar__menu-toggle-bar"></span>
+            <span class="topbar__menu-toggle-bar"></span>
+            <span class="topbar__menu-toggle-bar"></span>
+          </button>
         </div>
 
-        <nav class="topbar__nav" aria-label="Primary">
+        <nav class="topbar__nav" id="topbar-nav" aria-label="Primary" data-topbar-menu-target="nav">
           <% if build_commit_sha.present? %>
             <div class="build-popup-wrapper" data-controller="build-popup" data-action="mouseenter->build-popup#show mouseleave->build-popup#hide">
               <%= link_to "Build #{build_commit_short_sha}", build_commit_url, class: "topbar__build-link", target: "_blank", rel: "noopener noreferrer", title: "View deployed source commit on GitHub" %>

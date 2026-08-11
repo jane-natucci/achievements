@@ -26,5 +26,15 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Nothing yet')
     end
+
+    it 'renders a collapsible mobile nav toggle wired to the nav via Stimulus' do
+      get root_path
+
+      expect(response.body).to include('data-controller="topbar-menu"')
+      expect(response.body).to include('data-topbar-menu-target="toggle"')
+      expect(response.body).to include('data-topbar-menu-target="nav"')
+      expect(response.body).to include('aria-controls="topbar-nav"')
+      expect(response.body).to include('id="topbar-nav"')
+    end
   end
 end
