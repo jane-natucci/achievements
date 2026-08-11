@@ -9,7 +9,11 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
+  # True bare "/" shows the minimal welcome/landing page (the app itself
+  # still lives under /achievements below; this doesn't use `root` so it
+  # doesn't touch the existing root_path helper used throughout the app).
+  get "/", to: "welcome#index"
+
   scope path: "achievements" do
     root "achievements#index"
     get "welcome", to: "welcome#index", as: :welcome
