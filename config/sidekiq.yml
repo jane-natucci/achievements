@@ -3,3 +3,6 @@
     enqueue_user_achievement_syncs:
       cron: "5 * * * *"
       class: EnqueueUserAchievementSyncsWorker
+    sync_user_profiles:
+      cron: "0 4 * * *"
+      class: SyncUserProfilesWorker

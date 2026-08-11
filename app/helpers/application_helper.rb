@@ -18,6 +18,11 @@ module ApplicationHelper
     "#{GITHUB_REPOSITORY_URL}/commit/#{build_commit_sha}" if build_commit_sha.present?
   end
 
+  def page_title(default)
+    title = content_for(:title).presence || default
+    Rails.env.development? ? "#{title} (local)" : title
+  end
+
   private
 
   def local_git_commit_sha
