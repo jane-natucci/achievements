@@ -1,0 +1,7 @@
+<% if Rails.env.production? %>
+  <script src="https://cdn.amplitude.com/script/36828638be1a93e5486a5df48cce64c6.js"></script>
+  <script>
+    window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+    window.amplitude.init('36828638be1a93e5486a5df48cce64c6', {"fetchRemoteConfig":true,"autocapture":true});
+  </script>
+<% end %>
