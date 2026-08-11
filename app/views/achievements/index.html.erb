@@ -39,21 +39,40 @@
 
 <section class="chain-index">
   <header class="chain-index__header">
-    <p class="eyebrow">Home</p>
-    <h1>Achievement ChainZ</h1>
+    <p class="eyebrow">News</p>
+    <h1>What's Happening</h1>
     <p class="chain-index__description">
-      Turn achievements into journeys. Start with a curated chain and follow it from the first unlock to the crown achievement.
+      See what the community's been up to &mdash; achievements unlocked, chains created and completed, across every player.
     </p>
   </header>
 
-  <% if @chains.any? %>
-    <div class="chain-card-list">
-      <%= render partial: "chains/chain_card", collection: @chains, as: :chain %>
-    </div>
+  <% if @recent_events.any? %>
+    <ul class="news-feed">
+      <% @recent_events.each do |event| %>
+        <li class="news-feed__row">
+          <%= link_to user_path(event.user), class: "leaderboard-row__avatar-wrap" do %>
+            <% if event.user.avatar_url.present? %>
+              <%= image_tag event.user.avatar_url, alt: "", class: "leaderboard-row__avatar" %>
+            <% else %>
+              <span class="leaderboard-row__avatar leaderboard-row__avatar--placeholder"><%= event.user.display_name&.first&.upcase || "?" %></span>
+            <% end %>
+          <% end %>
+
+          <%= xp_event_subject_icon(event) %>
+
+          <span class="news-feed__description">
+            <%= link_to event.user.display_name.presence || "Unknown Player", user_path(event.user), class: "news-feed__actor-name" %>
+            <%= xp_event_description(event) %>
+          </span>
+
+          <span class="xp-feed__time"><%= time_ago_in_words(event.created_at) %> ago</span>
+        </li>
+      <% end %>
+    </ul>
   <% else %>
     <div class="achievement-empty-state">
-      <h3>No chains yet</h3>
-      <p>Once chains are created, they will appear here with their progression details.</p>
+      <h3>Nothing yet</h3>
+      <p>Once players start earning XP, their activity will show up here.</p>
       <p><%= link_to "Build Your First Chain", wizard_path, class: "sidebar-button" %></p>
     </div>
   <% end %>

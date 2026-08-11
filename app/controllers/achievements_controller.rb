@@ -1,9 +1,10 @@
 class AchievementsController < ApplicationController
   def index
-    @chains = Chain.kept.includes(:game, chain_nodes: :achievement).order(created_at: :desc)
-    @total_chains = @chains.size
-    # @total_achievements = @chains.sum { |chain| chain.chain_nodes.size }
-    @total_achievements = ChainNode.joins(:chain).where(chain_id: @chains.pluck(:id)).count
+    @recent_events = XpEvent.includes(:user).order(created_at: :desc).limit(30)
+
+    chains = Chain.kept
+    @total_chains = chains.size
+    @total_achievements = ChainNode.joins(:chain).where(chain_id: chains.select(:id)).count
     @filter_games = Game.joins(:chains).distinct.order(:name)
   end
 

@@ -48,13 +48,12 @@ module UsersHelper
 
   def chain_subject_icon(chain, reason)
     cover_achievement = chain&.head&.achievement
-    status_glyph = reason == "chain_completed" ? "✅" : "✨"
 
     content_tag(:span, class: "xp-feed__icon xp-feed__icon--chain", aria: { hidden: true }) do
       parts = []
       parts << image_tag(cover_achievement.icon_unlocked, alt: "", class: "xp-feed__icon-cover") if cover_achievement&.icon_unlocked.present?
       parts << content_tag(:span, "⛓️", class: "xp-feed__icon-glyph")
-      parts << content_tag(:span, status_glyph, class: "xp-feed__icon-status-glyph")
+      parts << content_tag(:span, "✨", class: "xp-feed__icon-status-glyph") unless reason == "chain_completed"
       safe_join(parts)
     end
   end

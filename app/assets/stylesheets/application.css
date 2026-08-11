@@ -1876,6 +1876,37 @@ a {
   white-space: nowrap;
 }
 
+.news-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.news-feed__row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  background: rgba(15, 23, 32, 0.7);
+}
+
+.news-feed__description {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.news-feed__actor-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .xp-feed__icon {
   position: relative;
   flex: none;

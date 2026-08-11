@@ -85,9 +85,10 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).to include('xp-feed__icon--chain')
       expect(response.body.scan('xp-feed__icon--chain').size).to eq(2) # chain_created + chain_completed
 
-      # created and completed are visually distinguishable from each other
-      expect(response.body).to include('✨') # chain_created status glyph
-      expect(response.body).to include('✅') # chain_completed status glyph
+      # created gets a sparkle status glyph; completed stays plain (just the chain glyph)
+      expect(response.body.scan('xp-feed__icon-status-glyph').size).to eq(1)
+      expect(response.body).to include('✨')
+      expect(response.body).not_to include('✅')
     end
 
     it 'renders gracefully when an xp event subject has been deleted' do
