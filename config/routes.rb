@@ -1,3 +1,16 @@
+require "sidekiq/web"
+
+# ECS injects SIDEKIQ_USERNAME/SIDEKIQ_PASSWORD as env vars sourced from
+# SSM Parameter Store in production; local dev falls back to Rails
+# credentials (config/credentials.yml.enc, key: sidekiq.username/password).
+Sidekiq::Web.use(Rack::Auth::Basic) do |username, password|
+  expected_username = ENV.fetch("SIDEKIQ_USERNAME") { Rails.application.credentials.dig(:sidekiq, :username) }
+  expected_password = ENV.fetch("SIDEKIQ_PASSWORD") { Rails.application.credentials.dig(:sidekiq, :password) }
+
+  ActiveSupport::SecurityUtils.secure_compare(username, expected_username) &&
+    ActiveSupport::SecurityUtils.secure_compare(password, expected_password)
+end
+
 Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -13,6 +26,9 @@ Rails.application.routes.draw do
   # still lives under /achievements below; this doesn't use `root` so it
   # doesn't touch the existing root_path helper used throughout the app).
   get "/", to: "welcome#index"
+
+  mount Sidekiq::Web => "/sidekiq"
+  get "/debug", to: "debug#index"
 
   scope path: "achievements" do
     root "achievements#index"
