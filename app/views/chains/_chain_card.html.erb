@@ -47,11 +47,11 @@
   <div class="chain-card__details">
     <div class="chain-card__detail">
       <span class="chain-card__detail-label">Starts With</span>
-      <span class="chain-card__detail-value"><%= first_node&.title || "No starting achievement" %></span>
+      <%= render "chains/chain_card_detail_value", node: first_node, empty_text: "No starting achievement" %>
     </div>
     <div class="chain-card__detail">
       <span class="chain-card__detail-label">Ends With</span>
-      <span class="chain-card__detail-value"><%= last_node&.title || "No final achievement" %></span>
+      <%= render "chains/chain_card_detail_value", node: last_node, empty_text: "No final achievement" %>
     </div>
   </div>
 

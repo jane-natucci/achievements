@@ -1,0 +1,21 @@
+<%
+  achievement = node&.achievement
+  icon_url = node&.icon_unlocked
+%>
+<% if node && achievement %>
+  <%= link_to achievement_path(achievement), class: "chain-card__detail-value chain-card__detail-value--linked" do %>
+    <% if icon_url.present? %>
+      <%= image_tag icon_url, alt: "", class: "chain-card__detail-icon" %>
+    <% else %>
+      <span class="chain-card__detail-icon chain-card__detail-icon--placeholder" aria-hidden="true"></span>
+    <% end %>
+    <span class="chain-card__detail-title"><%= node.title %></span>
+  <% end %>
+<% elsif node %>
+  <span class="chain-card__detail-value">
+    <span class="chain-card__detail-icon chain-card__detail-icon--placeholder" aria-hidden="true"></span>
+    <span class="chain-card__detail-title"><%= node.title %></span>
+  </span>
+<% else %>
+  <span class="chain-card__detail-value"><%= empty_text %></span>
+<% end %>

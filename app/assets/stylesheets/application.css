@@ -985,8 +985,36 @@ a {
 }
 
 .chain-card__detail-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--text);
   line-height: 1.4;
+}
+
+.chain-card__detail-value--linked:hover,
+.chain-card__detail-value--linked:focus-visible {
+  color: var(--accent);
+}
+
+.chain-card__detail-icon {
+  display: block;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.chain-card__detail-icon--placeholder {
+  background: var(--accent-soft);
+}
+
+.chain-card__detail-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chain-card__footer {
