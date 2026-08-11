@@ -68,7 +68,7 @@ class ChainsController < ApplicationController
       @chain.save!
       ordered_nodes = SyncChainSequence.call(@chain, selected_achievements)
     end
-    AwardChainNodeXp.call(@chain, ordered_nodes)
+    AwardChainNodeXp.call(@chain, ordered_nodes, new_nodes: ordered_nodes.select(&:previously_new_record?))
 
     enqueue_current_user_achievement_sync!
     redirect_to chain_path(@chain), notice: "Chain updated. Status of newly added achievements will synchronize shortly."
