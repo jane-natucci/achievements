@@ -159,6 +159,52 @@ a {
   text-transform: uppercase;
 }
 
+.build-popup-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.build-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  /* padding-top (not margin) keeps this invisible strip part of the
+     hoverable box, so the mouse doesn't cross a dead zone on its way
+     down from the build link into the popup below. */
+  padding-top: 0.4rem;
+  pointer-events: none;
+}
+
+.build-popup--visible {
+  pointer-events: auto;
+}
+
+.build-popup__inner {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(102, 192, 244, 0.24);
+  border-radius: 8px;
+  background: #0b1520;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.build-popup--visible .build-popup__inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.build-popup__link {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .topbar__nav-button {
   padding: 0;
   border: 0;
