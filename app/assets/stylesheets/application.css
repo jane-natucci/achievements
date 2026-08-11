@@ -1912,9 +1912,23 @@ a {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
 }
 
-.xp-feed__icon--chain:not(:has(.xp-feed__icon-cover)) .xp-feed__icon-glyph {
+.xp-feed__icon-status-glyph {
+  position: absolute;
+  right: -0.3rem;
+  top: -0.3rem;
+  font-size: 0.7rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+
+.xp-feed__icon--chain:not(:has(.xp-feed__icon-cover)) {
+  gap: 0.15rem;
+}
+
+.xp-feed__icon--chain:not(:has(.xp-feed__icon-cover)) .xp-feed__icon-glyph,
+.xp-feed__icon--chain:not(:has(.xp-feed__icon-cover)) .xp-feed__icon-status-glyph {
   position: static;
-  font-size: 1rem;
+  font-size: 0.9rem;
   filter: none;
 }
 

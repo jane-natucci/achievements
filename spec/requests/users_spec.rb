@@ -84,6 +84,10 @@ RSpec.describe 'Users', type: :request do
       # ...while chain-related rows show the chain glyph badge instead
       expect(response.body).to include('xp-feed__icon--chain')
       expect(response.body.scan('xp-feed__icon--chain').size).to eq(2) # chain_created + chain_completed
+
+      # created and completed are visually distinguishable from each other
+      expect(response.body).to include('✨') # chain_created status glyph
+      expect(response.body).to include('✅') # chain_completed status glyph
     end
 
     it 'renders gracefully when an xp event subject has been deleted' do

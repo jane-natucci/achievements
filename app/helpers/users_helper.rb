@@ -23,13 +23,14 @@ module UsersHelper
   # Distinguishes chain-related XP events from achievement-related ones at a
   # glance: achievements show their own icon, chains show their starting
   # achievement's icon with a small chain glyph badge, since a chain has no
-  # icon of its own.
+  # icon of its own. Chain events additionally get a status glyph so
+  # "created" and "completed" aren't visually identical.
   def xp_event_subject_icon(event)
     case event.subject_type
     when "ChainNode"
       achievement_subject_icon(event.subject&.achievement)
     when "Chain"
-      chain_subject_icon(event.subject)
+      chain_subject_icon(event.subject, event.reason)
     else
       content_tag(:span, "", class: "xp-feed__icon xp-feed__icon--placeholder", aria: { hidden: true })
     end
@@ -45,13 +46,15 @@ module UsersHelper
     end
   end
 
-  def chain_subject_icon(chain)
+  def chain_subject_icon(chain, reason)
     cover_achievement = chain&.head&.achievement
+    status_glyph = reason == "chain_completed" ? "✅" : "✨"
 
     content_tag(:span, class: "xp-feed__icon xp-feed__icon--chain", aria: { hidden: true }) do
       parts = []
       parts << image_tag(cover_achievement.icon_unlocked, alt: "", class: "xp-feed__icon-cover") if cover_achievement&.icon_unlocked.present?
       parts << content_tag(:span, "⛓️", class: "xp-feed__icon-glyph")
+      parts << content_tag(:span, status_glyph, class: "xp-feed__icon-status-glyph")
       safe_join(parts)
     end
   end
