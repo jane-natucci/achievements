@@ -608,6 +608,16 @@ a {
   margin-top: 0.25em;
 }
 
+.help-page a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.help-page a:hover,
+.help-page a:focus-visible {
+  text-decoration: underline;
+}
+
 .chain-show__header {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
