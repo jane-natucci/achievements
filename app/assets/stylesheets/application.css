@@ -1945,6 +1945,28 @@ a {
   white-space: nowrap;
 }
 
+.xp-feed__entity-link {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.xp-feed__entity-link:hover,
+.xp-feed__entity-link:focus-visible {
+  text-decoration: underline;
+}
+
+.xp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(126, 217, 87, 0.16);
+  color: var(--success);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .news-feed {
   display: flex;
   flex-direction: column;

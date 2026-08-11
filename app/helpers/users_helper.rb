@@ -2,21 +2,21 @@ module UsersHelper
   def xp_event_description(event)
     case event.reason
     when "profile_created"
-      "Created their profile! (+#{event.amount} xp)"
+      safe_join(["Created their profile! ", xp_amount_badge(event.amount)])
     when "achievement_unlocked"
-      safe_join(["Unlocked ", chain_node_link(event.subject), " (+#{event.amount} xp)"])
+      safe_join(["Unlocked ", chain_node_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "achievement_added"
-      safe_join(["Added ", chain_node_link(event.subject), " to a chain (+#{event.amount} xp)"])
+      safe_join(["Added ", chain_node_link(event.subject), " to a chain ", xp_amount_badge(event.amount)])
     when "achievement_note"
-      safe_join(["Wrote a note for ", chain_node_link(event.subject), " (+#{event.amount} xp)"])
+      safe_join(["Wrote a note for ", chain_node_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_created"
-      safe_join(["Created ", chain_link(event.subject), " (+#{event.amount} xp)"])
+      safe_join(["Created ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_description"
-      safe_join(["Added a description to ", chain_link(event.subject), " (+#{event.amount} xp)"])
+      safe_join(["Added a description to ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_completed"
-      safe_join(["Completed ", chain_link(event.subject), " (+#{event.amount} xp)"])
+      safe_join(["Completed ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     else
-      "#{event.reason.humanize} (+#{event.amount} xp)"
+      safe_join(["#{event.reason.humanize} ", xp_amount_badge(event.amount)])
     end
   end
 
@@ -64,12 +64,16 @@ module UsersHelper
     achievement = chain_node.achievement
     return chain_node.title unless achievement
 
-    link_to achievement.title, achievement_path(achievement)
+    link_to achievement.title, achievement_path(achievement), class: "xp-feed__entity-link"
   end
 
   def chain_link(chain)
     return "a chain" unless chain
 
-    link_to chain.title, chain_path(chain)
+    link_to chain.title, chain_path(chain), class: "xp-feed__entity-link"
+  end
+
+  def xp_amount_badge(amount)
+    content_tag(:span, "+#{amount} XP", class: "xp-badge")
   end
 end
