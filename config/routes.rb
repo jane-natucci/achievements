@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   scope path: "achievements" do
     root "achievements#index"
+    get "welcome", to: "welcome#index", as: :welcome
     get "help", to: "achievements#help"
     get "login", to: "sessions#new"
     post "login", to: "sessions#create"
