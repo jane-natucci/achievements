@@ -6,7 +6,7 @@ module UsersHelper
     when "achievement_unlocked"
       safe_join(["Unlocked ", chain_node_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "achievement_added"
-      safe_join(["Added ", chain_node_link(event.subject), " to a chain ", xp_amount_badge(event.amount)])
+      safe_join(["Added ", chain_node_link(event.subject), " to ", chain_node_chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "achievement_note"
       safe_join(["Wrote a note for ", chain_node_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_created"
@@ -81,6 +81,16 @@ module UsersHelper
     return "a chain" unless chain
 
     link_to chain.title, chain_path(chain), class: "xp-feed__entity-link"
+  end
+
+  # Links the word "chain" itself (rather than the chain's title) to the
+  # specific chain a ChainNode belongs to, for the "Added X to a chain"
+  # sentence -- the chain_node's own association already tells us which one.
+  def chain_node_chain_link(chain_node)
+    chain = chain_node&.chain
+    return "a chain" unless chain
+
+    link_to "a chain", chain_path(chain), class: "xp-feed__entity-link"
   end
 
   def xp_amount_badge(amount)

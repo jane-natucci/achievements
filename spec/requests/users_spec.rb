@@ -112,5 +112,32 @@ RSpec.describe 'Users', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('an achievement')
     end
+
+    it 'links "a chain" in an achievement_added event to the chain the achievement was added to' do
+      user = create(:user)
+      chain = create(:chain, creator: user)
+      node = create(:chain_node, chain: chain)
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_added', subject: node)
+
+      get user_path(user)
+
+      expect(response.body).to include('to <a')
+      expect(response.body).to include(">a chain</a>")
+      expect(response.body).to include(chain_path(chain))
+    end
+
+    it 'falls back to plain "a chain" text when the achievement_added subject has been deleted' do
+      user = create(:user)
+      chain = create(:chain, creator: user)
+      node = create(:chain_node, chain: chain)
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_added', subject: node)
+      node.destroy!
+
+      get user_path(user)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('to a chain')
+      expect(response.body).not_to include(chain_path(chain))
+    end
   end
 end
