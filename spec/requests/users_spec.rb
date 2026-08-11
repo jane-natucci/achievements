@@ -91,6 +91,15 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).not_to include('✅')
     end
 
+    it "shows the user's own avatar for the profile_created event" do
+      user = create(:user, avatar_url: 'https://example.com/my-avatar.jpg')
+      AwardXp.call(user: user, amount: 100, reason: 'profile_created')
+
+      get user_path(user)
+
+      expect(response.body).to include('https://example.com/my-avatar.jpg')
+    end
+
     it 'renders gracefully when an xp event subject has been deleted' do
       user = create(:user)
       chain = create(:chain, creator: user)

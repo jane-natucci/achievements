@@ -26,6 +26,8 @@ module UsersHelper
   # icon of its own. Chain events additionally get a status glyph so
   # "created" and "completed" aren't visually identical.
   def xp_event_subject_icon(event)
+    return user_subject_icon(event.user) if event.reason == "profile_created"
+
     case event.subject_type
     when "ChainNode"
       achievement_subject_icon(event.subject&.achievement)
@@ -37,6 +39,14 @@ module UsersHelper
   end
 
   private
+
+  def user_subject_icon(user)
+    if user&.avatar_url.present?
+      image_tag(user.avatar_url, alt: "", class: "xp-feed__icon")
+    else
+      content_tag(:span, "", class: "xp-feed__icon xp-feed__icon--placeholder", aria: { hidden: true })
+    end
+  end
 
   def achievement_subject_icon(achievement)
     if achievement&.icon_unlocked.present?
