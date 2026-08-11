@@ -44,6 +44,18 @@
             <span class="leaderboard-row__name"><%= user.display_name.presence || "Unknown Player" %></span>
           <% end %>
 
+          <span class="leaderboard-row__stats">
+            <span class="leaderboard-stat" title="Achievements unlocked">
+              <span class="leaderboard-stat__icon" aria-hidden="true">🏆</span>
+              <span class="leaderboard-stat__value"><%= @achievements_unlocked_counts[user.id] || 0 %></span>
+            </span>
+
+            <span class="leaderboard-stat" title="Chains completed">
+              <span class="leaderboard-stat__icon" aria-hidden="true">⛓️</span>
+              <span class="leaderboard-stat__value"><%= @chains_completed_counts[user.id] || 0 %></span>
+            </span>
+          </span>
+
           <span class="leaderboard-row__xp"><%= number_with_delimiter(user.total_xp) %> xp</span>
         </li>
       <% end %>

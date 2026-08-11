@@ -58,6 +58,7 @@
       <ul class="xp-feed">
         <% @xp_events.each do |event| %>
           <li class="xp-feed__row">
+            <%= xp_event_subject_icon(event) %>
             <span class="xp-feed__description"><%= xp_event_description(event) %></span>
             <span class="xp-feed__time"><%= time_ago_in_words(event.created_at) %> ago</span>
           </li>
