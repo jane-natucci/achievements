@@ -43,6 +43,40 @@ RSpec.describe 'Chains XP on edit', type: :request do
     expect(user.xp_events.where(reason: 'achievement_added').count).to eq(3)
   end
 
+  it 'awards a note bonus for adding a note to an already-existing achievement in the chain' do
+    post chains_path, params: {
+      chain: {
+        title: 'My Chain', game_id: game.id,
+        selected_achievement_ids: selected_ids_json([[achievement_a, nil], [achievement_b, nil]])
+      }
+    }
+    chain = Chain.last
+    xp_after_create = user.reload.total_xp
+
+    patch chain_path(chain), params: {
+      chain: {
+        title: 'My Chain', game_id: game.id,
+        selected_achievement_ids: selected_ids_json([[achievement_a, 'finally wrote this down'], [achievement_b, nil]])
+      }
+    }
+
+    expect(user.reload.total_xp).to eq(xp_after_create + XpRules::ACHIEVEMENT_NOTE_BONUS)
+    expect(user.xp_events.where(reason: 'achievement_note').count).to eq(1)
+    expect(user.xp_events.where(reason: 'achievement_added').count).to eq(2) # only from creation, none from this edit
+
+    # editing the chain again without changing that note doesn't re-award the bonus
+    xp_after_note = user.reload.total_xp
+    patch chain_path(chain), params: {
+      chain: {
+        title: 'My Chain, Renamed', game_id: game.id,
+        selected_achievement_ids: selected_ids_json([[achievement_a, 'finally wrote this down'], [achievement_b, nil]])
+      }
+    }
+
+    expect(user.reload.total_xp).to eq(xp_after_note)
+    expect(user.xp_events.where(reason: 'achievement_note').count).to eq(1)
+  end
+
   it 'awards nothing when an edit does not add any new achievements' do
     post chains_path, params: {
       chain: {
