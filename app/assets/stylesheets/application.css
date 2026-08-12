@@ -198,15 +198,28 @@ a {
   letter-spacing: 0.06em;
 }
 
-.topbar__avatar-status {
+.avatar-status-dot {
   position: absolute;
   right: -3px;
   bottom: -3px;
   width: 0.7rem;
   height: 0.7rem;
+  border-radius: 50%;
   border: 2px solid #171d25;
+  background: #5b6672;
+}
+
+.avatar-status-dot--online {
   background: #7ed957;
   box-shadow: 0 0 10px rgba(126, 217, 87, 0.55);
+}
+
+.avatar-status-dot--lg {
+  right: 0;
+  bottom: 4px;
+  width: 1rem;
+  height: 1rem;
+  border-width: 3px;
 }
 
 .topbar__nav {
@@ -1849,6 +1862,7 @@ a {
 }
 
 .leaderboard-row__avatar-wrap {
+  position: relative;
   flex: none;
 }
 
@@ -1921,6 +1935,7 @@ a {
 }
 
 .profile-header__avatar-wrap {
+  position: relative;
   width: 96px;
   height: 96px;
 }

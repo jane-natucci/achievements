@@ -35,6 +35,7 @@
 
           <%= link_to user_path(user), class: "leaderboard-row__identity" do %>
             <span class="leaderboard-row__avatar-wrap">
+              <span class="avatar-status-dot<%= " avatar-status-dot--online" if user.online? %>" title="<%= user.online? ? "Online" : "Offline" %>"></span>
               <% if user.avatar_url.present? %>
                 <%= image_tag user.avatar_url, alt: "", class: "leaderboard-row__avatar" %>
               <% else %>

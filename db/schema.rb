@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_081952) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_090813) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -132,6 +132,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_081952) do
     t.datetime "created_at", null: false
     t.string "display_name"
     t.datetime "games_synced_at"
+    t.datetime "last_seen_at"
     t.string "steam_id", null: false
     t.integer "total_xp", default: 0, null: false
     t.datetime "updated_at", null: false

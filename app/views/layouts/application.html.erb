@@ -25,7 +25,11 @@
     <%= render "shared/analytics" %>
   </head>
 
-  <body class="steam-shell<%= " steam-shell--dashboard" if controller_name == "achievements" && action_name == "index" %>" data-controller="pull-refresh">
+  <body
+    class="steam-shell<%= " steam-shell--dashboard" if controller_name == "achievements" && action_name == "index" %>"
+    data-controller="pull-refresh<%= " presence" if current_user %>"
+    data-presence-url-value="<%= heartbeat_path %>"
+  >
     <div class="pull-refresh-indicator" data-pull-refresh-target="indicator" aria-hidden="true">
       <span class="pull-refresh-spinner"></span>
     </div>
@@ -37,7 +41,7 @@
             <%= link_to(header_avatar_link_path, class: "topbar__avatar-link", aria: { label: header_avatar_link_label }) do %>
               <div class="topbar__avatar-slot">
                 <% if current_user %>
-                  <span class="topbar__avatar-status"></span>
+                  <span class="avatar-status-dot<%= " avatar-status-dot--online" if current_user.online? %>"></span>
                 <% end %>
                 <% if current_user&.avatar_url.present? %>
                   <%= image_tag current_user.avatar_url, alt: "", class: "topbar__avatar-image" %>

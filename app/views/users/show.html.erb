@@ -21,6 +21,7 @@
 <section class="chain-index">
   <header class="profile-header">
     <div class="profile-header__avatar-wrap">
+      <span class="avatar-status-dot avatar-status-dot--lg<%= " avatar-status-dot--online" if @user.online? %>" title="<%= @user.online? ? "Online" : "Offline" %>"></span>
       <%= link_to "https://steamcommunity.com/profiles/#{@user.steam_id}/",
             target: "_blank", rel: "noopener noreferrer", title: "Open Steam profile", aria: { label: "Open Steam profile" } do %>
         <% if @user.avatar_url.present? %>

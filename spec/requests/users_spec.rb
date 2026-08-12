@@ -42,6 +42,24 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).to include(">2<") # achievements unlocked
       expect(response.body).to include(">1<") # chains completed
     end
+
+    it 'shows an online dot for a recently active player and an offline dot for everyone else' do
+      online_user = create(:user, display_name: 'Online Alice', last_seen_at: 30.seconds.ago)
+      offline_user = create(:user, display_name: 'Offline Bob', last_seen_at: 1.hour.ago)
+      never_seen_user = create(:user, display_name: 'NeverSeen Carl', last_seen_at: nil)
+
+      get leaderboard_path
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      rows = doc.css('.leaderboard-row')
+      online_dot = rows.find { |row| row.text.include?('Online Alice') }.at_css('.avatar-status-dot')
+      offline_dot = rows.find { |row| row.text.include?('Offline Bob') }.at_css('.avatar-status-dot')
+      never_seen_dot = rows.find { |row| row.text.include?('NeverSeen Carl') }.at_css('.avatar-status-dot')
+
+      expect(online_dot['class']).to include('avatar-status-dot--online')
+      expect(offline_dot['class']).not_to include('avatar-status-dot--online')
+      expect(never_seen_dot['class']).not_to include('avatar-status-dot--online')
+    end
   end
 
   describe 'GET /achievements/users/:id' do
@@ -98,6 +116,26 @@ RSpec.describe 'Users', type: :request do
       get user_path(user)
 
       expect(response.body).to include('https://example.com/my-avatar.jpg')
+    end
+
+    it 'shows an online status dot when the player is recently active' do
+      user = create(:user, last_seen_at: 30.seconds.ago)
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      dot = doc.at_css('.profile-header__avatar-wrap .avatar-status-dot')
+      expect(dot['class']).to include('avatar-status-dot--online')
+    end
+
+    it "shows an offline status dot when the player hasn't been seen recently" do
+      user = create(:user, last_seen_at: 1.hour.ago)
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      dot = doc.at_css('.profile-header__avatar-wrap .avatar-status-dot')
+      expect(dot['class']).not_to include('avatar-status-dot--online')
     end
 
     it 'shows a "Wall of Text" icon linking to that achievement for the first_comment event' do

@@ -16,6 +16,7 @@ class SessionsController < ApplicationController
     # this so a previously-verified session can't carry over to whichever
     # profile URL gets pasted in next.
     session[:steam_verified] = false
+    mark_online!(result.user)
 
     redirect_to "/achievements/", notice: "Now impersonating #{result.user.display_name}."
   end
@@ -42,6 +43,7 @@ class SessionsController < ApplicationController
     SyncUserAchievementProgressWorker.perform_async(result.user.id)
     session[:user_id] = result.user.id
     session[:steam_verified] = true
+    mark_online!(result.user)
 
     redirect_to "/achievements/", notice: "Signed in as #{result.user.display_name} via Steam."
   end
@@ -50,5 +52,19 @@ class SessionsController < ApplicationController
     session.delete(:user_id)
     session.delete(:steam_verified)
     redirect_to "/achievements/", notice: "Logged out."
+  end
+
+  # Pinged every ~1 minute by presence_controller.js while a logged-in
+  # user has a tab open, so User#online? reflects real presence rather
+  # than just "has an active session". No-ops when logged out.
+  def heartbeat
+    current_user&.update_column(:last_seen_at, Time.current)
+    head :ok
+  end
+
+  private
+
+  def mark_online!(user)
+    user.update_column(:last_seen_at, Time.current)
   end
 end

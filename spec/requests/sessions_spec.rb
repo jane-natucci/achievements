@@ -79,4 +79,47 @@ RSpec.describe 'Sessions', type: :request do
       expect(session[:steam_verified]).to be_nil
     end
   end
+
+  describe 'signing in marks the user online right away' do
+    it 'via Steam OpenID' do
+      user = create(:user, last_seen_at: nil)
+      allow(SteamOpenid).to receive(:verify_steam_id).and_return(user.steam_id)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam/callback'
+
+      expect(user.reload.online?).to be(true)
+    end
+
+    it 'via paste-URL' do
+      user = create(:user, last_seen_at: nil)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      post '/achievements/login', params: { profile_url: user.steam_id }
+
+      expect(user.reload.online?).to be(true)
+    end
+  end
+
+  describe 'POST /achievements/heartbeat' do
+    it "updates the logged-in user's last_seen_at" do
+      user = create(:user, last_seen_at: 1.hour.ago)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+      post '/achievements/login', params: { profile_url: user.steam_id }
+
+      post '/achievements/heartbeat'
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.online?).to be(true)
+    end
+
+    it 'no-ops when logged out, without raising' do
+      post '/achievements/heartbeat'
+
+      expect(response).to have_http_status(:ok)
+    end
+  end
 end
