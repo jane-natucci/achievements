@@ -15,6 +15,8 @@ module UsersHelper
       safe_join(["Added a description to ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_completed"
       safe_join(["Completed ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
+    when "first_comment"
+      safe_join(["Left their first comment ", xp_amount_badge(event.amount)])
     else
       safe_join(["#{event.reason.humanize} ", xp_amount_badge(event.amount)])
     end

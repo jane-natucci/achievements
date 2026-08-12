@@ -50,6 +50,7 @@ Rails.application.routes.draw do
     get "wizard/summary", to: "wizard#summary", as: :wizard_summary
     get "leaderboard", to: "users#index", as: :leaderboard
     get "users/:id", to: "users#show", as: :user
+    resources :comments, only: [:create, :destroy]
     resources :achievements
     resources :chains do
       member do

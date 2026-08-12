@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_191434) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_073631) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -69,6 +69,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_191434) do
     t.index ["discarded_at"], name: "index_chains_on_discarded_at"
     t.index ["game_id"], name: "index_chains_on_game_id"
     t.index ["slug"], name: "index_chains_on_slug", unique: true
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.bigint "commentable_id", null: false
+    t.string "commentable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
+    t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
   create_table "games", force: :cascade do |t|
@@ -136,6 +147,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_191434) do
   add_foreign_key "chain_edges", "chains"
   add_foreign_key "chain_nodes", "chains"
   add_foreign_key "chains", "games"
+  add_foreign_key "comments", "users"
   add_foreign_key "user_chain_progresses", "chains"
   add_foreign_key "user_chain_progresses", "users"
   add_foreign_key "user_node_progresses", "chain_nodes"

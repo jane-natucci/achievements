@@ -1,0 +1,61 @@
+<%
+  comments = commentable.comments.includes(:user).order(created_at: :desc)
+%>
+
+<section class="comments-section">
+  <div class="achievements-section__header">
+    <h2>Comments</h2>
+    <p class="achievements-section__meta"><%= pluralize(comments.size, "comment") %></p>
+  </div>
+
+  <% if current_user %>
+    <%= form_with url: comments_path, method: :post, class: "comment-form" do |form| %>
+      <%= hidden_field_tag :commentable_type, commentable.class.name %>
+      <%= hidden_field_tag :commentable_id, commentable.id %>
+      <%= text_area_tag "comment[body]", nil, class: "chain-builder__input chain-builder__textarea", placeholder: "Write a comment...", rows: 3 %>
+      <%= submit_tag "Post Comment", class: "sidebar-button comment-form__submit" %>
+    <% end %>
+  <% else %>
+    <p class="chain-builder__hint"><%= link_to "Log in", "/achievements/login/" %> to leave a comment.</p>
+  <% end %>
+
+  <% if comments.any? %>
+    <ul class="comment-list">
+      <% comments.each do |comment| %>
+        <li class="comment-row">
+          <%= link_to user_path(comment.user), class: "comment-row__avatar-wrap" do %>
+            <% if comment.user.avatar_url.present? %>
+              <%= image_tag comment.user.avatar_url, alt: "", class: "comment-row__avatar" %>
+            <% else %>
+              <span class="comment-row__avatar comment-row__avatar--placeholder"><%= comment.user.display_name&.first&.upcase || "?" %></span>
+            <% end %>
+          <% end %>
+
+          <div class="comment-row__body">
+            <div class="comment-row__meta">
+              <%= link_to comment.user.display_name.presence || "Unknown Player", user_path(comment.user), class: "xp-feed__entity-link" %>
+              <span class="comment-row__time"><%= time_ago_in_words(comment.created_at) %> ago</span>
+            </div>
+            <div class="comment-row__text"><%= simple_format(comment.body) %></div>
+          </div>
+
+          <% if current_user == comment.user %>
+            <%= button_to comment_path(comment),
+                  method: :delete,
+                  class: "comment-row__delete",
+                  form: { data: { turbo_confirm: "Delete this comment?" } },
+                  title: "Delete comment",
+                  aria: { label: "Delete comment" } do %>
+              &times;
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No comments yet</h3>
+      <p>Be the first to say something.</p>
+    </div>
+  <% end %>
+</section>

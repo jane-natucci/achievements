@@ -7,6 +7,7 @@ class Chain < ApplicationRecord
   has_many :chain_edges, dependent: :destroy
   has_many :chain_nodes, dependent: :destroy
   has_many :user_chain_progresses, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   def nodes
     chain_nodes.loaded? ? chain_nodes : chain_nodes.includes(:achievement)
