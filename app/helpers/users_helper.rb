@@ -1,4 +1,10 @@
 module UsersHelper
+  # "Wall of Text" from Victoria 3 (achievement id 9413) -- borrowed for
+  # first_comment events since a Comment has no icon of its own. Steam CDN
+  # URLs are content-hashed and permanent.
+  FIRST_COMMENT_ICON_URL = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/529340/ffd6c0c9e418f19f9300ee2039bf12ff76a8ec9a.jpg".freeze
+  FIRST_COMMENT_ACHIEVEMENT_ID = 9413
+
   def xp_event_description(event)
     case event.reason
     when "profile_created"
@@ -26,9 +32,12 @@ module UsersHelper
   # glance: achievements show their own icon, chains show their starting
   # achievement's icon with a small chain glyph badge, since a chain has no
   # icon of its own. Chain events additionally get a status glyph so
-  # "created" and "completed" aren't visually identical.
+  # "created" and "completed" aren't visually identical. Whenever the icon
+  # maps to a real achievement, only the icon itself (not the row's other
+  # text) links to that achievement's page.
   def xp_event_subject_icon(event)
     return user_subject_icon(event.user) if event.reason == "profile_created"
+    return first_comment_icon if event.reason == "first_comment"
 
     case event.subject_type
     when "ChainNode"
@@ -42,6 +51,13 @@ module UsersHelper
 
   private
 
+  def first_comment_icon
+    icon = image_tag(FIRST_COMMENT_ICON_URL, alt: "")
+    link_to icon, achievement_path(FIRST_COMMENT_ACHIEVEMENT_ID),
+      class: "xp-feed__icon xp-feed__icon-link",
+      title: "Wall of Text (Victoria 3)"
+  end
+
   def user_subject_icon(user)
     if user&.avatar_url.present?
       image_tag(user.avatar_url, alt: "", class: "xp-feed__icon")
@@ -51,22 +67,31 @@ module UsersHelper
   end
 
   def achievement_subject_icon(achievement)
-    if achievement&.icon_unlocked.present?
-      image_tag(achievement.icon_unlocked, alt: "", class: "xp-feed__icon")
-    else
-      content_tag(:span, "", class: "xp-feed__icon xp-feed__icon--placeholder", aria: { hidden: true })
+    unless achievement&.icon_unlocked.present?
+      return content_tag(:span, "", class: "xp-feed__icon xp-feed__icon--placeholder", aria: { hidden: true })
     end
+
+    icon = image_tag(achievement.icon_unlocked, alt: "")
+    link_to icon, achievement_path(achievement), class: "xp-feed__icon xp-feed__icon-link", title: achievement.title
   end
 
   def chain_subject_icon(chain, reason)
     cover_achievement = chain&.head&.achievement
 
-    content_tag(:span, class: "xp-feed__icon xp-feed__icon--chain", aria: { hidden: true }) do
+    icon_content = capture do
       parts = []
       parts << image_tag(cover_achievement.icon_unlocked, alt: "", class: "xp-feed__icon-cover") if cover_achievement&.icon_unlocked.present?
       parts << content_tag(:span, "⛓️", class: "xp-feed__icon-glyph")
       parts << content_tag(:span, "✨", class: "xp-feed__icon-status-glyph") unless reason == "chain_completed"
       safe_join(parts)
+    end
+
+    if cover_achievement
+      link_to icon_content, achievement_path(cover_achievement),
+        class: "xp-feed__icon xp-feed__icon--chain xp-feed__icon-link",
+        title: cover_achievement.title
+    else
+      content_tag(:span, icon_content, class: "xp-feed__icon xp-feed__icon--chain", aria: { hidden: true })
     end
   end
 

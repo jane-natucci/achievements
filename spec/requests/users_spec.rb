@@ -100,6 +100,45 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).to include('https://example.com/my-avatar.jpg')
     end
 
+    it 'shows a "Wall of Text" icon linking to that achievement for the first_comment event' do
+      user = create(:user)
+      AwardXp.call(user: user, amount: XpRules::FIRST_COMMENT_BONUS, reason: 'first_comment')
+
+      get user_path(user)
+
+      expect(response.body).to include(UsersHelper::FIRST_COMMENT_ICON_URL)
+      expect(response.body).to include(achievement_path(UsersHelper::FIRST_COMMENT_ACHIEVEMENT_ID))
+    end
+
+    it "links an achievement's icon (but not its row's other text) straight to that achievement" do
+      user = create(:user)
+      game = create(:game)
+      achievement = create(:achievement, game: game, icon_unlocked: 'https://example.com/icon.png')
+      node = create(:chain_node, chain: create(:chain, game: game), achievement: achievement)
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_unlocked', subject: node)
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      icon_link = doc.at_css('a.xp-feed__icon-link')
+      expect(icon_link['href']).to eq(achievement_path(achievement))
+    end
+
+    it "links a chain event's cover icon to the chain's cover achievement" do
+      user = create(:user)
+      game = create(:game)
+      cover_achievement = create(:achievement, game: game, icon_unlocked: 'https://example.com/cover.png')
+      chain = create(:chain, game: game, creator: user)
+      create(:chain_node, chain: chain, achievement: cover_achievement)
+      AwardXp.call(user: user, amount: 100, reason: 'chain_completed', subject: chain)
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      icon_link = doc.at_css('a.xp-feed__icon--chain')
+      expect(icon_link['href']).to eq(achievement_path(cover_achievement))
+    end
+
     it 'renders gracefully when an xp event subject has been deleted' do
       user = create(:user)
       chain = create(:chain, creator: user)
