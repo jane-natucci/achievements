@@ -32,7 +32,7 @@
         <% end %>
       <% end %>
       <% if current_user && @chain.creator_user_id == current_user.id %>
-        <%= button_to chain_path(@chain), method: :delete, class: "sidebar-icon-button sidebar-icon-button--danger", form: { data: { turbo_confirm: "Delete this chain?" } }, title: "Delete this chain", aria: { label: "Delete this chain" } do %>
+        <% delete_icon = capture do %>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M9.5 3.5H14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -40,6 +40,16 @@
             <path d="M10 10.25V16.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M14 10.25V16.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
+        <% end %>
+
+        <% if steam_verified? %>
+          <%= button_to chain_path(@chain), method: :delete, class: "sidebar-icon-button sidebar-icon-button--danger", form: { data: { turbo_confirm: "Delete this chain?" } }, title: "Delete this chain", aria: { label: "Delete this chain" } do %>
+            <%= delete_icon %>
+          <% end %>
+        <% else %>
+          <%= link_to login_steam_path, class: "sidebar-icon-button sidebar-icon-button--danger sidebar-icon-button--muted", title: "Sign in with Steam to remove chains", aria: { label: "Sign in with Steam to remove chains" } do %>
+            <%= delete_icon %>
+          <% end %>
         <% end %>
       <% end %>
     </div>

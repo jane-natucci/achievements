@@ -5,12 +5,19 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  helper_method :current_user, :header_avatar_link_path, :header_avatar_link_label, :random_header_achievement_icon_url
+  helper_method :current_user, :steam_verified?, :header_avatar_link_path, :header_avatar_link_label, :random_header_achievement_icon_url
 
   private
 
   def current_user
     @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+  end
+
+  # True only when the current session was established via a real Steam
+  # OpenID sign-in (not the paste-a-profile-URL flow), which is the only
+  # path that actually proves the visitor owns the Steam account.
+  def steam_verified?
+    session[:steam_verified].present?
   end
 
   def random_header_achievement_icon_url

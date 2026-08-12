@@ -36,6 +36,8 @@ Rails.application.routes.draw do
     get "help", to: "achievements#help"
     get "login", to: "sessions#new"
     post "login", to: "sessions#create"
+    get "login/steam", to: "sessions#steam", as: :login_steam
+    get "login/steam/callback", to: "sessions#steam_callback", as: :login_steam_callback
     delete "logout", to: "sessions#destroy"
     get "wizard", to: "wizard#profile", as: :wizard
     post "wizard", to: "wizard#create_profile"

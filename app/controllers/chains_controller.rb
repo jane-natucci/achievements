@@ -2,6 +2,7 @@ class ChainsController < ApplicationController
   before_action :set_chain, only: [:show, :edit, :update, :destroy]
   before_action :load_games, only: [:new, :create, :edit, :update]
   before_action :require_chain_creator!, only: [:edit, :update, :destroy]
+  before_action :require_steam_verified!, only: [:destroy]
 
   def index
     @filter_games = Game.joins(:chains).distinct.order(:name)
@@ -186,6 +187,12 @@ class ChainsController < ApplicationController
     return if @chain.creator && current_user && @chain.creator_user_id == current_user.id
 
     redirect_to chain_path(@chain), alert: "Only the chain creator can edit or delete this chain."
+  end
+
+  def require_steam_verified!
+    return if steam_verified?
+
+    redirect_to chain_path(@chain), alert: "Sign in with Steam to remove chains."
   end
 
   def enqueue_current_user_achievement_sync!

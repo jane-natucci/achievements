@@ -14,6 +14,10 @@
             <dt>Steam ID</dt>
             <dd><%= current_user.steam_id %></dd>
           </div>
+          <div>
+            <dt>Verified</dt>
+            <dd><%= steam_verified? ? "Yes, via Steam sign-in" : "No, paste-URL login" %></dd>
+          </div>
         </dl>
         <%= button_to "Log Out", "/achievements/logout/", method: :delete, class: "sidebar-button sidebar-button--secondary" %>
       </section>
@@ -32,6 +36,11 @@
       <p>Log in to create your own achievement chains and see your progress.</p>
       <p class="chain-builder__hint">Your games must be public on Steam so achievements can sync.</p>
     </div>
+
+    <%= link_to "Sign in with Steam", login_steam_path, class: "sidebar-button" %>
+    <p class="chain-builder__hint">Proves the account is actually yours -- required to remove a chain you created.</p>
+
+    <div class="login-divider">or</div>
 
     <%= form_with url: "/achievements/login/", method: :post, class: "login-form" do |form| %>
       <div class="chain-builder-panel__section">

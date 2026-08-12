@@ -9,6 +9,12 @@ class SteamProfileLogin
     new(profile_url).call
   end
 
+  # For flows that already have a trusted steamid64 (e.g. a verified Steam
+  # OpenID callback), skipping the URL-parsing step above.
+  def self.call_for_steam_id(steam_id)
+    new(nil).call_for_steam_id(steam_id)
+  end
+
   def initialize(profile_url)
     @profile_url = profile_url
   end
@@ -17,6 +23,10 @@ class SteamProfileLogin
     steam_id = extract_steam_id(profile_url.to_s)
     return Result.new(error: "Enter a valid Steam profile URL, vanity URL, or SteamID64.") if steam_id.blank?
 
+    call_for_steam_id(steam_id)
+  end
+
+  def call_for_steam_id(steam_id)
     summary = Steam::User.summary(steam_id)
     return Result.new(error: "Could not load that Steam profile.") unless summary
 
