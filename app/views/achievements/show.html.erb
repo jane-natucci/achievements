@@ -4,7 +4,21 @@
 
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
-    <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+    <div class="sidebar-actions">
+      <%= link_to "Back to Chains", chains_path, class: "sidebar-button" %>
+
+      <% if current_user %>
+        <%= button_to @favorited ? favorite_achievement_path(@achievement) : favorite_achievement_path(@achievement),
+              method: @favorited ? :delete : :post,
+              class: ["sidebar-icon-button", "sidebar-icon-button--star", (@favorited ? "sidebar-icon-button--star-active" : nil)].compact.join(" "),
+              title: @favorited ? "Remove from favorites" : "Add to favorites",
+              aria: { label: @favorited ? "Remove from favorites" : "Add to favorites" } do %>
+          <svg viewBox="0 0 24 24" fill="<%= @favorited ? 'currentColor' : 'none' %>" aria-hidden="true">
+            <path d="M12 3.7L14.55 8.87L20.25 9.7L16.12 13.72L17.1 19.4L12 16.72L6.9 19.4L7.88 13.72L3.75 9.7L9.45 8.87L12 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
 
     <section class="sidebar-section">
       <h3>Achievement</h3>
@@ -12,6 +26,10 @@
         <div class="achievement-stat-card achievement-stat-card--sidebar">
           <span class="achievement-stat-card__value"><%= chains.size %></span>
           <span class="achievement-stat-card__label">Chains Using This</span>
+        </div>
+        <div class="achievement-stat-card achievement-stat-card--sidebar">
+          <span class="achievement-stat-card__value"><%= @favorite_count %></span>
+          <span class="achievement-stat-card__label">Favorites</span>
         </div>
       </div>
     </section>
@@ -62,6 +80,39 @@
       </div>
     </section>
   <% end %>
+
+  <section class="achievements-section">
+    <div class="achievements-section__header">
+      <h2>History</h2>
+      <p class="achievements-section__meta"><%= pluralize(@history.size, "event") %></p>
+    </div>
+
+    <% if @history.any? %>
+      <ul class="xp-feed">
+        <% @history.each do |event| %>
+          <li class="xp-feed__row">
+            <%= link_to user_path(event.user), class: "leaderboard-row__avatar-wrap" do %>
+              <% if event.user.avatar_url.present? %>
+                <%= image_tag event.user.avatar_url, alt: "", class: "leaderboard-row__avatar" %>
+              <% else %>
+                <span class="leaderboard-row__avatar leaderboard-row__avatar--placeholder"><%= event.user.display_name&.first&.upcase || "?" %></span>
+              <% end %>
+            <% end %>
+            <span class="xp-feed__description">
+              <%= link_to event.user.display_name.presence || "Unknown Player", user_path(event.user), class: "xp-feed__entity-link" %>
+              <%= event.reason == "achievement_favorited" ? "favorited this" : "unlocked this" %>
+            </span>
+            <span class="xp-feed__time"><%= time_ago_in_words(event.created_at) %> ago</span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="achievement-empty-state">
+        <h3>No activity yet</h3>
+        <p>Once someone unlocks or favorites this, it'll show up here.</p>
+      </div>
+    <% end %>
+  </section>
 
   <%= render "comments/comments", commentable: @achievement %>
 </section>

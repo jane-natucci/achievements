@@ -1,6 +1,9 @@
 class AwardXp
+  # amount: 0 is allowed on purpose -- some reasons (e.g. favoriting) are
+  # meant to appear on the timeline without granting XP, since they're
+  # trivially repeatable and would otherwise be an easy leaderboard exploit.
   def self.call(user:, amount:, reason:, subject: nil, occurred_at: nil)
-    return if user.nil? || amount.to_i.zero?
+    return if user.nil? || amount.nil?
 
     ActiveRecord::Base.transaction do
       event = XpEvent.create!(user: user, amount: amount, reason: reason, subject: subject)

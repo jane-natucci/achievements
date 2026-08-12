@@ -24,6 +24,7 @@ class ChainsController < ApplicationController
         {}
       end
     @favorited = current_user.present? && current_user.user_chain_progresses.exists?(chain: @chain, favorite: true)
+    @favorite_count = UserChainProgress.where(chain: @chain, favorite: true).count
   end
 
   def new
@@ -87,8 +88,11 @@ class ChainsController < ApplicationController
 
     chain = Chain.kept.find(params[:id])
     progress = UserChainProgress.find_or_initialize_by(user: current_user, chain: chain)
-    progress.favorite = true
-    progress.save!
+    unless progress.favorite?
+      progress.favorite = true
+      progress.save!
+      AwardXp.call(user: current_user, amount: 0, reason: "chain_favorited", subject: chain)
+    end
 
     redirect_back fallback_location: chain_path(chain), notice: "Chain saved to your library."
   end
@@ -98,7 +102,10 @@ class ChainsController < ApplicationController
 
     chain = Chain.kept.find(params[:id])
     progress = UserChainProgress.find_by(user: current_user, chain: chain)
-    progress&.destroy if progress&.favorite?
+    if progress&.favorite?
+      progress.destroy
+      XpEvent.where(user: current_user, reason: "chain_favorited", subject: chain).destroy_all
+    end
 
     redirect_back fallback_location: chain_path(chain), notice: "Chain removed from your library."
   end

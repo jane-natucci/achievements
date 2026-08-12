@@ -136,4 +136,31 @@ RSpec.describe 'Comments', type: :request do
       expect(response.body).not_to include('Post Comment')
     end
   end
+
+  describe "first_comment xp event links to where the comment was posted" do
+    it "links to the chain, anchored to the specific comment" do
+      user = create(:user, display_name: 'Alice')
+      chain = create(:chain)
+      sign_in(user)
+
+      post comments_path, params: { commentable_type: 'Chain', commentable_id: chain.id, comment: { body: 'First!' } }
+      comment = Comment.last
+
+      get root_path
+
+      expect(response.body).to include("#{chain_path(chain)}#comment-#{comment.id}")
+    end
+
+    it "falls back to plain text if the comment was since deleted" do
+      user = create(:user, display_name: 'Alice')
+      chain = create(:chain)
+      sign_in(user)
+      post comments_path, params: { commentable_type: 'Chain', commentable_id: chain.id, comment: { body: 'First!' } }
+      Comment.last.destroy
+
+      get root_path
+
+      expect(response.body).to include('Left their first comment somewhere')
+    end
+  end
 end

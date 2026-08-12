@@ -77,4 +77,37 @@ RSpec.describe 'Chains deletion', type: :request do
       follow_redirect! if response.redirect?
     end
   end
+
+  describe 'favoriting a chain' do
+    it 'puts a no-xp "favorited" entry on the timeline, and removes it on unfavorite' do
+      chain = create(:chain, title: 'My Big Run')
+      user = create(:user)
+      sign_in_via_paste_url(user)
+
+      expect {
+        post favorite_chain_path(chain)
+      }.to change { user.reload.total_xp }.by(0)
+
+      get root_path
+      expect(response.body).to include('Favorited')
+      expect(response.body).to include('My Big Run')
+
+      delete favorite_chain_path(chain)
+
+      get root_path
+      expect(response.body).not_to include('Favorited')
+    end
+
+    it 'shows a visible favorite count in the sidebar' do
+      chain = create(:chain)
+      user = create(:user)
+      sign_in_via_paste_url(user)
+      post favorite_chain_path(chain)
+
+      get chain_path(chain)
+
+      expect(response.body).to include('Favorites')
+      expect(response.body).to include('>1<')
+    end
+  end
 end

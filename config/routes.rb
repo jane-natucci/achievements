@@ -51,7 +51,12 @@ Rails.application.routes.draw do
     get "leaderboard", to: "users#index", as: :leaderboard
     get "users/:id", to: "users#show", as: :user
     resources :comments, only: [:create, :destroy]
-    resources :achievements
+    resources :achievements do
+      member do
+        post :favorite
+        delete :favorite, action: :unfavorite
+      end
+    end
     resources :chains do
       member do
         post :favorite

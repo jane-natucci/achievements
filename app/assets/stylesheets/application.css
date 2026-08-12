@@ -2118,6 +2118,10 @@ a {
   margin-bottom: 1rem;
 }
 
+.comment-form__textarea {
+  resize: none;
+}
+
 .comment-form__submit {
   justify-self: start;
 }

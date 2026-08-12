@@ -9,4 +9,6 @@ class User < ApplicationRecord
   # achievements) -- distinct from :comments above, which is the reverse.
   has_many :authored_comments, class_name: "Comment", foreign_key: :user_id, dependent: :destroy
   has_many :favorite_chains, -> { where(user_chain_progresses: { favorite: true }) }, through: :user_chain_progresses, source: :chain
+  has_many :user_achievement_favorites, dependent: :destroy
+  has_many :favorite_achievements, through: :user_achievement_favorites, source: :achievement
 end

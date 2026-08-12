@@ -12,7 +12,7 @@
     <%= form_with url: comments_path, method: :post, class: "comment-form" do |form| %>
       <%= hidden_field_tag :commentable_type, commentable.class.name %>
       <%= hidden_field_tag :commentable_id, commentable.id %>
-      <%= text_area_tag "comment[body]", nil, class: "chain-builder__input chain-builder__textarea", placeholder: "Write a comment...", rows: 3 %>
+      <%= text_area_tag "comment[body]", nil, class: "chain-builder__input chain-builder__textarea comment-form__textarea", placeholder: "Write a comment...", rows: 3 %>
       <%= submit_tag "Post Comment", class: "sidebar-button comment-form__submit" %>
     <% end %>
   <% else %>
@@ -22,7 +22,7 @@
   <% if comments.any? %>
     <ul class="comment-list">
       <% comments.each do |comment| %>
-        <li class="comment-row">
+        <li class="comment-row" id="comment-<%= comment.id %>">
           <%= link_to user_path(comment.user), class: "comment-row__avatar-wrap" do %>
             <% if comment.user.avatar_url.present? %>
               <%= image_tag comment.user.avatar_url, alt: "", class: "comment-row__avatar" %>

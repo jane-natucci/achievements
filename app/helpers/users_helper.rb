@@ -1,9 +1,11 @@
 module UsersHelper
-  # "Wall of Text" from Victoria 3 (achievement id 9413) -- borrowed for
-  # first_comment events since a Comment has no icon of its own. Steam CDN
-  # URLs are content-hashed and permanent.
+  # "Wall of Text" from Victoria 3 -- borrowed for first_comment events since
+  # a Comment has no icon of its own. Steam CDN URLs are content-hashed and
+  # permanent, but the achievement's own row id is NOT stable across
+  # environments (dev/prod each import their own Achievements table with
+  # independently-assigned ids), so the achievement is looked up by its
+  # title/game rather than a hardcoded id.
   FIRST_COMMENT_ICON_URL = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/529340/ffd6c0c9e418f19f9300ee2039bf12ff76a8ec9a.jpg".freeze
-  FIRST_COMMENT_ACHIEVEMENT_ID = 9413
 
   def xp_event_description(event)
     case event.reason
@@ -22,7 +24,11 @@ module UsersHelper
     when "chain_completed"
       safe_join(["Completed ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "first_comment"
-      safe_join(["Left their first comment ", xp_amount_badge(event.amount)])
+      safe_join(["Left their first comment ", first_comment_location_link(event.subject), " ", xp_amount_badge(event.amount)])
+    when "chain_favorited"
+      safe_join(["Favorited ", chain_link(event.subject)])
+    when "achievement_favorited"
+      safe_join(["Favorited ", achievement_link(event.subject)])
     else
       safe_join(["#{event.reason.humanize} ", xp_amount_badge(event.amount)])
     end
@@ -44,6 +50,8 @@ module UsersHelper
       achievement_subject_icon(event.subject&.achievement)
     when "Chain"
       chain_subject_icon(event.subject, event.reason)
+    when "Achievement"
+      achievement_subject_icon(event.subject)
     else
       content_tag(:span, "", class: "xp-feed__icon xp-feed__icon--placeholder", aria: { hidden: true })
     end
@@ -53,9 +61,18 @@ module UsersHelper
 
   def first_comment_icon
     icon = image_tag(FIRST_COMMENT_ICON_URL, alt: "")
-    link_to icon, achievement_path(FIRST_COMMENT_ACHIEVEMENT_ID),
+    achievement_id = wall_of_text_achievement_id
+    return content_tag(:span, icon, class: "xp-feed__icon") unless achievement_id
+
+    link_to icon, achievement_path(achievement_id),
       class: "xp-feed__icon xp-feed__icon-link",
-      title: "Wall of Text (Victoria 3)"
+      title: "Wall of Text"
+  end
+
+  def wall_of_text_achievement_id
+    Rails.cache.fetch("wall_of_text_achievement_id", expires_in: 1.day) do
+      Achievement.joins(:game).find_by(title: "Wall of Text", games: { name: "Victoria 3" })&.id
+    end
   end
 
   def user_subject_icon(user)
@@ -82,7 +99,7 @@ module UsersHelper
       parts = []
       parts << image_tag(cover_achievement.icon_unlocked, alt: "", class: "xp-feed__icon-cover") if cover_achievement&.icon_unlocked.present?
       parts << content_tag(:span, "⛓️", class: "xp-feed__icon-glyph")
-      parts << content_tag(:span, "✨", class: "xp-feed__icon-status-glyph") unless reason == "chain_completed"
+      parts << content_tag(:span, "✨", class: "xp-feed__icon-status-glyph") unless reason.in?(%w[chain_completed chain_favorited])
       safe_join(parts)
     end
 
@@ -93,6 +110,16 @@ module UsersHelper
     else
       content_tag(:span, icon_content, class: "xp-feed__icon xp-feed__icon--chain", aria: { hidden: true })
     end
+  end
+
+  # Links to the exact spot a first_comment event's Comment was posted
+  # (deep-linked via its #comment-ID anchor, see comments/_comments.html.erb).
+  # Falls back to plain text if the comment or its commentable was since
+  # deleted -- the XpEvent itself is never removed.
+  def first_comment_location_link(comment)
+    return "somewhere" unless comment&.commentable
+
+    link_to "here", polymorphic_path(comment.commentable, anchor: "comment-#{comment.id}"), class: "xp-feed__entity-link"
   end
 
   def chain_node_link(chain_node)
@@ -108,6 +135,12 @@ module UsersHelper
     return "a chain" unless chain
 
     link_to chain.title, chain_path(chain), class: "xp-feed__entity-link"
+  end
+
+  def achievement_link(achievement)
+    return "an achievement" unless achievement
+
+    link_to achievement.title, achievement_path(achievement), class: "xp-feed__entity-link"
   end
 
   # Links the word "chain" itself (rather than the chain's title) to the

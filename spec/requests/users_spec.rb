@@ -102,12 +102,24 @@ RSpec.describe 'Users', type: :request do
 
     it 'shows a "Wall of Text" icon linking to that achievement for the first_comment event' do
       user = create(:user)
+      game = create(:game, name: 'Victoria 3')
+      wall_of_text = create(:achievement, game: game, title: 'Wall of Text')
       AwardXp.call(user: user, amount: XpRules::FIRST_COMMENT_BONUS, reason: 'first_comment')
 
       get user_path(user)
 
       expect(response.body).to include(UsersHelper::FIRST_COMMENT_ICON_URL)
-      expect(response.body).to include(achievement_path(UsersHelper::FIRST_COMMENT_ACHIEVEMENT_ID))
+      expect(response.body).to include(achievement_path(wall_of_text))
+    end
+
+    it "falls back to a plain (unlinked) icon if no Wall of Text achievement exists" do
+      user = create(:user)
+      AwardXp.call(user: user, amount: XpRules::FIRST_COMMENT_BONUS, reason: 'first_comment')
+
+      get user_path(user)
+
+      expect(response.body).to include(UsersHelper::FIRST_COMMENT_ICON_URL)
+      expect(response).to have_http_status(:ok)
     end
 
     it "links an achievement's icon (but not its row's other text) straight to that achievement" do

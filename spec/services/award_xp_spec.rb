@@ -29,9 +29,16 @@ RSpec.describe AwardXp do
       .not_to change(XpEvent, :count)
   end
 
-  it 'does nothing for a zero amount' do
-    expect { described_class.call(user: user, amount: 0, reason: 'chain_created') }
+  it 'does nothing for a nil amount' do
+    expect { described_class.call(user: user, amount: nil, reason: 'chain_created') }
       .not_to change(XpEvent, :count)
+  end
+
+  it 'creates a zero-amount event without changing the user total -- used for timeline-only actions like favoriting' do
+    event = described_class.call(user: user, amount: 0, reason: 'chain_favorited', subject: chain)
+
+    expect(event).to be_a(XpEvent)
+    expect(event.amount).to eq(0)
     expect(user.reload.total_xp).to eq(10)
   end
 
