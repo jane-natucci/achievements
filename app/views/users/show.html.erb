@@ -37,6 +37,11 @@
     <div class="profile-header__copy">
       <p class="eyebrow">Player Profile</p>
       <h1><%= @user.display_name.presence || "Unknown Player" %></h1>
+      <% if @user.online? %>
+        <p class="profile-header__presence">Online now</p>
+      <% elsif @user.last_seen_at.present? %>
+        <p class="profile-header__presence">Last seen <%= time_ago_in_words(@user.last_seen_at) %> ago</p>
+      <% end %>
       <p class="chain-index__description">
         Rank #<%= @rank %> &middot; <%= number_with_delimiter(@user.total_xp) %> xp
         <%= link_to "Open on Steam ↗",

@@ -609,6 +609,12 @@ a {
   margin: 0;
 }
 
+.profile-header__presence {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 .chain-index__description {
   max-width: 52rem;
   margin: 0.6rem 0 0;

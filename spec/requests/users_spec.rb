@@ -138,6 +138,31 @@ RSpec.describe 'Users', type: :request do
       expect(dot['class']).not_to include('avatar-status-dot--online')
     end
 
+    it 'shows "Online now" when the player is currently online' do
+      user = create(:user, last_seen_at: 30.seconds.ago)
+
+      get user_path(user)
+
+      expect(response.body).to include('Online now')
+    end
+
+    it 'shows how long ago the player was last seen when offline' do
+      user = create(:user, last_seen_at: 2.hours.ago)
+
+      get user_path(user)
+
+      expect(response.body).to include('Last seen about 2 hours ago')
+    end
+
+    it "shows no presence line when the player has never been seen" do
+      user = create(:user, last_seen_at: nil)
+
+      get user_path(user)
+
+      expect(response.body).not_to include('Online now')
+      expect(response.body).not_to include('Last seen')
+    end
+
     it 'shows a "Wall of Text" icon linking to that achievement for the first_comment event' do
       user = create(:user)
       game = create(:game, name: 'Victoria 3')
