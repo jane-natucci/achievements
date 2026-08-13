@@ -69,6 +69,22 @@
         </li>
       <% end %>
     </ul>
+
+    <% if @page > 1 || @has_next_page %>
+      <nav class="news-feed__pagination" aria-label="News pagination">
+        <% if @page > 1 %>
+          <%= link_to "← Prev", root_path(page: @page - 1), class: "news-feed__pagination-link" %>
+        <% else %>
+          <span class="news-feed__pagination-link news-feed__pagination-link--disabled">← Prev</span>
+        <% end %>
+
+        <% if @has_next_page %>
+          <%= link_to "Next →", root_path(page: @page + 1), class: "news-feed__pagination-link" %>
+        <% else %>
+          <span class="news-feed__pagination-link news-feed__pagination-link--disabled">Next →</span>
+        <% end %>
+      </nav>
+    <% end %>
   <% else %>
     <div class="achievement-empty-state">
       <h3>Nothing yet</h3>

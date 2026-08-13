@@ -1,6 +1,11 @@
 class AchievementsController < ApplicationController
+  NEWS_PAGE_SIZE = 30
+
   def index
-    @recent_events = XpEvent.includes(:user).order(created_at: :desc).limit(30)
+    @page = [params[:page].to_i, 1].max
+    @recent_events = XpEvent.includes(:user).order(created_at: :desc)
+                             .offset((@page - 1) * NEWS_PAGE_SIZE).limit(NEWS_PAGE_SIZE)
+    @has_next_page = XpEvent.count > @page * NEWS_PAGE_SIZE
 
     chains = Chain.kept
     @total_chains = chains.size

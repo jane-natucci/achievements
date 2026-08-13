@@ -2210,6 +2210,31 @@ a {
   font-weight: 600;
 }
 
+.news-feed__pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.news-feed__pagination-link {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.news-feed__pagination-link:hover {
+  border-color: var(--accent);
+}
+
+.news-feed__pagination-link--disabled {
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .xp-feed__icon {
   position: relative;
   flex: none;

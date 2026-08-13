@@ -36,6 +36,32 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include('aria-controls="topbar-nav"')
       expect(response.body).to include('id="topbar-nav"')
     end
+
+    it 'paginates with prev/next links instead of page numbers' do
+      user = create(:user)
+      (AchievementsController::NEWS_PAGE_SIZE + 5).times do |i|
+        AwardXp.call(user: user, amount: 5, reason: 'achievement_unlocked', occurred_at: i.minutes.ago)
+      end
+
+      get root_path
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      expect(doc.at_css("a[href=\"#{root_path(page: 2)}\"]").text).to include('Next')
+      expect(doc.at_css('span.news-feed__pagination-link--disabled').text).to include('Prev')
+
+      get root_path(page: 2)
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      expect(doc.at_css("a[href=\"#{root_path(page: 1)}\"]").text).to include('Prev')
+      expect(doc.at_css('span.news-feed__pagination-link--disabled').text).to include('Next')
+    end
+
+    it "doesn't show pagination links when everything fits on one page" do
+      user = create(:user)
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_unlocked')
+
+      get root_path
+
+      expect(response.body).not_to include('news-feed__pagination')
+    end
   end
 
   def sign_in(user)
