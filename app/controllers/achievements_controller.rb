@@ -3,9 +3,14 @@ class AchievementsController < ApplicationController
 
   def index
     @page = [params[:page].to_i, 1].max
-    @recent_events = XpEvent.includes(:user).order(created_at: :desc)
-                             .offset((@page - 1) * NEWS_PAGE_SIZE).limit(NEWS_PAGE_SIZE)
-    @has_next_page = XpEvent.count > @page * NEWS_PAGE_SIZE
+    # A chain with a lot of achievements floods the feed with one
+    # "added X to a chain" row per achievement -- the chain_created row
+    # already summarizes the count (see UsersHelper#xp_event_description),
+    # so skip the individual rows here.
+    visible_events = XpEvent.where.not(reason: "achievement_added")
+    @recent_events = visible_events.includes(:user).order(created_at: :desc)
+                                    .offset((@page - 1) * NEWS_PAGE_SIZE).limit(NEWS_PAGE_SIZE)
+    @has_next_page = visible_events.count > @page * NEWS_PAGE_SIZE
 
     chains = Chain.kept
     @total_chains = chains.size

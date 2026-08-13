@@ -20,6 +20,21 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include(user_path(bob))
     end
 
+    it "hides individual achievement_added events but summarizes the count on chain_created" do
+      user = create(:user, display_name: 'Chainbuilder')
+      chain = create(:chain, creator: user, title: 'Big Chain')
+      nodes = Array.new(3) { create(:chain_node, chain: chain) }
+      AwardXp.call(user: user, amount: 50, reason: 'chain_created', subject: chain)
+      nodes.each { |node| AwardXp.call(user: user, amount: 5, reason: 'achievement_added', subject: node) }
+
+      get root_path
+
+      expect(response.body).to include('Created')
+      expect(response.body).to include('Big Chain')
+      expect(response.body).to include('3 achievements')
+      expect(response.body).not_to include('Added')
+    end
+
     it 'shows an empty state when nobody has earned xp yet' do
       get root_path
 

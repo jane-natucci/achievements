@@ -18,7 +18,7 @@ module UsersHelper
     when "achievement_note"
       safe_join(["Wrote a note for ", chain_node_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_created"
-      safe_join(["Created ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
+      safe_join(["Created ", chain_link(event.subject), chain_node_count_text(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_description"
       safe_join(["Added a description to ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_completed"
@@ -135,6 +135,16 @@ module UsersHelper
     return "a chain" unless chain
 
     link_to chain.title, chain_path(chain), class: "xp-feed__entity-link"
+  end
+
+  # A chain with a lot of achievements would otherwise flood the feed with
+  # one "added X to a chain" row per achievement (see AchievementsController#
+  # index, which drops those rows from the dashboard) -- summarize the count
+  # on the chain_created row instead.
+  def chain_node_count_text(chain)
+    return "" unless chain
+
+    " (#{pluralize(chain.chain_nodes.count, "achievement")})"
   end
 
   def achievement_link(achievement)

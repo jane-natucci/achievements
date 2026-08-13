@@ -109,6 +109,17 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).not_to include('✅')
     end
 
+    it 'shows how many achievements were in the chain on the chain_created event' do
+      user = create(:user)
+      chain = create(:chain, creator: user, title: 'Small Chain')
+      Array.new(3) { create(:chain_node, chain: chain) }
+      AwardXp.call(user: user, amount: 50, reason: 'chain_created', subject: chain)
+
+      get user_path(user)
+
+      expect(response.body).to include('3 achievements')
+    end
+
     it "shows the user's own avatar for the profile_created event" do
       user = create(:user, avatar_url: 'https://example.com/my-avatar.jpg')
       AwardXp.call(user: user, amount: 100, reason: 'profile_created')
