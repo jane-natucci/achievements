@@ -16,6 +16,10 @@ class User < ApplicationRecord
   has_many :favorite_chains, -> { where(user_chain_progresses: { favorite: true }) }, through: :user_chain_progresses, source: :chain
   has_many :user_achievement_favorites, dependent: :destroy
   has_many :favorite_achievements, through: :user_achievement_favorites, source: :achievement
+  has_many :user_achievement_unlocks, dependent: :destroy
+  has_many :unlocked_achievements, through: :user_achievement_unlocks, source: :achievement
+  has_many :user_achievement_pins, dependent: :destroy
+  has_many :pinned_achievements, through: :user_achievement_pins, source: :achievement
 
   def online?
     last_seen_at.present? && last_seen_at > ONLINE_WINDOW.ago

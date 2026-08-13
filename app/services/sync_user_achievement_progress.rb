@@ -25,6 +25,8 @@ class SyncUserAchievementProgress
       .select { |entry| entry["achieved"].to_i == 1 }
       .index_by { |entry| entry["apiname"] }
 
+    sync_first_class_unlocks!(game, unlocked_achievements)
+
     chain_nodes = ChainNode.joins(:chain)
                            .includes(:achievement, :chain)
                            .where(chains: { game_id: game.id })
@@ -68,6 +70,34 @@ class SyncUserAchievementProgress
         .delete_all
 
     award_chain_completion_bonuses!(chain_nodes, unlocked_chain_node_ids)
+  end
+
+  # Tracks unlocks as a first-class fact independent of chains -- an
+  # achievement can be genuinely unlocked on Steam without ever being added
+  # to any chain, and the achievement wall (profile) needs to show all of
+  # those, not just the ones that happen to be chain nodes.
+  def sync_first_class_unlocks!(game, unlocked_achievements)
+    still_unlocked_ids = game.achievements.filter_map do |achievement|
+      steam_achievement = unlocked_achievements[achievement.steam_api_name]
+      next unless steam_achievement
+
+      unlocked_at =
+        if steam_achievement["unlocktime"].to_i.positive?
+          Time.zone.at(steam_achievement["unlocktime"].to_i)
+        end
+
+      unlock = UserAchievementUnlock.find_or_initialize_by(user: user, achievement: achievement)
+      unlock.unlocked_at = unlocked_at
+      unlock.source = "steam"
+      unlock.save! if unlock.new_record? || unlock.changed?
+
+      achievement.id
+    end
+
+    user.user_achievement_unlocks
+        .where(source: "steam", achievement_id: game.achievement_ids)
+        .where.not(achievement_id: still_unlocked_ids)
+        .delete_all
   end
 
   def award_chain_completion_bonuses!(chain_nodes, unlocked_chain_node_ids)

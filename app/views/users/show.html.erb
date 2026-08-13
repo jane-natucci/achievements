@@ -54,6 +54,85 @@
     </div>
   </header>
 
+  <section class="achievement-wall">
+    <div class="achievements-section__header">
+      <h2>Achievement Wall</h2>
+      <p class="achievements-section__meta">
+        <% if @achievement_wall_total_count > @achievement_wall.size %>
+          Showing <%= @achievement_wall.size %> most recent of <%= number_with_delimiter(@achievement_wall_total_count) %>
+        <% else %>
+          <%= pluralize(@achievement_wall_total_count, "achievement") %>
+        <% end %>
+      </p>
+    </div>
+
+    <% if @achievement_wall.any? %>
+      <div class="achievement-wall__grid">
+        <% @achievement_wall.each do |unlock| %>
+          <%
+            achievement = unlock.achievement
+            pinned = @pinned_achievement_ids.include?(achievement.id)
+            popular_chain = @most_popular_chain_by_achievement_id[achievement.id]
+          %>
+          <div class="achievement-wall__tile-wrap"
+               data-controller="wall-popup"
+               data-action="mouseenter->wall-popup#show mouseleave->wall-popup#hide">
+            <%= link_to achievement_path(achievement),
+                  class: "achievement-wall__tile#{pinned ? " achievement-wall__tile--pinned" : ""}",
+                  aria: { label: achievement.title } do %>
+              <% if achievement.icon_unlocked.present? %>
+                <%= image_tag achievement.icon_unlocked, alt: "", class: "achievement-wall__icon" %>
+              <% else %>
+                <span class="achievement-wall__icon achievement-wall__icon--placeholder" aria-hidden="true"></span>
+              <% end %>
+              <% if pinned %>
+                <span class="achievement-wall__pin-badge" title="Pinned" aria-hidden="true">★</span>
+              <% end %>
+            <% end %>
+
+            <div class="wall-popup" data-wall-popup-target="popup">
+              <div class="wall-popup__inner">
+                <h4><%= achievement.title %></h4>
+
+                <% if achievement.game&.name.present? %>
+                  <p class="wall-popup__game">
+                    <%= link_to achievement.game.name, chains_path(game: achievement.game.id) %>
+                    <% if achievement.game.steam_app_id.present? %>
+                      &middot; <%= link_to "Steam ↗", "https://store.steampowered.com/app/#{achievement.game.steam_app_id}/", target: "_blank", rel: "noopener noreferrer" %>
+                    <% end %>
+                  </p>
+                <% end %>
+
+                <% if unlock.unlocked_at.present? %>
+                  <p class="wall-popup__unlocked-at">Unlocked <%= unlock.unlocked_at.in_time_zone.strftime("%-d %b %Y @ %-I:%M%P") %></p>
+                <% end %>
+
+                <% if popular_chain %>
+                  <p class="wall-popup__chain">Popular in <%= link_to popular_chain.title, chain_path(popular_chain) %></p>
+                <% end %>
+
+                <% if @viewing_own_wall %>
+                  <% if pinned %>
+                    <%= button_to "Unpin", pin_achievement_path(achievement), method: :delete, class: "wall-popup__pin-button" %>
+                  <% elsif @pinned_achievement_ids.size < UserAchievementPin::MAX_PINS_PER_USER %>
+                    <%= button_to "Pin to wall", pin_achievement_path(achievement), method: :post, class: "wall-popup__pin-button" %>
+                  <% else %>
+                    <p class="wall-popup__pin-limit">Pin limit reached (<%= UserAchievementPin::MAX_PINS_PER_USER %>)</p>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="achievement-empty-state">
+        <h3>No achievements yet</h3>
+        <p>Once <%= @user.display_name.presence || "this player" %> unlocks something, it'll show up here.</p>
+      </div>
+    <% end %>
+  </section>
+
   <section class="achievements-section">
     <div class="achievements-section__header">
       <h2>Latest XP Gains</h2>

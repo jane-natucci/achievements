@@ -199,4 +199,97 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include('favorited this')
     end
   end
+
+  describe 'pinning an achievement to the wall' do
+    it 'pins an unlocked achievement' do
+      achievement = create(:achievement)
+      user = create(:user)
+      sign_in(user)
+
+      expect {
+        post pin_achievement_path(achievement)
+      }.to change { user.pinned_achievements.count }.by(1)
+
+      expect(user.pinned_achievements).to include(achievement)
+    end
+
+    it 'unpins an achievement' do
+      achievement = create(:achievement)
+      user = create(:user)
+      sign_in(user)
+      UserAchievementPin.create!(user: user, achievement: achievement)
+
+      expect {
+        delete pin_achievement_path(achievement)
+      }.to change { user.pinned_achievements.count }.by(-1)
+    end
+
+    it 'redirects a logged-out visitor to log in instead of pinning' do
+      achievement = create(:achievement)
+
+      expect {
+        post pin_achievement_path(achievement)
+      }.not_to change { UserAchievementPin.count }
+
+      expect(response).to redirect_to('/achievements/login/')
+    end
+
+    it 'blocks pinning past the per-user limit with a clear message' do
+      user = create(:user)
+      sign_in(user)
+      UserAchievementPin::MAX_PINS_PER_USER.times { UserAchievementPin.create!(user: user, achievement: create(:achievement)) }
+      one_too_many = create(:achievement)
+
+      expect {
+        post pin_achievement_path(one_too_many)
+      }.not_to change { user.pinned_achievements.count }
+
+      follow_redirect!
+      expect(response.body).to include("up to #{UserAchievementPin::MAX_PINS_PER_USER}")
+    end
+  end
+
+  describe 'pin button on the achievement show page' do
+    it 'shows a pin button for an achievement the user has unlocked' do
+      achievement = create(:achievement)
+      user = create(:user)
+      UserAchievementUnlock.create!(user: user, achievement: achievement, source: 'steam')
+      sign_in(user)
+
+      get achievement_path(achievement)
+
+      expect(response.body).to include('Pin to wall')
+    end
+
+    it "doesn't show a pin button for an achievement the user hasn't unlocked" do
+      achievement = create(:achievement)
+      user = create(:user)
+      sign_in(user)
+
+      get achievement_path(achievement)
+
+      expect(response.body).not_to include('Pin to wall')
+    end
+
+    it "doesn't show a pin button for a logged-out visitor" do
+      achievement = create(:achievement)
+
+      get achievement_path(achievement)
+
+      expect(response.body).not_to include('Pin to wall')
+    end
+
+    it 'shows an unpin button once pinned, even at the pin limit' do
+      achievement = create(:achievement)
+      user = create(:user)
+      UserAchievementUnlock.create!(user: user, achievement: achievement, source: 'steam')
+      (UserAchievementPin::MAX_PINS_PER_USER - 1).times { UserAchievementPin.create!(user: user, achievement: create(:achievement)) }
+      UserAchievementPin.create!(user: user, achievement: achievement)
+      sign_in(user)
+
+      get achievement_path(achievement)
+
+      expect(response.body).to include('Unpin from wall')
+    end
+  end
 end

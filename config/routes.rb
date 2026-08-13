@@ -56,6 +56,8 @@ Rails.application.routes.draw do
       member do
         post :favorite
         delete :favorite, action: :unfavorite
+        post :pin
+        delete :pin, action: :unpin
       end
     end
     resources :chains do

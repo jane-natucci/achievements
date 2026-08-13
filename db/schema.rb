@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_090813) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_131108) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,6 +100,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_090813) do
     t.index ["user_id"], name: "index_user_achievement_favorites_on_user_id"
   end
 
+  create_table "user_achievement_pins", force: :cascade do |t|
+    t.bigint "achievement_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["achievement_id"], name: "index_user_achievement_pins_on_achievement_id"
+    t.index ["user_id", "achievement_id"], name: "index_user_achievement_pins_on_user_id_and_achievement_id", unique: true
+    t.index ["user_id"], name: "index_user_achievement_pins_on_user_id"
+  end
+
+  create_table "user_achievement_unlocks", force: :cascade do |t|
+    t.bigint "achievement_id", null: false
+    t.datetime "created_at", null: false
+    t.string "source"
+    t.datetime "unlocked_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["achievement_id"], name: "index_user_achievement_unlocks_on_achievement_id"
+    t.index ["user_id", "achievement_id"], name: "index_user_achievement_unlocks_on_user_id_and_achievement_id", unique: true
+    t.index ["user_id"], name: "index_user_achievement_unlocks_on_user_id"
+  end
+
   create_table "user_chain_progresses", force: :cascade do |t|
     t.bigint "chain_id", null: false
     t.datetime "completed_at"
@@ -161,6 +183,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_090813) do
   add_foreign_key "comments", "users"
   add_foreign_key "user_achievement_favorites", "achievements"
   add_foreign_key "user_achievement_favorites", "users"
+  add_foreign_key "user_achievement_pins", "achievements"
+  add_foreign_key "user_achievement_pins", "users"
+  add_foreign_key "user_achievement_unlocks", "achievements"
+  add_foreign_key "user_achievement_unlocks", "users"
   add_foreign_key "user_chain_progresses", "chains"
   add_foreign_key "user_chain_progresses", "users"
   add_foreign_key "user_node_progresses", "chain_nodes"

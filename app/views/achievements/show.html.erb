@@ -18,6 +18,18 @@
           </svg>
         <% end %>
       <% end %>
+
+      <% if current_user && @already_unlocked && (@pinned || @can_pin_more) %>
+        <%= button_to @pinned ? pin_achievement_path(@achievement) : pin_achievement_path(@achievement),
+              method: @pinned ? :delete : :post,
+              class: ["sidebar-icon-button", "sidebar-icon-button--pin", (@pinned ? "sidebar-icon-button--pin-active" : nil)].compact.join(" "),
+              title: @pinned ? "Unpin from wall" : "Pin to wall",
+              aria: { label: @pinned ? "Unpin from wall" : "Pin to wall" } do %>
+          <svg viewBox="0 0 24 24" fill="<%= @pinned ? 'currentColor' : 'none' %>" aria-hidden="true">
+            <path d="M12 2L14 8.5L20 10L14.5 13.5L15 20L12 16.5L9 20L9.5 13.5L4 10L10 8.5L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+        <% end %>
+      <% end %>
     </div>
 
     <section class="sidebar-section">

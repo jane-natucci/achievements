@@ -22,6 +22,10 @@ class AchievementsController < ApplicationController
 
     @favorited = current_user.present? && current_user.user_achievement_favorites.exists?(achievement: @achievement)
     @favorite_count = UserAchievementFavorite.where(achievement: @achievement).count
+
+    @already_unlocked = current_user.present? && current_user.user_achievement_unlocks.exists?(achievement: @achievement)
+    @pinned = current_user.present? && current_user.user_achievement_pins.exists?(achievement: @achievement)
+    @can_pin_more = current_user.present? && current_user.user_achievement_pins.count < UserAchievementPin::MAX_PINS_PER_USER
   end
 
   def help
@@ -51,5 +55,27 @@ class AchievementsController < ApplicationController
     end
 
     redirect_back fallback_location: achievement_path(achievement), notice: "Achievement removed from your library."
+  end
+
+  def pin
+    return redirect_to("/achievements/login/", alert: "Log in to pin achievements.") unless current_user
+
+    achievement = Achievement.find(params[:id])
+    pin = current_user.user_achievement_pins.new(achievement: achievement)
+
+    if pin.save
+      redirect_back fallback_location: achievement_path(achievement), notice: "Pinned to your wall."
+    else
+      redirect_back fallback_location: achievement_path(achievement), alert: pin.errors.full_messages.to_sentence
+    end
+  end
+
+  def unpin
+    return redirect_to("/achievements/login/", alert: "Log in to manage your wall.") unless current_user
+
+    achievement = Achievement.find(params[:id])
+    current_user.user_achievement_pins.find_by(achievement: achievement)&.destroy
+
+    redirect_back fallback_location: achievement_path(achievement), notice: "Unpinned."
   end
 end

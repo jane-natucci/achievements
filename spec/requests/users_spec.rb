@@ -254,4 +254,133 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).not_to include(chain_path(chain))
     end
   end
+
+  def sign_in(user)
+    allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+    allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+    post '/achievements/login', params: { profile_url: user.steam_id }
+  end
+
+  describe 'achievement wall' do
+    it 'shows unlocked achievements in chronological order, newest first' do
+      user = create(:user)
+      game = create(:game)
+      old_achievement = create(:achievement, game: game, title: 'Old One')
+      new_achievement = create(:achievement, game: game, title: 'New One')
+      UserAchievementUnlock.create!(user: user, achievement: old_achievement, unlocked_at: 10.days.ago, source: 'steam')
+      UserAchievementUnlock.create!(user: user, achievement: new_achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      get user_path(user)
+
+      expect(response.body).to include('Achievement Wall')
+      new_index = response.body.index('New One')
+      old_index = response.body.index('Old One')
+      expect(new_index).to be < old_index
+    end
+
+    it "isn't limited to achievements attached to a chain" do
+      user = create(:user)
+      achievement = create(:achievement, title: 'Standalone')
+      UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      get user_path(user)
+
+      expect(response.body).to include('Standalone')
+    end
+
+    it 'links each tile straight to the achievement page (a plain click navigates)' do
+      user = create(:user)
+      achievement = create(:achievement)
+      UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      tile = doc.at_css('.achievement-wall__tile')
+      expect(tile.name).to eq('a')
+      expect(tile['href']).to eq(achievement_path(achievement))
+    end
+
+    it 'shows an empty state when nothing has been unlocked yet' do
+      user = create(:user)
+
+      get user_path(user)
+
+      expect(response.body).to include('No achievements yet')
+    end
+
+    it "caps the wall at #{UsersController::ACHIEVEMENT_WALL_LIMIT} and says how many more there are" do
+      user = create(:user)
+      (UsersController::ACHIEVEMENT_WALL_LIMIT + 5).times do |i|
+        achievement = create(:achievement, title: "Achievement #{i}")
+        UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: i.days.ago, source: 'steam')
+      end
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      expect(doc.css('.achievement-wall__tile').size).to eq(UsersController::ACHIEVEMENT_WALL_LIMIT)
+      expect(response.body).to include("Showing #{UsersController::ACHIEVEMENT_WALL_LIMIT} most recent of")
+    end
+
+    it 'shows a pin badge for pinned achievements to any visitor' do
+      owner = create(:user)
+      visitor = create(:user)
+      achievement = create(:achievement)
+      UserAchievementUnlock.create!(user: owner, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+      UserAchievementPin.create!(user: owner, achievement: achievement)
+      sign_in(visitor)
+
+      get user_path(owner)
+
+      expect(response.body).to include('achievement-wall__tile--pinned')
+    end
+
+    it 'shows pin/unpin controls only when viewing your own wall' do
+      owner = create(:user)
+      visitor = create(:user)
+      achievement = create(:achievement)
+      UserAchievementUnlock.create!(user: owner, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      sign_in(visitor)
+      get user_path(owner)
+      expect(response.body).not_to include('Pin to wall')
+
+      get user_path(visitor)
+      # visitor has no unlocks, so nothing to assert pin controls on, but
+      # confirm the wall section itself still renders for the owner's view
+      expect(response.body).to include('Achievement Wall')
+    end
+
+    it 'shows the pin button on your own wall for an unpinned achievement' do
+      user = create(:user)
+      achievement = create(:achievement)
+      UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+      sign_in(user)
+
+      get user_path(user)
+
+      expect(response.body).to include('Pin to wall')
+    end
+
+    it 'shows the most popular chain (by favorites) containing the achievement' do
+      user = create(:user)
+      game = create(:game)
+      achievement = create(:achievement, game: game)
+      UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      unpopular_chain = create(:chain, game: game, title: 'Unpopular Chain')
+      create(:chain_node, chain: unpopular_chain, achievement: achievement)
+
+      popular_chain = create(:chain, game: game, title: 'Popular Chain')
+      create(:chain_node, chain: popular_chain, achievement: achievement)
+      fan = create(:user)
+      UserChainProgress.create!(user: fan, chain: popular_chain, favorite: true)
+
+      get user_path(user)
+
+      expect(response.body).to include('Popular Chain')
+      expect(response.body).not_to include('Unpopular Chain')
+    end
+  end
 end

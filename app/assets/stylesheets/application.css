@@ -877,6 +877,21 @@ a {
   color: #ffc84d;
 }
 
+.sidebar-icon-button--pin {
+  border-color: rgba(232, 185, 63, 0.26);
+  background: linear-gradient(180deg, rgba(76, 63, 25, 0.94), rgba(49, 39, 12, 0.98));
+  color: #e8b93f;
+}
+
+.sidebar-icon-button--pin-active {
+  color: #ffd35c;
+}
+
+.sidebar-icon-button--pin:hover,
+.sidebar-icon-button--pin:focus-visible {
+  background: linear-gradient(180deg, rgba(98, 82, 33, 0.96), rgba(61, 49, 16, 0.99));
+}
+
 .sidebar-icon-button--muted {
   opacity: 0.55;
 }
@@ -1406,6 +1421,140 @@ a {
   border-radius: 2px;
   color: var(--text-muted);
   text-align: center;
+}
+
+/*
+ * Achievement Wall: a dense grid of every achievement a player has
+ * unlocked, most recent first -- meant to read like a medal case, not a
+ * list. Pinned tiles get a star badge and a brighter border.
+ */
+.achievement-wall {
+  margin-bottom: 1.5rem;
+}
+
+.achievement-wall__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.5rem;
+}
+
+.achievement-wall__tile-wrap {
+  position: relative;
+}
+
+.achievement-wall__tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  overflow: visible;
+}
+
+.achievement-wall__tile:hover,
+.achievement-wall__tile:focus-visible {
+  border-color: var(--accent);
+}
+
+.achievement-wall__tile--pinned {
+  border-color: #e8b93f;
+  box-shadow: 0 0 10px rgba(232, 185, 63, 0.35);
+}
+
+.achievement-wall__icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.achievement-wall__icon--placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent-soft);
+}
+
+.achievement-wall__pin-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: #e8b93f;
+  color: #171d25;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.wall-popup {
+  --wall-popup-shift: 0px;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(calc(-50% + var(--wall-popup-shift)));
+  z-index: 30;
+  width: 220px;
+  padding-bottom: 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+.wall-popup--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.wall-popup__inner {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(102, 192, 244, 0.24);
+  border-radius: 8px;
+  background: #0b1520;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  text-align: left;
+}
+
+.wall-popup__inner h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+
+.wall-popup__inner p {
+  margin: 0.2rem 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.wall-popup__inner a {
+  color: var(--accent);
+}
+
+.wall-popup__pin-button {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.wall-popup__pin-button:hover {
+  border-color: var(--accent);
 }
 
 /*

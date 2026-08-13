@@ -95,4 +95,50 @@ RSpec.describe SyncUserAchievementProgress do
       expect(user.reload.total_xp).to eq(xp_after_first_sync)
     end
   end
+
+  context 'first-class unlock tracking (for the achievement wall)' do
+    let!(:achievement_c) { create(:achievement, game: game, steam_api_name: 'ach_c') }
+    let(:unlocked_at) { 10.days.ago }
+
+    it "records an unlock even for an achievement that isn't part of any chain" do
+      stub_unlocked('ach_c', unlocktime: unlocked_at.to_i)
+
+      expect { call }.to change { user.user_achievement_unlocks.count }.by(1)
+
+      unlock = user.user_achievement_unlocks.find_by(achievement: achievement_c)
+      expect(unlock.unlocked_at).to be_within(1.second).of(unlocked_at)
+      expect(unlock.source).to eq('steam')
+    end
+
+    it 'also records an unlock for achievements that are part of a chain' do
+      stub_unlocked('ach_a', unlocktime: unlocked_at.to_i)
+
+      call
+
+      unlock = user.user_achievement_unlocks.find_by(achievement: achievement_a)
+      expect(unlock).to be_present
+      expect(unlock.unlocked_at).to be_within(1.second).of(unlocked_at)
+    end
+
+    it 'removes the unlock record when the achievement becomes locked again' do
+      stub_unlocked('ach_c', unlocktime: unlocked_at.to_i)
+      call
+      expect(user.user_achievement_unlocks.count).to eq(1)
+
+      stub_unlocked
+      described_class.call(user)
+
+      expect(user.user_achievement_unlocks.count).to eq(0)
+    end
+
+    it "doesn't touch unlocks belonging to a different user" do
+      other_user = create(:user)
+      UserAchievementUnlock.create!(user: other_user, achievement: achievement_c, source: 'steam')
+      stub_unlocked('ach_c', unlocktime: unlocked_at.to_i)
+
+      call
+
+      expect(other_user.user_achievement_unlocks.count).to eq(1)
+    end
+  end
 end
