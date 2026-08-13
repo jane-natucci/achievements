@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_131108) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_145058) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,6 +26,53 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_131108) do
     t.datetime "updated_at", null: false
     t.index ["game_id", "steam_api_name"], name: "index_achievements_on_game_id_and_steam_api_name", unique: true
     t.index ["game_id"], name: "index_achievements_on_game_id"
+  end
+
+  create_table "battle_cards", force: :cascade do |t|
+    t.bigint "achievement_id", null: false
+    t.bigint "battle_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "deck_position", null: false
+    t.integer "dmg", null: false
+    t.integer "hp_current", null: false
+    t.integer "hp_max", null: false
+    t.string "side", null: false
+    t.string "slot"
+    t.datetime "updated_at", null: false
+    t.string "zone", default: "deck", null: false
+    t.index ["achievement_id"], name: "index_battle_cards_on_achievement_id"
+    t.index ["battle_id", "side"], name: "index_battle_cards_on_battle_id_and_side"
+    t.index ["battle_id"], name: "index_battle_cards_on_battle_id"
+  end
+
+  create_table "battle_moves", force: :cascade do |t|
+    t.bigint "acting_battle_card_id", null: false
+    t.string "acting_side", null: false
+    t.bigint "battle_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "damage_dealt", null: false
+    t.string "stance_used", null: false
+    t.bigint "target_battle_card_id"
+    t.integer "target_hp_after", null: false
+    t.string "target_type", null: false
+    t.integer "turn_number", null: false
+    t.datetime "updated_at", null: false
+    t.index ["acting_battle_card_id"], name: "index_battle_moves_on_acting_battle_card_id"
+    t.index ["battle_id"], name: "index_battle_moves_on_battle_id"
+    t.index ["target_battle_card_id"], name: "index_battle_moves_on_target_battle_card_id"
+  end
+
+  create_table "battles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "current_turn_side", null: false
+    t.bigint "deck_chain_id", null: false
+    t.integer "opponent_hp", default: 30, null: false
+    t.integer "player_hp", default: 30, null: false
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["deck_chain_id"], name: "index_battles_on_deck_chain_id"
+    t.index ["user_id"], name: "index_battles_on_user_id"
   end
 
   create_table "chain_edges", force: :cascade do |t|
@@ -175,6 +222,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_131108) do
   end
 
   add_foreign_key "achievements", "games"
+  add_foreign_key "battle_cards", "achievements"
+  add_foreign_key "battle_cards", "battles"
+  add_foreign_key "battle_moves", "battle_cards", column: "acting_battle_card_id"
+  add_foreign_key "battle_moves", "battle_cards", column: "target_battle_card_id"
+  add_foreign_key "battle_moves", "battles"
+  add_foreign_key "battles", "chains", column: "deck_chain_id"
+  add_foreign_key "battles", "users"
   add_foreign_key "chain_edges", "chain_nodes", column: "from_node"
   add_foreign_key "chain_edges", "chain_nodes", column: "to_node"
   add_foreign_key "chain_edges", "chains"

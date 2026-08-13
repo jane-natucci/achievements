@@ -6,4 +6,5 @@ class Achievement < ApplicationRecord
   has_many :user_achievement_favorites, dependent: :destroy
   has_many :user_achievement_unlocks, dependent: :destroy
   has_many :user_achievement_pins, dependent: :destroy
+  has_many :battle_cards, dependent: :destroy
 end

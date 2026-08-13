@@ -67,5 +67,8 @@ Rails.application.routes.draw do
         delete :favorite, action: :unfavorite
       end
     end
+    resources :battles, only: [:index, :new, :create, :show] do
+      member { post :turn }
+    end
   end
 end

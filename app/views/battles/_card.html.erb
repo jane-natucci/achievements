@@ -1,0 +1,19 @@
+<div class="battle-card<%= " battle-card--dead" unless card.alive? %>"
+     data-battle-card-id="<%= card.id %>"
+     data-side="<%= card.side %>"
+     data-zone="<%= card.zone %>"
+     <% if interactive %>data-action="click->battle#selectCard"<% end %>>
+  <% if card.achievement.icon_unlocked.present? %>
+    <%= image_tag card.achievement.icon_unlocked, alt: "", class: "battle-card__icon" %>
+  <% else %>
+    <span class="battle-card__icon battle-card__icon--placeholder" aria-hidden="true"></span>
+  <% end %>
+  <span class="battle-card__title"><%= card.achievement.title %></span>
+  <div class="battle-card__stats">
+    <span class="battle-card__hp">♥ <%= card.hp_current %>/<%= card.hp_max %></span>
+    <span class="battle-card__dmg">⚔ <%= card.dmg %></span>
+  </div>
+  <% unless card.alive? %>
+    <span class="battle-card__skull" aria-hidden="true">💀</span>
+  <% end %>
+</div>

@@ -20,6 +20,7 @@ class User < ApplicationRecord
   has_many :unlocked_achievements, through: :user_achievement_unlocks, source: :achievement
   has_many :user_achievement_pins, dependent: :destroy
   has_many :pinned_achievements, through: :user_achievement_pins, source: :achievement
+  has_many :battles, dependent: :destroy
 
   def online?
     last_seen_at.present? && last_seen_at > ONLINE_WINDOW.ago

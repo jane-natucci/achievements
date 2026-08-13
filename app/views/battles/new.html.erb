@@ -1,0 +1,30 @@
+<section class="chain-index">
+  <header class="chain-index__header">
+    <p class="eyebrow">Battle</p>
+    <h1>Choose a deck</h1>
+    <p class="chain-index__description">
+      Pick one of your own chains (<%= Battle::MAX_DECK_SIZE %> achievements or fewer) to battle with. The opponent mirrors your deck.
+    </p>
+  </header>
+
+  <% if @eligible_chains.any? %>
+    <div class="chain-card-list">
+      <% @eligible_chains.each do |chain| %>
+        <article class="chain-card">
+          <div class="chain-card__heading">
+            <h2><%= chain.title %></h2>
+            <p class="chain-card__game"><%= chain.game&.name || "Unknown Game" %></p>
+            <p class="chain-card__meta"><%= pluralize(chain.chain_nodes.count, "achievement") %></p>
+          </div>
+          <%= button_to "Battle with this deck", battles_path(chain_id: chain.id), method: :post, class: "sidebar-button" %>
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No battle-ready chains yet</h3>
+      <p>Create a chain with <%= Battle::MAX_DECK_SIZE %> achievements or fewer to use it as a deck.</p>
+      <p><%= link_to "Build a chain", new_chain_path, class: "sidebar-button" %></p>
+    </div>
+  <% end %>
+</section>

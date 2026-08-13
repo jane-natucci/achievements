@@ -1,0 +1,30 @@
+<section class="achievements-section">
+  <div class="achievements-section__header">
+    <h1>Your Battles</h1>
+    <p class="achievements-section__meta"><%= pluralize(@battles.size, "battle") %></p>
+  </div>
+
+  <% if @battles.any? %>
+    <ul class="xp-feed">
+      <% @battles.each do |battle| %>
+        <li class="xp-feed__row">
+          <span class="xp-feed__description">
+            <%= link_to battle.deck_chain.title, battle_path(battle), class: "xp-feed__entity-link" %>
+            &mdash;
+            <% if battle.active? %>
+              in progress (<%= battle.current_turn_side == "player" ? "your" : "opponent's" %> turn)
+            <% else %>
+              <%= battle.status == "won" ? "won" : "lost" %>
+            <% end %>
+          </span>
+          <span class="xp-feed__time"><%= time_ago_in_words(battle.created_at) %> ago</span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No battles yet</h3>
+      <p><%= link_to "Start one", new_battle_path, class: "sidebar-button" %></p>
+    </div>
+  <% end %>
+</section>

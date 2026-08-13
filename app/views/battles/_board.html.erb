@@ -1,0 +1,65 @@
+<%
+  player_can_act = battle.active? && battle.current_turn_side == "player"
+  opponent_board_cards = battle.opponent_cards.select { |c| c.zone == "board" }
+  opponent_hidden_count = battle.opponent_cards.count { |c| c.zone.in?(%w[hand deck]) }
+  player_board_cards = battle.player_cards.select { |c| c.zone == "board" }
+  player_hand_cards = battle.player_cards.select { |c| c.zone == "hand" }
+  player_deck_count = battle.player_cards.count { |c| c.zone == "deck" }
+%>
+<div class="battle-board" data-battle-status="<%= battle.status %>" data-current-turn="<%= battle.current_turn_side %>">
+  <div class="battle-side battle-side--opponent">
+    <div class="battle-hp">
+      <span class="battle-hp__label">Opponent</span>
+      <div class="battle-hp__bar"><div class="battle-hp__fill" style="width: <%= (battle.opponent_hp.to_f / Battle::STARTING_HP * 100).round %>%"></div></div>
+      <span class="battle-hp__value"><%= battle.opponent_hp %> / <%= Battle::STARTING_HP %></span>
+    </div>
+
+    <div class="battle-slots">
+      <% BattleCard::SLOTS.each do |slot| %>
+        <% card = opponent_board_cards.find { |c| c.slot == slot } %>
+        <div class="battle-slot" data-slot="<%= slot %>" data-side="opponent">
+          <%= render "card", card: card, interactive: player_can_act if card %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="battle-deck-pile" title="<%= opponent_hidden_count %> hidden cards (hand + deck)">
+      <span class="battle-card-back" aria-hidden="true"></span>
+      <span class="battle-deck-pile__count"><%= opponent_hidden_count %></span>
+    </div>
+
+    <% if player_can_act %>
+      <button type="button" class="battle-target-player-button" data-action="click->battle#selectPlayerTarget">
+        Attack Opponent Directly
+      </button>
+    <% end %>
+  </div>
+
+  <div class="battle-side battle-side--player">
+    <div class="battle-deck-pile" title="<%= player_deck_count %> cards left in your deck">
+      <span class="battle-card-back" aria-hidden="true"></span>
+      <span class="battle-deck-pile__count"><%= player_deck_count %></span>
+    </div>
+
+    <div class="battle-slots">
+      <% BattleCard::SLOTS.each do |slot| %>
+        <% card = player_board_cards.find { |c| c.slot == slot } %>
+        <div class="battle-slot" data-slot="<%= slot %>" data-side="player" data-action="click->battle#selectSlot">
+          <%= render "card", card: card, interactive: player_can_act if card %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="battle-hp">
+      <span class="battle-hp__label">You</span>
+      <div class="battle-hp__bar"><div class="battle-hp__fill" style="width: <%= (battle.player_hp.to_f / Battle::STARTING_HP * 100).round %>%"></div></div>
+      <span class="battle-hp__value"><%= battle.player_hp %> / <%= Battle::STARTING_HP %></span>
+    </div>
+  </div>
+
+  <div class="battle-hand" data-battle-target="hand">
+    <% player_hand_cards.each do |card| %>
+      <%= render "card", card: card, interactive: player_can_act %>
+    <% end %>
+  </div>
+</div>
