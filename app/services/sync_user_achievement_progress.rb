@@ -48,12 +48,15 @@ class SyncUserAchievementProgress
       progress.unlocked_at = unlocked_at
       progress.save! if progress.new_record? || progress.changed?
 
-      if progress.created_at.blank? && unlocked_at.present?
+      # Backdate to the real Steam unlock time -- otherwise an achievement
+      # someone unlocked long ago, only just added to a chain, reads as
+      # having happened "now" (both here and on the XpEvent below).
+      if progress.previously_new_record? && unlocked_at.present?
         progress.update_column(:created_at, unlocked_at)
       end
 
       unless already_completed
-        AwardXp.call(user: user, amount: XpRules::ACHIEVEMENT_UNLOCKED, reason: "achievement_unlocked", subject: chain_node)
+        AwardXp.call(user: user, amount: XpRules::ACHIEVEMENT_UNLOCKED, reason: "achievement_unlocked", subject: chain_node, occurred_at: unlocked_at)
       end
 
       chain_node.id

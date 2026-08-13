@@ -13,8 +13,8 @@ RSpec.describe SyncUserAchievementProgress do
   let!(:node_a) { create(:chain_node, chain: chain, achievement: achievement_a) }
   let!(:node_b) { create(:chain_node, chain: chain, achievement: achievement_b) }
 
-  def stub_unlocked(*api_names)
-    achievements = api_names.map { |name| { 'apiname' => name, 'achieved' => 1, 'unlocktime' => 0 } }
+  def stub_unlocked(*api_names, unlocktime: 0)
+    achievements = api_names.map { |name| { 'apiname' => name, 'achieved' => 1, 'unlocktime' => unlocktime } }
     allow(Steam::UserStats).to receive(:player_achievements).with(440, user.steam_id).and_return('achievements' => achievements)
   end
 
@@ -51,6 +51,33 @@ RSpec.describe SyncUserAchievementProgress do
     it 'does not re-award the completion bonus on a later sync' do
       call
       expect { described_class.call(user) }.not_to(change { user.reload.total_xp })
+    end
+  end
+
+  context 'when an achievement was unlocked long before it was synced (e.g. just added to a chain)' do
+    let(:unlocked_at) { 30.days.ago }
+
+    before { stub_unlocked('ach_a', unlocktime: unlocked_at.to_i) }
+
+    it 'backdates both the progress record and the xp event to the real Steam unlock time' do
+      call
+
+      progress = UserNodeProgress.find_by(user: user, chain_node: node_a)
+      expect(progress.created_at).to be_within(1.second).of(unlocked_at)
+
+      event = user.xp_events.find_by(reason: 'achievement_unlocked')
+      expect(event.created_at).to be_within(1.second).of(unlocked_at)
+    end
+
+    it "doesn't backdate an already-existing progress record on a later re-sync" do
+      call
+      first_sync_created_at = UserNodeProgress.find_by(user: user, chain_node: node_a).created_at
+
+      stub_unlocked('ach_a', unlocktime: 60.days.ago.to_i)
+      described_class.call(user)
+
+      progress = UserNodeProgress.find_by(user: user, chain_node: node_a)
+      expect(progress.created_at).to be_within(1.second).of(first_sync_created_at)
     end
   end
 
