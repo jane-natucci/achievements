@@ -16,17 +16,47 @@ class UsersController < ApplicationController
     @rank = User.where("total_xp > ?", @user.total_xp).count + 1
     @xp_events = @user.xp_events.order(created_at: :desc).limit(20)
 
-    @achievement_wall_total_count = @user.user_achievement_unlocks.count
-    @achievement_wall = @user.user_achievement_unlocks
-                              .includes(achievement: :game)
-                              .order(Arel.sql("unlocked_at DESC NULLS LAST"))
-                              .limit(ACHIEVEMENT_WALL_LIMIT)
-    @pinned_achievement_ids = @user.user_achievement_pins.pluck(:achievement_id).to_set
-    @viewing_own_wall = current_user == @user
-    build_most_popular_chain_lookup(@achievement_wall.map(&:achievement_id))
+    load_achievement_wall(limit: ACHIEVEMENT_WALL_LIMIT)
+  end
+
+  # Uncapped version of the wall, for "Show all" -- kept as its own page
+  # (rather than lazy-loading more into #show) so the default profile load
+  # stays light for players with a huge unlock history.
+  def wall
+    @user = User.find(params[:id])
+
+    load_achievement_wall(limit: nil)
   end
 
   private
+
+  # Pinned achievements always show first (most recently pinned first),
+  # then the rest by unlock recency. Pins are capped at
+  # UserAchievementPin::MAX_PINS_PER_USER (small), so it's cheap to fetch
+  # them separately and fill the remaining slots around them, rather than
+  # expressing this ordering as one big SQL CASE.
+  def load_achievement_wall(limit:)
+    @achievement_wall_total_count = @user.user_achievement_unlocks.count
+
+    pinned_achievement_ids = @user.user_achievement_pins.order(created_at: :desc).pluck(:achievement_id)
+    @pinned_achievement_ids = pinned_achievement_ids.to_set
+
+    pinned_unlocks_by_achievement_id = @user.user_achievement_unlocks
+                                             .includes(achievement: :game)
+                                             .where(achievement_id: pinned_achievement_ids)
+                                             .index_by(&:achievement_id)
+    pinned_unlocks = pinned_achievement_ids.filter_map { |id| pinned_unlocks_by_achievement_id[id] }
+
+    remaining = @user.user_achievement_unlocks
+                      .includes(achievement: :game)
+                      .where.not(achievement_id: pinned_achievement_ids)
+                      .order(Arel.sql("unlocked_at DESC NULLS LAST"))
+    remaining = remaining.limit([limit - pinned_unlocks.size, 0].max) if limit
+
+    @achievement_wall = pinned_unlocks + remaining.to_a
+    @viewing_own_wall = current_user == @user
+    build_most_popular_chain_lookup(@achievement_wall.map(&:achievement_id))
+  end
 
   # For each achievement on the wall, the chain (among all kept chains that
   # include it) with the most favorites -- shown in the wall popup. Batched

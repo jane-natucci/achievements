@@ -1,0 +1,32 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back to Profile", user_path(@user), class: "sidebar-button" %>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="profile-header">
+    <div class="profile-header__avatar-wrap">
+      <% if @user.avatar_url.present? %>
+        <%= image_tag @user.avatar_url, alt: "", class: "profile-header__avatar" %>
+      <% else %>
+        <div class="profile-header__avatar profile-header__avatar--placeholder" aria-hidden="true">
+          <%= @user.display_name&.first&.upcase || "?" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="profile-header__copy">
+      <p class="eyebrow">Full Achievement Wall</p>
+      <h1><%= @user.display_name.presence || "Unknown Player" %></h1>
+    </div>
+  </header>
+
+  <%= render "achievement_wall",
+        user: @user,
+        achievement_wall: @achievement_wall,
+        achievement_wall_total_count: @achievement_wall_total_count,
+        pinned_achievement_ids: @pinned_achievement_ids,
+        most_popular_chain_by_achievement_id: @most_popular_chain_by_achievement_id,
+        viewing_own_wall: @viewing_own_wall %>
+</section>

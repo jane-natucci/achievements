@@ -382,5 +382,79 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).to include('Popular Chain')
       expect(response.body).not_to include('Unpopular Chain')
     end
+
+    it 'shows pinned achievements first, most recently pinned first, ahead of unlock order' do
+      user = create(:user)
+      old_unlock = create(:achievement, title: 'Old Unlock')
+      new_unlock = create(:achievement, title: 'New Unlock')
+      pinned_first = create(:achievement, title: 'Pinned First')
+      pinned_second = create(:achievement, title: 'Pinned Second')
+      UserAchievementUnlock.create!(user: user, achievement: old_unlock, unlocked_at: 10.days.ago, source: 'steam')
+      UserAchievementUnlock.create!(user: user, achievement: new_unlock, unlocked_at: 1.day.ago, source: 'steam')
+      UserAchievementUnlock.create!(user: user, achievement: pinned_first, unlocked_at: 20.days.ago, source: 'steam')
+      UserAchievementUnlock.create!(user: user, achievement: pinned_second, unlocked_at: 30.days.ago, source: 'steam')
+      UserAchievementPin.create!(user: user, achievement: pinned_first, created_at: 2.days.ago)
+      UserAchievementPin.create!(user: user, achievement: pinned_second, created_at: 1.day.ago)
+
+      get user_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      titles = doc.css('.achievement-wall__tile').map { |tile| tile['aria-label'] }
+      expect(titles).to eq(['Pinned Second', 'Pinned First', 'New Unlock', 'Old Unlock'])
+    end
+
+    it 'shows a "Show all" link when there are more achievements than the cap, linking to the full wall' do
+      user = create(:user)
+      (UsersController::ACHIEVEMENT_WALL_LIMIT + 1).times do |i|
+        achievement = create(:achievement, title: "Achievement #{i}")
+        UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: i.days.ago, source: 'steam')
+      end
+
+      get user_path(user)
+
+      expect(response.body).to include('Show all')
+      expect(response.body).to include(user_wall_path(user))
+    end
+
+    it "doesn't show a \"Show all\" link when everything already fits" do
+      user = create(:user)
+      achievement = create(:achievement)
+      UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      get user_path(user)
+
+      expect(response.body).not_to include('Show all')
+    end
+  end
+
+  describe 'GET /achievements/users/:id/wall' do
+    it 'shows every unlocked achievement, uncapped' do
+      user = create(:user)
+      (UsersController::ACHIEVEMENT_WALL_LIMIT + 5).times do |i|
+        achievement = create(:achievement, title: "Achievement #{i}")
+        UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: i.days.ago, source: 'steam')
+      end
+
+      get user_wall_path(user)
+
+      expect(response).to have_http_status(:ok)
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      expect(doc.css('.achievement-wall__tile').size).to eq(UsersController::ACHIEVEMENT_WALL_LIMIT + 5)
+    end
+
+    it 'still orders pinned achievements first' do
+      user = create(:user)
+      old_unlock = create(:achievement, title: 'Old Unlock')
+      pinned = create(:achievement, title: 'Pinned')
+      UserAchievementUnlock.create!(user: user, achievement: old_unlock, unlocked_at: 10.days.ago, source: 'steam')
+      UserAchievementUnlock.create!(user: user, achievement: pinned, unlocked_at: 20.days.ago, source: 'steam')
+      UserAchievementPin.create!(user: user, achievement: pinned)
+
+      get user_wall_path(user)
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      titles = doc.css('.achievement-wall__tile').map { |tile| tile['aria-label'] }
+      expect(titles).to eq(['Pinned', 'Old Unlock'])
+    end
   end
 end

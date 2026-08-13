@@ -1260,6 +1260,11 @@ a {
   color: var(--text-muted);
 }
 
+.achievement-wall__show-all {
+  margin-left: 0.4rem;
+  color: var(--accent);
+}
+
 .achievement-list {
   display: grid;
   gap: 0.6rem;
