@@ -20,12 +20,10 @@ class CardStats
 
   def self.for_achievements(achievement_ids)
     achievement_ids = achievement_ids.uniq
-    total_users = User.count.to_f
-    unlock_counts = UserAchievementUnlock.where(achievement_id: achievement_ids).group(:achievement_id).count
+    pct_by_id = AchievementRarity.pct_for(achievement_ids)
 
     achievement_ids.index_with do |achievement_id|
-      rarity_pct = total_users.zero? ? 0.0 : (unlock_counts[achievement_id] || 0) / total_users
-      rarity_score = (1.0 - rarity_pct).clamp(0.0, 1.0)
+      rarity_score = (1.0 - pct_by_id.fetch(achievement_id)).clamp(0.0, 1.0)
 
       Stats.new(
         (HP_BASE + HP_RANGE * rarity_score).round,

@@ -56,6 +56,14 @@ class UsersController < ApplicationController
     @achievement_wall = pinned_unlocks + remaining.to_a
     @viewing_own_wall = current_user == @user
     build_most_popular_chain_lookup(@achievement_wall.map(&:achievement_id))
+    build_rare_achievement_lookup(@achievement_wall.map(&:achievement_id))
+  end
+
+  # Which wall tiles get the "rare" glow -- same rarity math CardStats uses
+  # for battle card strength, so "rare" means the same thing everywhere.
+  def build_rare_achievement_lookup(achievement_ids)
+    pct_by_id = AchievementRarity.pct_for(achievement_ids)
+    @rare_achievement_ids = pct_by_id.select { |_id, pct| AchievementRarity.rare?(pct) }.keys.to_set
   end
 
   # For each achievement on the wall, the chain (among all kept chains that
