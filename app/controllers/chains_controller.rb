@@ -79,7 +79,11 @@ class ChainsController < ApplicationController
   end
 
   def destroy
-    @chain.discard!
+    ActiveRecord::Base.transaction do
+      RevertChainXp.call(@chain)
+      @chain.discard!
+    end
+
     redirect_to chains_path, notice: "Chain deleted."
   end
 

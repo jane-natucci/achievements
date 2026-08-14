@@ -52,6 +52,27 @@ RSpec.describe 'Chains deletion', type: :request do
       expect(response).to redirect_to(chains_path)
     end
 
+    it "removes the chain's xp events (and the xp they earned) so the profile feed doesn't link to a 404" do
+      user = create(:user)
+      chain = create(:chain, creator: user, description: 'A great chain')
+      node = create(:chain_node, chain: chain)
+      AwardXp.call(user: user, amount: 50, reason: 'chain_created', subject: chain)
+      AwardXp.call(user: user, amount: 25, reason: 'chain_description', subject: chain)
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_added', subject: node)
+      sign_in_via_steam(user)
+      xp_before = user.reload.total_xp
+
+      delete chain_path(chain)
+
+      expect(user.reload.total_xp).to eq(xp_before - 80)
+      expect(XpEvent.where(subject: chain).count).to eq(0)
+      expect(XpEvent.where(subject: node).count).to eq(0)
+
+      get user_path(user)
+      expect(response.body).not_to include('Created')
+      expect(response.body).not_to include('Added')
+    end
+
     it 'blocks deletion and explains why when the creator only used the paste-URL login' do
       user = create(:user)
       chain = create(:chain, creator: user)
