@@ -127,6 +127,24 @@ RSpec.describe 'Battles', type: :request do
       expect(response.body).to include(%(data-battle-turn-seconds-value="#{Battle::TURN_SECONDS}"))
     end
 
+    it "names each side's deck chain in the battle-start log entry" do
+      user = create(:user)
+      player_chain = build_chain(3, game: create(:game), creator: user)
+      opponent_chain = build_chain(4, game: create(:game), creator: user)
+      # opponent_chain is the only other eligible chain in the DB at this
+      # point, so CreateBattle's random pick deterministically lands on it.
+      battle = CreateBattle.call(user: user, chain: player_chain).battle
+      sign_in(user)
+
+      get battle_path(battle)
+
+      log_section = response.body[response.body.index('battle-log-section')..]
+      expect(log_section).to include(chain_path(player_chain))
+      expect(log_section).to include(player_chain.title)
+      expect(log_section).to include(chain_path(opponent_chain))
+      expect(log_section).to include(opponent_chain.title)
+    end
+
     it "titles the page with the player's name vs their shadow" do
       user = create(:user, display_name: 'Jane')
       chain = build_chain(3, game: create(:game), creator: user)

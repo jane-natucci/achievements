@@ -41,6 +41,7 @@ RSpec.describe CreateBattle do
       battle = call.battle
 
       expect(battle.opponent_cards.map(&:achievement_id).sort).to eq(battle.player_cards.map(&:achievement_id).sort)
+      expect(battle.opponent_deck_chain).to eq(chain)
     end
 
     it "battles against a different chain's cards -- even one made by someone else -- when another eligible chain exists" do
@@ -51,6 +52,7 @@ RSpec.describe CreateBattle do
       expect(battle.opponent_cards.size).to eq(4)
       expect(battle.opponent_cards.map(&:achievement_id).sort).to eq(other_chain.nodes_in_order.map { |n| n.achievement.id }.sort)
       expect(battle.opponent_cards.map(&:achievement_id).sort).not_to eq(battle.player_cards.map(&:achievement_id).sort)
+      expect(battle.opponent_deck_chain).to eq(other_chain)
     end
 
     it 'rejects starting a battle when the user already has one active' do

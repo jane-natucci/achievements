@@ -6,6 +6,9 @@ class Battle < ApplicationRecord
 
   belongs_to :user
   belongs_to :deck_chain, class_name: "Chain"
+  # Nullable -- battles created before this column existed have no
+  # recorded opponent chain (they mirrored the player's own deck_chain).
+  belongs_to :opponent_deck_chain, class_name: "Chain", optional: true
 
   # battle_moves must be destroyed before battle_cards -- Rails runs
   # dependent: :destroy callbacks in declaration order, and moves hold a

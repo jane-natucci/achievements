@@ -34,7 +34,7 @@ class CreateBattle
     return Result.new(error: "You already have a battle in progress.") if user.battles.exists?(status: "active")
 
     battle = ActiveRecord::Base.transaction do
-      battle = Battle.create!(user: user, deck_chain: chain, current_turn_side: first_mover)
+      battle = Battle.create!(user: user, deck_chain: chain, opponent_deck_chain: opponent_chain, current_turn_side: first_mover)
       seed_cards!(battle, "player", player_achievements)
       seed_cards!(battle, "opponent", opponent_achievements)
       battle
@@ -59,8 +59,12 @@ class CreateBattle
     @player_achievements ||= chain.nodes_in_order.filter_map(&:achievement)
   end
 
+  def opponent_chain
+    @opponent_chain ||= other_eligible_chains.sample || chain
+  end
+
   def opponent_achievements
-    @opponent_achievements ||= (other_eligible_chains.sample || chain).nodes_in_order.filter_map(&:achievement)
+    @opponent_achievements ||= opponent_chain.nodes_in_order.filter_map(&:achievement)
   end
 
   def other_eligible_chains

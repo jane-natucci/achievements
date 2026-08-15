@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_231813) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_233250) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_231813) do
     t.datetime "created_at", null: false
     t.string "current_turn_side", null: false
     t.bigint "deck_chain_id", null: false
+    t.bigint "opponent_deck_chain_id"
     t.integer "opponent_hp", default: 30, null: false
     t.boolean "opponent_placed_card_this_turn", default: false, null: false
     t.integer "opponent_turn_count", default: 0, null: false
@@ -79,6 +80,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_231813) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["deck_chain_id"], name: "index_battles_on_deck_chain_id"
+    t.index ["opponent_deck_chain_id"], name: "index_battles_on_opponent_deck_chain_id"
     t.index ["user_id"], name: "index_battles_on_user_id"
   end
 
@@ -235,6 +237,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_231813) do
   add_foreign_key "battle_moves", "battle_cards", column: "target_battle_card_id"
   add_foreign_key "battle_moves", "battles"
   add_foreign_key "battles", "chains", column: "deck_chain_id"
+  add_foreign_key "battles", "chains", column: "opponent_deck_chain_id"
   add_foreign_key "battles", "users"
   add_foreign_key "chain_edges", "chain_nodes", column: "from_node"
   add_foreign_key "chain_edges", "chain_nodes", column: "to_node"

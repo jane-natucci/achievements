@@ -1,6 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 const AI_MOVE_DELAY_MS = 2500
+// How long a dying card sits at 0 hp, flashed red, before it's actually
+// removed from the board -- matches the .battle-hp-flash CSS duration so
+// the card disappears right as the flash finishes, not mid-animation.
+const DEATH_FLASH_DELAY_MS = 1400
 
 export default class extends Controller {
   static targets = ["board", "status", "readyButton", "hint", "log", "timer"]
@@ -175,17 +179,21 @@ export default class extends Controller {
 
   revealSteps(steps, index, data) {
     if (index >= steps.length) {
-      this.applyBoardHtml(data.final_html)
-      this.finishEndTurn(data)
+      this.applyBoardHtml(data.final_html).then(() => this.finishEndTurn(data))
       return
     }
 
     setTimeout(() => {
       const step = steps[index]
-      this.applyBoardHtml(step.board_html)
-      if (step.move_html) this.logTarget.insertAdjacentHTML("afterbegin", step.move_html)
-      this.highlightAiStep(step)
-      this.revealSteps(steps, index + 1, data)
+      // Waits for the swap (and any death-flash delay it triggered) to
+      // fully finish before scheduling the next step -- otherwise a kill
+      // on this step could still be mid-animation when the next step's
+      // own board swap lands, stepping on it.
+      this.applyBoardHtml(step.board_html).then(() => {
+        if (step.move_html) this.logTarget.insertAdjacentHTML("afterbegin", step.move_html)
+        this.highlightAiStep(step)
+        this.revealSteps(steps, index + 1, data)
+      })
     }, AI_MOVE_DELAY_MS)
   }
 
@@ -250,11 +258,61 @@ export default class extends Controller {
   // changed (dealt or received, card or avatar) -- shared by attack
   // responses, each AI-turn step, and the final post-turn snapshot, so the
   // effect is consistent no matter which side did the damage.
+  //
+  // A card that died this update would otherwise just vanish the instant
+  // this swap happens -- one frame it's at full hp, the next it's gone,
+  // with no visible moment where it actually took the killing blow. So a
+  // card about to disappear gets shown at 0 hp with the normal red flash
+  // *first*, on the still-current DOM, and only actually gets removed
+  // (via the real swap) once that's had time to register. Returns a
+  // promise so callers that chain further board mutations (the AI-turn
+  // reveal) can wait for the whole thing, deaths included, before moving
+  // on to the next step.
   applyBoardHtml(html) {
     const before = this.captureHpSnapshot()
+    const dyingIds = this.findDyingCardIds(html)
+
+    if (dyingIds.length === 0) {
+      this.finishBoardSwap(html, before)
+      return Promise.resolve()
+    }
+
+    this.flashDyingCards(dyingIds)
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        this.finishBoardSwap(html, before)
+        resolve()
+      }, DEATH_FLASH_DELAY_MS)
+    })
+  }
+
+  finishBoardSwap(html, before) {
     this.boardTarget.innerHTML = html
     this.flashChangedHp(before)
     this.updateReadyGlow()
+  }
+
+  // A card id currently rendered on the board that won't appear anywhere
+  // in the incoming html at all means it just died -- zone flips to
+  // "dead" the instant hp hits 0, which drops it out of every zone the
+  // board renders (hand/board). Nothing else makes an id disappear
+  // outright within a single attack/place diff (a hand->board move keeps
+  // the same id findable, just under different markup).
+  findDyingCardIds(newHtml) {
+    return [...this.boardTarget.querySelectorAll(".battle-card[data-battle-card-id]")]
+      .map((el) => el.dataset.battleCardId)
+      .filter((id) => !newHtml.includes(`data-battle-card-id="${id}"`))
+  }
+
+  flashDyingCards(dyingIds) {
+    dyingIds.forEach((id) => {
+      const hpNode = this.boardTarget.querySelector(`.battle-card[data-battle-card-id="${id}"] [data-hp-node]`)
+      if (!hpNode) return
+
+      const max = hpNode.textContent.match(/\/(\d+)/)?.[1] ?? "0"
+      hpNode.textContent = `♥ 0/${max}`
+      this.flashNode(hpNode, "battle-hp-flash")
+    })
   }
 
   // Green halo on Ready once the player has nothing left to do this turn
