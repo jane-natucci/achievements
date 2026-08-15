@@ -4,7 +4,9 @@
       "command": [
         "/usr/local/bin/bundle",
         "exec",
-        "sidekiq"
+        "sidekiq",
+        "-C",
+        "config/sidekiq.yml"
       ],
       "cpu": 0,
       "entryPoint": [
