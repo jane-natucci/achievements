@@ -74,13 +74,13 @@
         </div>
 
         <nav class="topbar__nav" id="topbar-nav" aria-label="Primary" data-topbar-menu-target="nav">
+          <%= link_to "Battle", new_battle_path, class: "topbar__nav-link--battle" %>
           <% if build_commit_sha.present? %>
             <div class="build-popup-wrapper" data-controller="build-popup" data-action="mouseenter->build-popup#show mouseleave->build-popup#hide">
               <%= link_to "Build #{build_commit_short_sha}", build_commit_url, class: "topbar__build-link", target: "_blank", rel: "noopener noreferrer", title: "View deployed source commit on GitHub" %>
               <div class="build-popup" data-build-popup-target="popup">
                 <div class="build-popup__inner">
                   <%= link_to "Debug →", debug_path, class: "build-popup__link" %>
-                  <%= link_to "Battle →", new_battle_path, class: "build-popup__link" %>
                 </div>
               </div>
             </div>

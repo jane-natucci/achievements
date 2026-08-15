@@ -6,7 +6,9 @@
   player_board_cards = battle.player_cards.select { |c| c.zone == "board" }
   player_hand_cards = battle.player_cards.select { |c| c.zone == "hand" }
   player_deck_count = battle.player_cards.count { |c| c.zone == "deck" }
-  opponent_icon = battle.deck_chain.game&.icon
+  # The opponent is your own Shadow (a mirror of your deck, see issue #57)
+  # -- so their avatar is your own avatar too, not the game's icon.
+  opponent_icon = battle.user.avatar_url
   player_icon = battle.user.avatar_url
 %>
 <div class="battle-board" data-battle-status="<%= battle.status %>" data-current-turn="<%= battle.current_turn_side %>">
