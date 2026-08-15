@@ -263,6 +263,9 @@ a {
 }
 
 .build-popup__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
   padding: 0.4rem 0.7rem;
   border: 1px solid rgba(102, 192, 244, 0.24);
   border-radius: 8px;
@@ -2745,6 +2748,13 @@ a {
   justify-content: center;
 }
 
+.battle-slot--placeable {
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+  cursor: pointer;
+}
+
 .battle-card {
   position: relative;
   width: 80px;
@@ -2767,6 +2777,11 @@ a {
 
 .battle-card--log-highlight {
   outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.battle-card--log-highlight-target {
+  outline: 2px solid #e05252;
   outline-offset: 2px;
 }
 
@@ -2931,6 +2946,11 @@ a {
 
 .battle-log__damage--heal {
   color: var(--success);
+}
+
+.battle-log__death {
+  color: #e05252;
+  font-weight: 700;
 }
 
 .battle-log__time {

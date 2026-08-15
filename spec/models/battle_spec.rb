@@ -70,6 +70,56 @@ RSpec.describe Battle do
     end
   end
 
+  describe '#draw_card!' do
+    it 'draws the next deck card when the deck has one' do
+      battle = build_battle
+      deck_card = build_card(battle, side: 'player', zone: 'deck')
+
+      battle.draw_card!('player')
+
+      expect(deck_card.reload.zone).to eq('hand')
+    end
+
+    it "reshuffles this side's own dead cards back into the deck, revived at full hp with a clean acted flag, when the deck is empty" do
+      battle = build_battle
+      dead_card = build_card(battle, side: 'player', zone: 'dead', hp: 10, acted_this_turn: true)
+      dead_card.update!(hp_current: 0)
+
+      battle.draw_card!('player')
+
+      expect(dead_card.reload.zone).to eq('hand')
+      expect(dead_card.hp_current).to eq(10)
+      expect(dead_card.acted_this_turn?).to be(false)
+    end
+
+    it "does not reshuffle the other side's dead cards" do
+      battle = build_battle
+      opponent_dead = build_card(battle, side: 'opponent', zone: 'dead', hp: 10)
+      opponent_dead.update!(hp_current: 0)
+
+      battle.draw_card!('player')
+
+      expect(opponent_dead.reload.zone).to eq('dead')
+    end
+
+    it 'does nothing when there is nothing to draw or reshuffle at all' do
+      battle = build_battle
+
+      expect { battle.draw_card!('player') }.not_to raise_error
+    end
+
+    it "prevents a side from ever running permanently out of actionable cards -- the stuck-battle bug this fixes" do
+      battle = build_battle(player_turn_count: 1)
+      dead_card = build_card(battle, side: 'player', zone: 'dead', hp: 10, dmg: 5)
+      dead_card.update!(hp_current: 0)
+      expect(battle.actionable_cards_for('player')).to be_empty
+
+      battle.start_turn!('player')
+
+      expect(battle.actionable_cards_for('player')).not_to be_empty
+    end
+  end
+
   describe '#actionable_cards_for' do
     it 'excludes a card that already acted this turn' do
       battle = build_battle

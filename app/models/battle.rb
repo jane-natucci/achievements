@@ -98,9 +98,31 @@ class Battle < ApplicationRecord
     draw_card!(side) if turn_count_for(side) >= 2
   end
 
+  # Draws from this side's deck into hand -- reshuffling their own dead
+  # cards back into the deck (revived at full hp) first if the deck is
+  # empty, so a side is never permanently out of things to draw as long
+  # as they've fielded at least one card. Without this, a side whose
+  # whole original deck dies for good can end up with zero actionable
+  # cards forever, which soft-locks the battle: current_turn_side keeps
+  # bouncing onto them (see #skip_stuck_turns!) but nothing can ever
+  # resolve their turn, since that's normally driven by the *other*
+  # side's own end-turn action.
   def draw_card!(side)
     next_card = cards_for(side).select { |card| card.zone == "deck" }.min_by(&:deck_position)
+    next_card ||= reshuffle_deck!(side)
     next_card&.update!(zone: "hand")
+  end
+
+  def reshuffle_deck!(side)
+    dead_cards = cards_for(side).select { |card| card.zone == "dead" }
+    return nil if dead_cards.empty?
+
+    # acted_this_turn also needs resetting here, not just hp/zone -- these
+    # cards died (and so left the hand/board pool) before start_turn!'s own
+    # bulk reset ran, so they'd otherwise come back still marked as having
+    # acted, making the very card just drawn look unusable.
+    dead_cards.each { |card| card.update!(zone: "deck", hp_current: card.hp_max, acted_this_turn: false) }
+    cards_for(side).select { |card| card.zone == "deck" }.min_by(&:deck_position)
   end
 
   # Called after every turn transition (including battle creation, in case

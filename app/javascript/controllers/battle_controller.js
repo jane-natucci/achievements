@@ -13,22 +13,37 @@ export default class extends Controller {
 
   resetSelection() {
     this.selectedCardId = null
+    this.selectedCardRole = null
     this.clearAttackerHighlight()
+    this.markEmptySlotsPlaceable(false)
     this.updateHint()
   }
 
-  // A hand card has no attack decision to make -- placing it *is* its
-  // whole action for the turn (it can't also attack until next turn) --
-  // so this resolves immediately on click, no target needed.
+  // Step 1 of placing: arms a hand card. Nothing is submitted yet --
+  // placing still needs a slot (step 2, see selectPlacementSlot).
   placeCard(event) {
     if (!this.canAct() || this.requestInFlight) return
 
     const el = event.currentTarget
     if (el.dataset.acted === "true") return
 
-    el.classList.add("battle-card--attacking")
+    this.clearAttackerHighlight()
+    this.selectedCardId = el.dataset.battleCardId
+    this.selectedCardRole = "place"
+    el.classList.add("battle-card--selected")
+    this.markEmptySlotsPlaceable(true)
+    this.updateHint()
+  }
 
-    const body = new URLSearchParams({ card_id: el.dataset.battleCardId })
+  // Step 2 of placing: an empty slot on the player's own side. Resolves
+  // the placement immediately once chosen.
+  selectPlacementSlot(event) {
+    if (!this.canAct() || this.selectedCardRole !== "place" || this.requestInFlight) return
+
+    const slotEl = event.currentTarget
+    if (slotEl.querySelector(".battle-card")) return // occupied
+
+    const body = new URLSearchParams({ card_id: this.selectedCardId, slot: slotEl.dataset.slot })
     this.requestInFlight = true
 
     fetch(this.placeUrlValue, { method: "POST", headers: this.jsonHeaders(), body })
@@ -61,7 +76,9 @@ export default class extends Controller {
     if (el.dataset.zone === "dead" || el.dataset.acted === "true") return
 
     this.clearAttackerHighlight()
+    this.markEmptySlotsPlaceable(false)
     this.selectedCardId = el.dataset.battleCardId
+    this.selectedCardRole = "attacker"
     el.classList.add("battle-card--selected")
     this.updateHint()
   }
@@ -69,7 +86,7 @@ export default class extends Controller {
   // Step 2: an enemy card, or the opponent avatar itself. Resolves the
   // attack immediately -- no staging, no separate submit step.
   selectTarget(event) {
-    if (!this.canAct() || !this.selectedCardId || this.requestInFlight) return
+    if (!this.canAct() || this.selectedCardRole !== "attacker" || this.requestInFlight) return
 
     const el = event.currentTarget
     if (el.dataset.zone === "dead") return
@@ -238,12 +255,24 @@ export default class extends Controller {
     this.boardTarget.querySelectorAll(".battle-card--selected").forEach((el) => el.classList.remove("battle-card--selected"))
   }
 
+  markEmptySlotsPlaceable(active) {
+    this.boardTarget.querySelectorAll('.battle-slot[data-side="player"]').forEach((slotEl) => {
+      if (slotEl.querySelector(".battle-card")) return
+
+      slotEl.classList.toggle("battle-slot--placeable", active)
+    })
+  }
+
   updateHint() {
     if (!this.hasHintTarget) return
 
-    this.hintTarget.textContent = this.selectedCardId
-      ? "Choose a target -- an enemy card, or the opponent."
-      : "Click a hand card to place it, or select a board card then a target to attack."
+    if (this.selectedCardRole === "place") {
+      this.hintTarget.textContent = "Choose an empty slot to place it in -- left, center, or right."
+    } else if (this.selectedCardRole === "attacker") {
+      this.hintTarget.textContent = "Choose a target -- an enemy card, or the opponent."
+    } else {
+      this.hintTarget.textContent = "Click a hand card to place it, or select a board card then a target to attack."
+    }
   }
 
   highlightCard(event) {
@@ -252,9 +281,15 @@ export default class extends Controller {
     cardEl?.classList.add("battle-card--log-highlight")
   }
 
+  highlightTargetCard(event) {
+    const id = event.currentTarget.dataset.battleCardId
+    const cardEl = this.boardTarget.querySelector(`[data-battle-card-id="${id}"]`)
+    cardEl?.classList.add("battle-card--log-highlight-target")
+  }
+
   unhighlightCard(event) {
     const id = event.currentTarget.dataset.battleCardId
     const cardEl = this.boardTarget.querySelector(`[data-battle-card-id="${id}"]`)
-    cardEl?.classList.remove("battle-card--log-highlight")
+    cardEl?.classList.remove("battle-card--log-highlight", "battle-card--log-highlight-target")
   }
 }

@@ -39,7 +39,7 @@ class BattlesController < ApplicationController
     end
 
     card = @battle.battle_cards.find_by(id: params[:card_id])
-    result = PlaceBattleCard.call(battle: @battle, side: "player", card: card)
+    result = PlaceBattleCard.call(battle: @battle, side: "player", card: card, slot: params[:slot])
 
     return render json: { error: result.error }, status: :unprocessable_entity unless result.success?
 

@@ -39,7 +39,7 @@
     <div class="battle-slots battle-slots--player">
       <% BattleCard::SLOTS.each do |slot| %>
         <% card = player_board_cards.find { |c| c.slot == slot } %>
-        <div class="battle-slot" data-slot="<%= slot %>" data-side="player">
+        <div class="battle-slot" data-slot="<%= slot %>" data-side="player" <% if player_can_act && card.nil? %>data-action="click->battle#selectPlacementSlot"<% end %>>
           <%= render "card", battle: battle, card: card, role: (player_can_act ? "attacker" : nil) if card %>
         </div>
       <% end %>

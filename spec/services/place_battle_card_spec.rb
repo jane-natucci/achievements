@@ -3,10 +3,11 @@
 require 'rails_helper'
 
 RSpec.describe PlaceBattleCard do
-  subject(:call) { described_class.call(battle: battle, side: 'player', card: card) }
+  subject(:call) { described_class.call(battle: battle, side: 'player', card: card, slot: slot) }
 
   let(:battle) { build_battle }
   let(:card) { build_card(battle, side: 'player', zone: 'hand') }
+  let(:slot) { 'center' }
 
   def build_battle(current_turn_side: 'player')
     Battle.create!(user: create(:user), deck_chain: create(:chain), current_turn_side: current_turn_side)
@@ -19,11 +20,11 @@ RSpec.describe PlaceBattleCard do
     )
   end
 
-  it 'places the card onto the board (first open slot) and marks it acted, without any move or damage' do
+  it 'places the card onto the chosen slot and marks it acted, without any move or damage' do
     expect(call.success?).to be(true)
 
     expect(card.reload.zone).to eq('board')
-    expect(card.slot).to eq('left')
+    expect(card.slot).to eq('center')
     expect(card.acted_this_turn?).to be(true)
     expect(battle.reload.battle_moves.count).to eq(0)
   end
@@ -32,14 +33,6 @@ RSpec.describe PlaceBattleCard do
     call
 
     expect(battle.reload.placed_card_this_turn?('player')).to be(true)
-  end
-
-  it 'places into the first open slot when earlier slots are occupied' do
-    build_card(battle, side: 'player', zone: 'board', slot: 'left')
-
-    call
-
-    expect(card.reload.slot).to eq('center')
   end
 
   describe 'validation' do
@@ -60,7 +53,7 @@ RSpec.describe PlaceBattleCard do
     it 'rejects a card not in hand' do
       board_card = build_card(battle, side: 'player', zone: 'board', slot: 'left')
 
-      result = described_class.call(battle: battle, side: 'player', card: board_card)
+      result = described_class.call(battle: battle, side: 'player', card: board_card, slot: 'center')
 
       expect(result.success?).to be(false)
       expect(result.error).to match(/can't be placed/i)
@@ -70,17 +63,24 @@ RSpec.describe PlaceBattleCard do
       other_hand_card = build_card(battle, side: 'player', zone: 'hand')
       call
 
-      result = described_class.call(battle: battle, side: 'player', card: other_hand_card)
+      result = described_class.call(battle: battle, side: 'player', card: other_hand_card, slot: 'left')
 
       expect(result.success?).to be(false)
       expect(result.error).to match(/already placed/i)
     end
 
-    it 'rejects placing when the board has no open slot' do
-      BattleCard::SLOTS.each { |slot| build_card(battle, side: 'player', zone: 'board', slot: slot) }
+    it 'rejects an unknown slot' do
+      result = described_class.call(battle: battle, side: 'player', card: card, slot: 'top')
+
+      expect(result.success?).to be(false)
+      expect(result.error).to match(/slot/i)
+    end
+
+    it 'rejects a slot that is already occupied' do
+      build_card(battle, side: 'player', zone: 'board', slot: 'center')
 
       expect(call.success?).to be(false)
-      expect(call.error).to match(/slot/i)
+      expect(call.error).to match(/occupied/i)
     end
 
     it 'makes no changes when validation fails' do

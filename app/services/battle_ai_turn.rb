@@ -22,7 +22,7 @@ class BattleAiTurn
     return ResolveBattleTurn::Result.new(battle: battle, error: "Opponent has no actionable cards.") unless card
 
     if card.zone == "hand"
-      PlaceBattleCard.call(battle: battle, side: "opponent", card: card)
+      PlaceBattleCard.call(battle: battle, side: "opponent", card: card, slot: open_slots.sample)
     else
       ResolveBattleTurn.call(battle: battle, side: "opponent", acting_card: card, target: pick_target)
     end
@@ -31,6 +31,11 @@ class BattleAiTurn
   private
 
   attr_reader :battle
+
+  def open_slots
+    occupied = battle.cards_for("opponent").select { |card| card.zone == "board" }.map(&:slot)
+    BattleCard::SLOTS - occupied
+  end
 
   def pick_target
     # Only cards actually on the board are valid targets -- a hand/deck

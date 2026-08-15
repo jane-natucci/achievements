@@ -101,19 +101,20 @@ RSpec.describe 'Battles', type: :request do
       sign_in(user)
     end
 
-    it 'places a hand card onto the board' do
+    it 'places a hand card onto the chosen slot' do
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
-      post place_battle_path(battle), params: { card_id: card.id }, headers: { 'Accept' => 'application/json' }
+      post place_battle_path(battle), params: { card_id: card.id, slot: 'right' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to have_http_status(:ok)
       json = response.parsed_body
       expect(json['board_html']).to include('battle-board')
       expect(card.reload.zone).to eq('board')
+      expect(card.slot).to eq('right')
     end
 
     it 'returns a JSON error for an invalid placement without changing battle state' do
-      post place_battle_path(battle), params: { card_id: -1 }, headers: { 'Accept' => 'application/json' }
+      post place_battle_path(battle), params: { card_id: -1, slot: 'left' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body['error']).to be_present
@@ -123,7 +124,7 @@ RSpec.describe 'Battles', type: :request do
       battle.update!(status: 'won')
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
-      post place_battle_path(battle), params: { card_id: card.id }, headers: { 'Accept' => 'application/json' }
+      post place_battle_path(battle), params: { card_id: card.id, slot: 'left' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to have_http_status(:unprocessable_content)
     end
@@ -133,7 +134,7 @@ RSpec.describe 'Battles', type: :request do
       sign_in(visitor)
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
-      post place_battle_path(battle), params: { card_id: card.id }, headers: { 'Accept' => 'application/json' }
+      post place_battle_path(battle), params: { card_id: card.id, slot: 'left' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to redirect_to(battles_path)
     end
@@ -171,6 +172,16 @@ RSpec.describe 'Battles', type: :request do
       expect(json['board_html']).to include('battle-board')
       expect(json['move_html']).to include('battle-log__entry')
       expect(battle.reload.current_turn_side).to eq('player')
+    end
+
+    it 'includes a death notice in the move log when the attack kills its target' do
+      card = board_card_for(battle)
+      weak_target = battle.opponent_cards.find { |c| c.zone == 'hand' }
+      weak_target.update!(zone: 'board', slot: 'left', hp_current: 1)
+
+      post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'card', target_battle_card_id: weak_target.id }, headers: { 'Accept' => 'application/json' }
+
+      expect(response.parsed_body['move_html']).to include('died!')
     end
 
     it 'returns a JSON error for an invalid attack without changing battle state' do
