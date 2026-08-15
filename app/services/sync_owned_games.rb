@@ -12,7 +12,7 @@ class SyncOwnedGames
 
   def call
     candidates.each do |game_data|
-      sync_game!(game_data)
+      ImportSteamGame.call(game_data["appid"], name: game_data["name"], icon_hash: game_data["img_icon_url"])
     rescue StandardError
       next
     end
@@ -31,37 +31,5 @@ class SyncOwnedGames
     games.reject { |entry| known_app_ids.include?(entry["appid"]) }
   rescue StandardError
     []
-  end
-
-  def sync_game!(game_data)
-    app_id = game_data["appid"]
-    return if Game.exists?(steam_app_id: app_id)
-
-    schema = Steam::UserStats.game_schema(app_id)
-    achievement_data = Array(schema&.dig("availableGameStats", "achievements"))
-    return if achievement_data.empty?
-
-    game = Game.create!(
-      steam_app_id: app_id,
-      name: game_data["name"].presence || schema["gameName"],
-      icon: icon_url(app_id, game_data["img_icon_url"])
-    )
-
-    achievement_data.each do |entry|
-      game.achievements.create!(
-        steam_api_name: entry["name"],
-        title: entry["displayName"],
-        description: entry["description"],
-        icon_unlocked: entry["icon"],
-        icon_locked: entry["icongray"],
-        hidden: entry["hidden"].to_i == 1
-      )
-    end
-  end
-
-  def icon_url(app_id, icon_hash)
-    return if icon_hash.blank?
-
-    "https://media.steampowered.com/steamcommunity/public/images/apps/#{app_id}/#{icon_hash}.jpg"
   end
 end

@@ -8,6 +8,8 @@ class SyncUserAchievementProgress
   end
 
   def call
+    import_newly_played_games!
+
     Game.find_each do |game|
       sync_progress_for_game!(game)
     rescue StandardError
@@ -18,6 +20,23 @@ class SyncUserAchievementProgress
   private
 
   attr_reader :user
+
+  # SyncOwnedGames (onboarding) only imports a player's top N games by
+  # playtime, so a game started afterwards can go unnoticed forever -- pick
+  # up anything played at all that we don't already know about, no cap.
+  def import_newly_played_games!
+    owned = Steam::Player.owned_games(user.steam_id, params: { include_appinfo: true, include_played_free_games: true })
+    played = Array(owned["games"]).select { |entry| entry["playtime_forever"].to_i.positive? }
+    known_app_ids = Game.where(steam_app_id: played.map { |entry| entry["appid"] }).pluck(:steam_app_id).to_set
+
+    played.reject { |entry| known_app_ids.include?(entry["appid"]) }.each do |entry|
+      ImportSteamGame.call(entry["appid"], name: entry["name"], icon_hash: entry["img_icon_url"])
+    rescue StandardError
+      next
+    end
+  rescue StandardError
+    nil
+  end
 
   def sync_progress_for_game!(game)
     player_stats = Steam::UserStats.player_achievements(game.steam_app_id, user.steam_id)

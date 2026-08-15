@@ -18,6 +18,10 @@ RSpec.describe SyncUserAchievementProgress do
     allow(Steam::UserStats).to receive(:player_achievements).with(440, user.steam_id).and_return('achievements' => achievements)
   end
 
+  before do
+    allow(Steam::Player).to receive(:owned_games).with(user.steam_id, anything).and_return('games' => [])
+  end
+
   context 'when a single achievement is newly unlocked' do
     before { stub_unlocked('ach_a') }
 
@@ -139,6 +143,56 @@ RSpec.describe SyncUserAchievementProgress do
       call
 
       expect(other_user.user_achievement_unlocks.count).to eq(1)
+    end
+  end
+
+  context 'when the player owns a game not yet in our catalog' do
+    def schema_with_achievements(count)
+      {
+        'gameName' => 'New Game',
+        'availableGameStats' => {
+          'achievements' => Array.new(count) do |n|
+            { 'name' => "new_ach_#{n}", 'displayName' => "New Achievement #{n}", 'description' => '', 'icon' => '', 'icongray' => '', 'hidden' => 0 }
+          end
+        }
+      }
+    end
+
+    before { stub_unlocked('ach_a') }
+
+    it "imports it (and its achievements) regardless of SyncOwnedGames' playtime/rank cap" do
+      allow(Steam::Player).to receive(:owned_games).with(user.steam_id, anything).and_return(
+        'games' => [{ 'appid' => 999, 'name' => 'New Game', 'playtime_forever' => 5, 'img_icon_url' => 'hash' }]
+      )
+      allow(Steam::UserStats).to receive(:game_schema).with(999).and_return(schema_with_achievements(1))
+      allow(Steam::UserStats).to receive(:player_achievements).with(999, user.steam_id).and_return('achievements' => [])
+
+      expect { call }.to change(Game, :count).by(1)
+      expect(Game.find_by(steam_app_id: 999).achievements.pluck(:steam_api_name)).to eq(['new_ach_0'])
+    end
+
+    it 'skips owned games with zero playtime' do
+      allow(Steam::Player).to receive(:owned_games).with(user.steam_id, anything).and_return(
+        'games' => [{ 'appid' => 999, 'name' => 'Never Played', 'playtime_forever' => 0, 'img_icon_url' => 'hash' }]
+      )
+
+      expect(Steam::UserStats).not_to receive(:game_schema)
+      expect { call }.not_to change(Game, :count)
+    end
+
+    it 'does not re-import a game already in the catalog' do
+      allow(Steam::Player).to receive(:owned_games).with(user.steam_id, anything).and_return(
+        'games' => [{ 'appid' => 440, 'name' => 'Team Fortress 2', 'playtime_forever' => 500, 'img_icon_url' => 'hash' }]
+      )
+
+      expect(Steam::UserStats).not_to receive(:game_schema)
+      expect { call }.not_to change(Game, :count)
+    end
+
+    it 'continues syncing existing games even if the owned-games lookup itself fails' do
+      allow(Steam::Player).to receive(:owned_games).and_raise(StandardError, 'boom')
+
+      expect { call }.to change { user.reload.total_xp }.by(XpRules::ACHIEVEMENT_UNLOCKED)
     end
   end
 end
