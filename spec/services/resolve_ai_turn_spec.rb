@@ -30,13 +30,14 @@ RSpec.describe ResolveAiTurn do
       expect(result.moves.map(&:acting_side)).to all(eq('opponent'))
     end
 
-    it 'yields the battle state and move once per resolved action' do
+    it 'yields the battle state, move, and acting card once per resolved action' do
       yielded = []
 
-      described_class.call(battle: battle) { |b, move| yielded << [b, move] }
+      described_class.call(battle: battle) { |b, move, card| yielded << [b, move, card] }
 
       expect(yielded.size).to eq(3)
-      expect(yielded.map { |(_, move)| move.acting_side }).to all(eq('opponent'))
+      expect(yielded.map { |(_, move, _)| move.acting_side }).to all(eq('opponent'))
+      expect(yielded.map { |(_, move, card)| card.id }).to eq(yielded.map { |(_, move, _)| move.acting_battle_card_id })
     end
 
     it "hands control back to the player once the opponent's cards are exhausted" do
@@ -56,11 +57,12 @@ RSpec.describe ResolveAiTurn do
     it 'places it (no move, since nothing attacked) and then hands back, having used the one placement' do
       yielded = []
 
-      result = described_class.call(battle: battle) { |b, move| yielded << [b, move] }
+      result = described_class.call(battle: battle) { |b, move, card| yielded << [b, move, card] }
 
       expect(result.moves).to eq([])
       expect(yielded.size).to eq(1)
-      expect(yielded.first.last).to be_nil
+      expect(yielded.first[1]).to be_nil
+      expect(yielded.first[2]).to eq(battle.opponent_cards.first)
       expect(battle.opponent_cards.first.reload.zone).to eq('board')
       expect(result.battle.current_turn_side).to eq('player')
     end

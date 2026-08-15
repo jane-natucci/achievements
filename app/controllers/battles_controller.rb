@@ -64,7 +64,7 @@ class BattlesController < ApplicationController
 
     render json: {
       board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: result.battle }),
-      move_html: render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: result.move }),
+      move_html: render_to_string(partial: "move_log_entry", formats: [:html], locals: { battle: result.battle, move: result.move }),
       result_log_html: result_log_html_for(result.battle),
       battle_over: result.battle.active? ? false : result.battle.status
     }
@@ -81,10 +81,13 @@ class BattlesController < ApplicationController
     end
 
     steps = []
-    result = EndBattleTurn.call(battle: @battle, side: "player") do |battle_snapshot, move|
+    result = EndBattleTurn.call(battle: @battle, side: "player") do |battle_snapshot, move, card|
       steps << {
         board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: battle_snapshot }),
-        move_html: move ? render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: move }) : nil
+        move_html: move ? render_to_string(partial: "move_log_entry", formats: [:html], locals: { battle: battle_snapshot, move: move }) : nil,
+        acting_card_id: card&.id,
+        target_card_id: move&.target_type == "card" ? move.target_battle_card_id : nil,
+        target_player: move&.target_type == "player"
       }
     end
 

@@ -37,12 +37,13 @@
   <section class="battle-log-section">
     <h2>Log</h2>
     <ul class="battle-log" data-battle-target="log">
-      <% @battle.battle_moves.includes(:acting_battle_card, :target_battle_card).order(:move_number).each do |move| %>
-        <%= render "move_log_entry", move: move %>
-      <% end %>
       <% unless @battle.active? %>
         <%= render "result_log_entry", battle: @battle %>
       <% end %>
+      <% @battle.battle_moves.includes(:acting_battle_card, :target_battle_card).order(move_number: :desc).each do |move| %>
+        <%= render "move_log_entry", battle: @battle, move: move %>
+      <% end %>
+      <%= render "start_log_entry", battle: @battle %>
     </ul>
   </section>
 </section>

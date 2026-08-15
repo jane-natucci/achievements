@@ -29,6 +29,13 @@ RSpec.describe PlaceBattleCard do
     expect(battle.reload.battle_moves.count).to eq(0)
   end
 
+  it 'exposes the placed card on the result, with no move' do
+    result = call
+
+    expect(result.card).to eq(card)
+    expect(result.move).to be_nil
+  end
+
   it "marks the side as having placed a card this turn" do
     call
 

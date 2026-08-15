@@ -89,6 +89,57 @@ RSpec.describe 'Battles', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Battle')
     end
+
+    it "announces who's fighting whom, with the player's name linked to their profile" do
+      user = create(:user, display_name: 'Jane')
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      sign_in(user)
+
+      get battle_path(battle)
+
+      expect(response.body).to include('Shadow')
+      expect(response.body).to include(user_path(user))
+    end
+
+    it 'lists moves newest first, with the battle-start entry last' do
+      user = create(:user)
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      sign_in(user)
+      first_card, second_card = battle.player_cards.select { |c| c.zone == 'hand' }.first(2)
+      first_card.update!(zone: 'board', slot: 'left')
+      second_card.update!(zone: 'board', slot: 'center')
+      ResolveBattleTurn.call(battle: battle, side: 'player', acting_card: first_card, target: :player)
+      ResolveBattleTurn.call(battle: battle, side: 'player', acting_card: second_card, target: :player)
+
+      get battle_path(battle)
+
+      # Search only within the log section -- the same card titles also
+      # appear earlier on the board tiles themselves, which would otherwise
+      # give a false "first occurrence" position.
+      log_section = response.body[response.body.index('battle-log-section')..]
+      first_move_pos = log_section.index("data-battle-card-id=\"#{first_card.id}\"")
+      second_move_pos = log_section.index("data-battle-card-id=\"#{second_card.id}\"")
+      start_pos = log_section.index('started.')
+
+      expect(second_move_pos).to be < first_move_pos
+      expect(first_move_pos).to be < start_pos
+    end
+
+    it 'says clearly who defeated whom when the battle is over' do
+      user = create(:user, display_name: 'Jane')
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      battle.update!(status: 'won')
+      sign_in(user)
+
+      get battle_path(battle)
+
+      expect(response.body).to include('Jane')
+      expect(response.body).to include('defeated')
+      expect(response.body).to include('Shadow')
+    end
   end
 
   describe 'POST /achievements/battles/:id/place' do

@@ -28,7 +28,7 @@ class PlaceBattleCard
       battle.mark_card_placed!(side)
     end
 
-    ResolveBattleTurn::Result.new(battle: battle.reload)
+    ResolveBattleTurn::Result.new(battle: battle.reload, card: card)
   end
 
   private

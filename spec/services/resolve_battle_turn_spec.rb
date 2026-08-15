@@ -28,9 +28,14 @@ RSpec.describe ResolveBattleTurn do
   end
 
   it 'attacks the opponent directly for the card\'s flat damage' do
-    expect(call.success?).to be(true)
+    result = call
 
+    expect(result.success?).to be(true)
     expect(battle.reload.opponent_hp).to eq(Battle::STARTING_HP - 5)
+  end
+
+  it 'exposes the acting card on the result regardless of the move' do
+    expect(call.card).to eq(acting_card)
   end
 
   it 'records a BattleMove with the right details' do

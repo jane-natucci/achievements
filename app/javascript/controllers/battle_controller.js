@@ -121,7 +121,7 @@ export default class extends Controller {
     }
 
     this.applyBoardHtml(data.board_html)
-    if (data.move_html) this.logTarget.insertAdjacentHTML("beforeend", data.move_html)
+    if (data.move_html) this.logTarget.insertAdjacentHTML("afterbegin", data.move_html)
     this.resetSelection()
 
     if (data.battle_over) this.endBattle(data.battle_over, data.result_log_html)
@@ -168,9 +168,27 @@ export default class extends Controller {
     setTimeout(() => {
       const step = steps[index]
       this.applyBoardHtml(step.board_html)
-      if (step.move_html) this.logTarget.insertAdjacentHTML("beforeend", step.move_html)
+      if (step.move_html) this.logTarget.insertAdjacentHTML("afterbegin", step.move_html)
+      this.highlightAiStep(step)
       this.revealSteps(steps, index + 1, data)
     }, AI_MOVE_DELAY_MS)
+  }
+
+  // Spotlights what the AI just did for this step, using the same visual
+  // language as the player's own selection (blue outline = acting card,
+  // red pulse = whatever it hit) -- otherwise a step is just an HP diff
+  // you have to spot yourself. Lasts until the next applyBoardHtml swap
+  // replaces the board wholesale, no manual cleanup needed.
+  highlightAiStep(step) {
+    if (step.acting_card_id) {
+      this.boardTarget.querySelector(`[data-battle-card-id="${step.acting_card_id}"]`)?.classList.add("battle-card--selected")
+    }
+
+    if (step.target_card_id) {
+      this.boardTarget.querySelector(`[data-battle-card-id="${step.target_card_id}"]`)?.classList.add("battle-card--attacking")
+    } else if (step.target_player) {
+      this.boardTarget.querySelector('[data-hp-avatar="player"]')?.classList.add("battle-avatar-card--attacking")
+    }
   }
 
   finishEndTurn(data) {
@@ -187,7 +205,7 @@ export default class extends Controller {
 
   endBattle(status, resultLogHtml) {
     this.statusTarget.textContent = status === "won" ? "You won!" : "You lost."
-    if (resultLogHtml) this.logTarget.insertAdjacentHTML("beforeend", resultLogHtml)
+    if (resultLogHtml) this.logTarget.insertAdjacentHTML("afterbegin", resultLogHtml)
     this.activeValue = false
     this.element.querySelector(".battle-controls")?.remove()
   }

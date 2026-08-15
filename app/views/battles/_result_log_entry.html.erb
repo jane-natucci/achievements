@@ -1,3 +1,7 @@
 <li class="battle-log__entry battle-log__entry--result battle-log__entry--<%= battle.status %>">
-  <%= battle.status == "won" ? "You won!" : "You lost." %>
+  <% if battle.status == "won" %>
+    <strong><%= battle_player_link(battle) %></strong> defeated <strong><%= battle_shadow_name(battle) %></strong> -- You won!
+  <% else %>
+    <strong><%= battle_shadow_name(battle) %></strong> defeated <strong><%= battle_player_link(battle) %></strong> -- You lost.
+  <% end %>
 </li>

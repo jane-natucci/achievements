@@ -8,7 +8,11 @@
 # side's turn, so turn-ending is a separate, explicit step (see
 # EndBattleTurn). This only marks the acting card as having acted.
 class ResolveBattleTurn
-  Result = Struct.new(:battle, :move, :error, keyword_init: true) do
+  # :card is the acting card regardless of action type -- move.acting_battle_card
+  # covers the same thing for an attack, but a placement has no move at
+  # all, so callers that need "which card just did something" either way
+  # (e.g. highlighting the AI's choice mid-turn-reveal) read this instead.
+  Result = Struct.new(:battle, :move, :card, :error, keyword_init: true) do
     def success?
       error.nil?
     end
@@ -49,7 +53,7 @@ class ResolveBattleTurn
       check_for_battle_end!
     end
 
-    Result.new(battle: battle.reload, move: move)
+    Result.new(battle: battle.reload, move: move, card: acting_card)
   end
 
   private

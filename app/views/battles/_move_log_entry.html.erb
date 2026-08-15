@@ -1,5 +1,7 @@
 <li class="battle-log__entry">
-  <span class="battle-log__side battle-log__side--<%= move.acting_side %>"><%= move.acting_side == "player" ? "You" : "Opponent" %></span>
+  <span class="battle-log__side battle-log__side--<%= move.acting_side %>">
+    <%= move.acting_side == "player" ? battle_player_link(battle) : "Opponent" %>
+  </span>
   <span class="battle-log__actor"
         data-battle-card-id="<%= move.acting_battle_card_id %>"
         data-action="mouseenter->battle#highlightCard mouseleave->battle#unhighlightCard">
@@ -10,7 +12,7 @@
   </span>
   attacked
   <% if move.target_type == "player" %>
-    <span class="battle-log__target"><%= move.acting_side == "player" ? "the opponent" : "you" %></span>
+    <span class="battle-log__target"><%= move.acting_side == "player" ? "the opponent" : battle_player_link(battle) %></span>
   <% else %>
     <span class="battle-log__target"
           data-battle-card-id="<%= move.target_battle_card_id %>"

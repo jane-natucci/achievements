@@ -2924,6 +2924,17 @@ a {
   color: #e05252;
 }
 
+.battle-log__player-link {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+.battle-log__player-link:hover,
+.battle-log__player-link:focus-visible {
+  text-decoration: underline;
+}
+
 .battle-log__actor,
 .battle-log__target {
   color: var(--text);
@@ -2972,6 +2983,10 @@ a {
 
 .battle-log__entry--lost {
   color: #e05252;
+}
+
+.battle-log__entry--start {
+  color: var(--accent);
 }
 
 @keyframes battle-card-pulse {
