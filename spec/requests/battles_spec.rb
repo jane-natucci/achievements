@@ -37,6 +37,17 @@ RSpec.describe 'Battles', type: :request do
       expect(response.body).not_to include(too_big.title)
       expect(response.body).not_to include(someone_elses.title)
     end
+
+    it 'redirects to the existing active battle instead of the deck picker' do
+      user = create(:user)
+      sign_in(user)
+      chain = build_chain(3, game: create(:game), creator: user)
+      active_battle = Battle.create!(user: user, deck_chain: chain, current_turn_side: 'player', status: 'active')
+
+      get new_battle_path
+
+      expect(response).to redirect_to(battle_path(active_battle))
+    end
   end
 
   describe 'POST /achievements/battles' do
@@ -59,6 +70,20 @@ RSpec.describe 'Battles', type: :request do
 
       expect {
         post battles_path, params: { chain_id: chain.id }
+      }.not_to change(Battle, :count)
+
+      expect(response).to redirect_to(new_battle_path)
+    end
+
+    it 'redirects back with an error when the user already has a battle in progress' do
+      user = create(:user)
+      sign_in(user)
+      chain = build_chain(3, game: create(:game), creator: user)
+      Battle.create!(user: user, deck_chain: chain, current_turn_side: 'player', status: 'active')
+      other_chain = build_chain(3, game: create(:game), creator: user)
+
+      expect {
+        post battles_path, params: { chain_id: other_chain.id }
       }.not_to change(Battle, :count)
 
       expect(response).to redirect_to(new_battle_path)
@@ -88,6 +113,41 @@ RSpec.describe 'Battles', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Battle')
+    end
+
+    it "passes the turn's start time and the turn-timer budget to the client" do
+      user = create(:user)
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      sign_in(user)
+
+      get battle_path(battle)
+
+      expect(response.body).to include(%(data-battle-turn-started-at-value="#{battle.reload.turn_started_at.to_i}"))
+      expect(response.body).to include(%(data-battle-turn-seconds-value="#{Battle::TURN_SECONDS}"))
+    end
+
+    it "titles the page with the player's name vs their shadow" do
+      user = create(:user, display_name: 'Jane')
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      sign_in(user)
+
+      get battle_path(battle)
+
+      expect(response.body).to include('<h1>Jane vs Jane&#39;s Shadow</h1>')
+    end
+
+    it 'marks the board as having no player actions left once every card has acted, for the Ready-glow' do
+      user = create(:user)
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      sign_in(user)
+      battle.player_cards.each { |card| card.update!(acted_this_turn: true) }
+
+      get battle_path(battle)
+
+      expect(response.body).to include('data-player-actionable="false"')
     end
 
     it "announces who's fighting whom, with the player's name linked to their profile" do

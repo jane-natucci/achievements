@@ -24,7 +24,7 @@ RSpec.describe CreateBattle do
     # actually exercise the coin flip override this back to "opponent".
     before { allow_any_instance_of(described_class).to receive(:first_mover).and_return('player') }
 
-    it 'creates a battle with mirrored player and opponent cards' do
+    it 'creates a battle, dealing the player their own chain' do
       result = call
 
       expect(result.success?).to be(true)
@@ -34,8 +34,30 @@ RSpec.describe CreateBattle do
       expect(battle.player_hp).to eq(Battle::STARTING_HP)
       expect(battle.opponent_hp).to eq(Battle::STARTING_HP)
       expect(battle.player_cards.size).to eq(5)
-      expect(battle.opponent_cards.size).to eq(5)
-      expect(battle.player_cards.map { |c| c.achievement_id }.sort).to eq(battle.opponent_cards.map { |c| c.achievement_id }.sort)
+      expect(battle.player_cards.map(&:achievement_id).sort).to eq(chain.nodes_in_order.map { |n| n.achievement.id }.sort)
+    end
+
+    it "mirrors the player's own chain for the opponent when no other eligible chain exists yet" do
+      battle = call.battle
+
+      expect(battle.opponent_cards.map(&:achievement_id).sort).to eq(battle.player_cards.map(&:achievement_id).sort)
+    end
+
+    it "battles against a different chain's cards -- even one made by someone else -- when another eligible chain exists" do
+      other_chain = build_chain(4, game: game)
+
+      battle = call.battle
+
+      expect(battle.opponent_cards.size).to eq(4)
+      expect(battle.opponent_cards.map(&:achievement_id).sort).to eq(other_chain.nodes_in_order.map { |n| n.achievement.id }.sort)
+      expect(battle.opponent_cards.map(&:achievement_id).sort).not_to eq(battle.player_cards.map(&:achievement_id).sort)
+    end
+
+    it 'rejects starting a battle when the user already has one active' do
+      Battle.create!(user: user, deck_chain: chain, current_turn_side: 'player', status: 'active')
+
+      expect { call }.not_to change(Battle, :count)
+      expect(call.error).to match(/already have a battle in progress/i)
     end
 
     it 'deals the first HAND_SIZE cards to hand, in chain order, and leaves the rest in deck' do

@@ -66,6 +66,41 @@ RSpec.describe BattleAiTurn do
     end
   end
 
+  context "when the opponent's remaining board damage this turn adds up to lethal" do
+    before do
+      build_card(battle, side: 'opponent', zone: 'board', slot: 'left', dmg: 5)
+      build_card(battle, side: 'opponent', zone: 'board', slot: 'center', dmg: 5)
+      build_card(battle, side: 'player', zone: 'board', slot: 'left', hp: 100)
+      battle.update!(player_hp: 8)
+    end
+
+    it 'goes for the player directly instead of trading with a card at random' do
+      result = call
+
+      expect(result.move.target_type).to eq('player')
+    end
+  end
+
+  context "when the opponent's remaining board damage this turn falls short of lethal" do
+    before do
+      build_card(battle, side: 'opponent', zone: 'board', slot: 'left', dmg: 5)
+      # dmg: 0 -- a card-target hit retaliates (see ResolveBattleTurn), and
+      # a real retaliation dmg would eventually kill the opponent's one
+      # card across 20 iterations, which is incidental to what this test
+      # is actually checking.
+      build_card(battle, side: 'player', zone: 'board', slot: 'left', hp: 100, dmg: 0)
+      # High enough that even 20 rounds of nothing but face damage can't
+      # end the battle mid-loop and start returning "already over" errors.
+      battle.update!(player_hp: 500)
+    end
+
+    it 'can still trade with a card (not forced to go face every turn)' do
+      results = 20.times.map { described_class.call(battle: battle.tap { |b| b.opponent_cards.first.update!(acted_this_turn: false) }) }
+
+      expect(results.map { |r| r.move.target_type }).to include('card')
+    end
+  end
+
   context 'when the opponent has no actionable cards' do
     it 'returns an error rather than raising' do
       result = call

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_205800) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_231813) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_205800) do
 
   create_table "battle_moves", force: :cascade do |t|
     t.bigint "acting_battle_card_id", null: false
+    t.integer "acting_hp_after"
     t.string "acting_side", null: false
     t.bigint "battle_id", null: false
     t.datetime "created_at", null: false
@@ -74,6 +75,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_205800) do
     t.boolean "player_placed_card_this_turn", default: false, null: false
     t.integer "player_turn_count", default: 0, null: false
     t.string "status", default: "active", null: false
+    t.datetime "turn_started_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["deck_chain_id"], name: "index_battles_on_deck_chain_id"

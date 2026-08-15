@@ -9,9 +9,11 @@
          data-battle-place-url-value="<%= place_battle_path(@battle) %>"
          data-battle-attack-url-value="<%= attack_battle_path(@battle) %>"
          data-battle-end-turn-url-value="<%= end_turn_battle_path(@battle) %>"
-         data-battle-active-value="<%= @battle.active? %>">
+         data-battle-active-value="<%= @battle.active? %>"
+         data-battle-turn-started-at-value="<%= @battle.turn_started_at&.to_i %>"
+         data-battle-turn-seconds-value="<%= Battle::TURN_SECONDS %>">
   <header class="achievements-section__header">
-    <h1>Battle</h1>
+    <h1><%= battle_player_name(@battle) %> vs <%= battle_shadow_name(@battle) %></h1>
     <p class="achievements-section__meta" data-battle-target="status">
       <% if @battle.active? %>
         Your turn
@@ -30,6 +32,7 @@
       <button type="button" class="sidebar-button" data-battle-target="readyButton" data-action="click->battle#endTurn">
         Ready
       </button>
+      <span class="battle-controls__timer" data-battle-target="timer" aria-live="polite"></span>
       <p class="battle-controls__hint" data-battle-target="hint">Click a hand card to place it, or select a board card then a target to attack.</p>
     </div>
   <% end %>

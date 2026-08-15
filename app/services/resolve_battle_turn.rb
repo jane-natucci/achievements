@@ -4,6 +4,11 @@
 # the board is a separate action (see PlaceBattleCard) -- a card can't
 # attack the same turn it's placed.
 #
+# A card-vs-card attack is a mutual exchange: the target hits back with
+# its own dmg in the same action, so attacking is never free even when
+# you pick the fight. Attacking the player directly has no retaliation --
+# the player doesn't have a dmg stat to hit back with.
+#
 # Does NOT flip whose turn it is -- multiple cards can each act once per
 # side's turn, so turn-ending is a separate, explicit step (see
 # EndBattleTurn). This only marks the acting card as having acted.
@@ -38,6 +43,7 @@ class ResolveBattleTurn
     ActiveRecord::Base.transaction do
       damage = acting_card.dmg
       target_hp_after = apply_damage!(damage)
+      acting_hp_after = apply_retaliation!
 
       move = battle.battle_moves.create!(
         move_number: next_move_number,
@@ -46,7 +52,8 @@ class ResolveBattleTurn
         target_type: target == :player ? "player" : "card",
         target_battle_card: target == :player ? nil : target,
         damage_dealt: damage,
-        target_hp_after: target_hp_after
+        target_hp_after: target_hp_after,
+        acting_hp_after: acting_hp_after
       )
 
       acting_card.update!(acted_this_turn: true)
@@ -84,6 +91,16 @@ class ResolveBattleTurn
       target.update!(hp_current: new_hp, zone: (new_hp.zero? ? "dead" : target.zone))
       new_hp
     end
+  end
+
+  # Simultaneous exchange: the target hits back with its own dmg,
+  # regardless of whether either card dies from the trade.
+  def apply_retaliation!
+    return acting_card.hp_current if target == :player
+
+    new_hp = [acting_card.hp_current - target.dmg, 0].max
+    acting_card.update!(hp_current: new_hp, zone: (new_hp.zero? ? "dead" : acting_card.zone))
+    new_hp
   end
 
   def next_move_number

@@ -48,6 +48,9 @@ RSpec.describe ResolveBattleTurn do
     expect(move.target_type).to eq('player')
     expect(move.damage_dealt).to eq(5)
     expect(move.target_hp_after).to eq(Battle::STARTING_HP - 5)
+    # A direct hit on the player doesn't retaliate -- the acting card's hp
+    # is untouched (still its starting 10).
+    expect(move.acting_hp_after).to eq(10)
   end
 
   it 'marks the acting card as having acted this turn, but does not change whose turn it is' do
@@ -81,6 +84,35 @@ RSpec.describe ResolveBattleTurn do
       described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: weak_target)
 
       expect(weak_target.reload.hp_current).to eq(0)
+    end
+
+    it "also damages the acting card by the target's own dmg -- a mutual exchange" do
+      call
+
+      expect(acting_card.reload.hp_current).to eq(5) # 10 hp - the target's 5 dmg
+    end
+
+    it 'records acting_hp_after reflecting the retaliation damage taken' do
+      call
+
+      expect(battle.battle_moves.last.acting_hp_after).to eq(5)
+    end
+
+    it 'kills the acting card too when retaliation damage is enough -- a mutual trade' do
+      glass_cannon = build_card(battle, side: 'player', zone: 'board', hp: 3, dmg: 10, slot: 'center')
+
+      described_class.call(battle: battle, side: 'player', acting_card: glass_cannon, target: target)
+
+      expect(glass_cannon.reload.hp_current).to eq(0)
+      expect(glass_cannon.zone).to eq('dead')
+    end
+
+    it "never drops the acting card's hp below 0 from retaliation" do
+      glass_cannon = build_card(battle, side: 'player', zone: 'board', hp: 1, dmg: 10, slot: 'center')
+
+      described_class.call(battle: battle, side: 'player', acting_card: glass_cannon, target: target)
+
+      expect(glass_cannon.reload.hp_current).to eq(0)
     end
   end
 

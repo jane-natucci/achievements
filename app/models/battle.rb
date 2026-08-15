@@ -2,6 +2,7 @@ class Battle < ApplicationRecord
   STARTING_HP = 30
   MAX_DECK_SIZE = 15
   HAND_REFILL_SIZE = 3
+  TURN_SECONDS = 120
 
   belongs_to :user
   belongs_to :deck_chain, class_name: "Chain"
@@ -69,11 +70,13 @@ class Battle < ApplicationRecord
     cards_for(side).select { |card| actionable?(card) }
   end
 
-  # The "beginning of a turn" event: resets this side's cards (and their
-  # one-placement-per-turn budget) so they can act again, and refills this
-  # side's hand back up to HAND_REFILL_SIZE cards once it's run
-  # completely empty -- not on a fixed per-turn cadence, so a side keeps
-  # playing down whatever hand it has across as many turns as that takes.
+  # The "beginning of a turn" event: stamps turn_started_at (the clock the
+  # player's TURN_SECONDS countdown runs against), resets this side's
+  # cards (and their one-placement-per-turn budget) so they can act
+  # again, and refills this side's hand back up to HAND_REFILL_SIZE cards
+  # once it's run completely empty -- not on a fixed per-turn cadence, so
+  # a side keeps playing down whatever hand it has across as many turns
+  # as that takes.
   def start_turn!(side)
     if side == "player"
       increment!(:player_turn_count)
@@ -81,7 +84,7 @@ class Battle < ApplicationRecord
       increment!(:opponent_turn_count)
     end
 
-    update!(side == "player" ? { player_placed_card_this_turn: false } : { opponent_placed_card_this_turn: false })
+    update!({ turn_started_at: Time.current }.merge(side == "player" ? { player_placed_card_this_turn: false } : { opponent_placed_card_this_turn: false }))
 
     battle_cards.where(side: side, zone: %w[hand board]).update_all(acted_this_turn: false)
     # update_all bypasses ActiveRecord entirely -- it doesn't touch this

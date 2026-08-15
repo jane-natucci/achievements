@@ -29,8 +29,14 @@
     </span>
   <% end %>
   for <strong class="battle-log__damage"><%= move.damage_dealt %></strong> dmg
-  <% if move.target_type == "card" && move.target_hp_after.zero? %>
-    <span class="battle-log__death">💀 died!</span>
+  <% if move.target_type == "card" %>
+    <% if move.target_hp_after.zero? %>
+      <span class="battle-log__death">💀 died!</span>
+    <% end %>
+    -- took <strong class="battle-log__damage"><%= move.target_battle_card.dmg %></strong> dmg back
+    <% if move.acting_hp_after&.zero? %>
+      <span class="battle-log__death">💀 died!</span>
+    <% end %>
   <% end %>
   <time class="battle-log__time"><%= move.created_at.strftime("%-I:%M:%S%P") %></time>
 </li>

@@ -41,8 +41,18 @@ class BattleAiTurn
     # Only cards actually on the board are valid targets -- a hand/deck
     # card isn't "in play" yet, even though it's technically alive.
     board_player_cards = battle.cards_for("player").select { |card| card.zone == "board" }
-    return :player if board_player_cards.empty?
+    return :player if board_player_cards.empty? || lethal_turn_available?
 
     ([:player] + board_player_cards).sample
+  end
+
+  # If everything the opponent could still swing with this turn adds up to
+  # lethal, go face with all of it instead of trading with cards at
+  # random -- otherwise the AI can "win" a turn on paper (enough total
+  # damage on board) and still not take it, which reads as obviously
+  # broken from the player's side.
+  def lethal_turn_available?
+    remaining_damage = battle.cards_for("opponent").select { |card| card.zone == "board" && card.alive? && !card.acted_this_turn? }.sum(&:dmg)
+    remaining_damage >= battle.player_hp
   end
 end

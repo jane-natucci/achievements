@@ -11,7 +11,7 @@
   opponent_icon = battle.user.avatar_url
   player_icon = battle.user.avatar_url
 %>
-<div class="battle-board" data-battle-status="<%= battle.status %>" data-current-turn="<%= battle.current_turn_side %>">
+<div class="battle-board" data-battle-status="<%= battle.status %>" data-current-turn="<%= battle.current_turn_side %>" data-player-actionable="<%= battle.actionable_cards_for("player").any? %>">
   <div class="battle-board__main">
     <div class="battle-hand battle-hand--opponent" aria-label="Opponent's hand (<%= opponent_hand_cards.size %> cards)">
       <% opponent_hand_cards.each do %>

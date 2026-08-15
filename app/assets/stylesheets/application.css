@@ -2906,10 +2906,37 @@ a.topbar__nav-link--battle {
   background: var(--panel);
 }
 
+.battle-controls__ready--glow:not(:disabled) {
+  box-shadow: 0 0 0 3px rgba(126, 217, 87, 0.35), 0 0 16px 4px rgba(126, 217, 87, 0.55);
+  animation: battle-ready-glow-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes battle-ready-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(126, 217, 87, 0.35), 0 0 16px 4px rgba(126, 217, 87, 0.55);
+  }
+
+  50% {
+    box-shadow: 0 0 0 3px rgba(126, 217, 87, 0.55), 0 0 22px 8px rgba(126, 217, 87, 0.8);
+  }
+}
+
 .battle-controls__hint {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.82rem;
+}
+
+.battle-controls__timer {
+  min-width: 2.6em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.battle-controls__timer:not(:empty)::before {
+  content: "⏱ ";
 }
 
 .battle-log-section {

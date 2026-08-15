@@ -11,6 +11,9 @@ class BattlesController < ApplicationController
   def new
     return redirect_to("/achievements/login/", alert: "Log in to start a battle.") unless current_user
 
+    active_battle = current_user.battles.find_by(status: "active")
+    return redirect_to(battle_path(active_battle), notice: "You already have a battle in progress.") if active_battle
+
     @eligible_chains = current_user.created_chains.kept.select { |chain| chain.chain_nodes.count.between?(1, Battle::MAX_DECK_SIZE) }
   end
 

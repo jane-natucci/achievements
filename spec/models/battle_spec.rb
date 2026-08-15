@@ -77,6 +77,15 @@ RSpec.describe Battle do
 
       expect(battle.placed_card_this_turn?('player')).to be(false)
     end
+
+    it 'stamps turn_started_at with the current time -- the clock the turn-timer counts down from' do
+      battle = build_battle
+      battle.update!(turn_started_at: 1.hour.ago)
+
+      battle.start_turn!('player')
+
+      expect(battle.turn_started_at).to be_within(2.seconds).of(Time.current)
+    end
   end
 
   describe '#draw_card!' do

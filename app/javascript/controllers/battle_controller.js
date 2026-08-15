@@ -3,12 +3,27 @@ import { Controller } from "@hotwired/stimulus"
 const AI_MOVE_DELAY_MS = 2500
 
 export default class extends Controller {
-  static targets = ["board", "status", "readyButton", "hint", "log"]
-  static values = { placeUrl: String, attackUrl: String, endTurnUrl: String, active: Boolean }
+  static targets = ["board", "status", "readyButton", "hint", "log", "timer"]
+  static values = {
+    placeUrl: String,
+    attackUrl: String,
+    endTurnUrl: String,
+    active: Boolean,
+    turnStartedAt: Number,
+    turnSeconds: Number
+  }
 
   connect() {
     this.requestInFlight = false
     this.resetSelection()
+    this.updateReadyGlow()
+    this.turnDeadline = this.turnStartedAtValue ? (this.turnStartedAtValue * 1000) + (this.turnSecondsValue * 1000) : null
+    this.timerIntervalId = setInterval(() => this.tickTimer(), 1000)
+    this.tickTimer()
+  }
+
+  disconnect() {
+    if (this.timerIntervalId) clearInterval(this.timerIntervalId)
   }
 
   resetSelection() {
@@ -200,6 +215,7 @@ export default class extends Controller {
       this.endBattle(data.battle_over, data.result_log_html)
     } else {
       this.statusTarget.textContent = "Your turn"
+      this.resetTurnTimer()
     }
   }
 
@@ -208,6 +224,7 @@ export default class extends Controller {
     if (resultLogHtml) this.logTarget.insertAdjacentHTML("afterbegin", resultLogHtml)
     this.activeValue = false
     this.element.querySelector(".battle-controls")?.remove()
+    if (this.timerIntervalId) clearInterval(this.timerIntervalId)
   }
 
   handleRequestError() {
@@ -237,6 +254,58 @@ export default class extends Controller {
     const before = this.captureHpSnapshot()
     this.boardTarget.innerHTML = html
     this.flashChangedHp(before)
+    this.updateReadyGlow()
+  }
+
+  // Green halo on Ready once the player has nothing left to do this turn
+  // (every card acted or can't act) -- a nudge that there's no more
+  // benefit to looking for a move, not just an empty hint line. The CSS
+  // itself also gates this on the button being enabled, so it can never
+  // show mid-request or during the opponent's reveal.
+  updateReadyGlow() {
+    if (!this.hasReadyButtonTarget) return
+
+    const actionable = this.boardTarget.querySelector(".battle-board")?.dataset.playerActionable === "true"
+    this.readyButtonTarget.classList.toggle("battle-controls__ready--glow", this.activeValue && !actionable)
+  }
+
+  // Ticks the visible countdown once a second and auto-submits Ready once
+  // it hits zero -- a turn is capped at TURN_SECONDS, not just advisory.
+  // Gated on the board's own data-current-turn (recomputed fresh every
+  // tick) rather than a locally-tracked flag, so it automatically goes
+  // quiet for the whole opponent-turn reveal without separate bookkeeping.
+  tickTimer() {
+    if (!this.hasTimerTarget) return
+
+    if (!this.canAct() || !this.isPlayerTurnInDom() || !this.turnDeadline) {
+      this.timerTarget.textContent = ""
+      return
+    }
+
+    const remainingMs = this.turnDeadline - Date.now()
+    if (remainingMs <= 0) {
+      this.timerTarget.textContent = "0:00"
+      this.endTurn() // no-ops via its own guards if a request is already in flight
+      return
+    }
+
+    const totalSeconds = Math.ceil(remainingMs / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    this.timerTarget.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`
+  }
+
+  // Called once a fresh player turn actually begins (not on every
+  // place/attack -- those spend from the same turn's budget, they don't
+  // renew it). Client-side "now" rather than a server timestamp: simpler,
+  // and avoids clock-skew weirdness between server and browser time.
+  resetTurnTimer() {
+    this.turnDeadline = Date.now() + this.turnSecondsValue * 1000
+    this.tickTimer()
+  }
+
+  isPlayerTurnInDom() {
+    return this.boardTarget.querySelector(".battle-board")?.dataset.currentTurn === "player"
   }
 
   captureHpSnapshot() {
