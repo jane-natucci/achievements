@@ -2869,6 +2869,23 @@ a {
   border-top: 1px solid var(--chrome-border);
 }
 
+.battle-hand--opponent {
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0.5rem;
+  border-top: none;
+  border-bottom: 1px solid var(--chrome-border);
+}
+
+.battle-card--facedown {
+  width: 80px;
+  height: 108px;
+  border-radius: 6px;
+  border: 1px solid var(--chrome-border);
+  background: repeating-linear-gradient(135deg, var(--panel-strong), var(--panel-strong) 6px, var(--page-bg-accent) 6px, var(--page-bg-accent) 12px);
+  cursor: default;
+}
+
 .battle-controls {
   display: flex;
   align-items: center;
@@ -2969,24 +2986,6 @@ a {
   margin-top: 0.15rem;
   font-size: 0.68rem;
   color: var(--text-muted);
-}
-
-.battle-log__entry--result {
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.battle-log__entry--won {
-  color: var(--success);
-}
-
-.battle-log__entry--lost {
-  color: #e05252;
-}
-
-.battle-log__entry--start {
-  color: var(--accent);
 }
 
 @keyframes battle-card-pulse {

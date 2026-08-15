@@ -1,6 +1,7 @@
 class Battle < ApplicationRecord
   STARTING_HP = 30
   MAX_DECK_SIZE = 15
+  HAND_REFILL_SIZE = 3
 
   belongs_to :user
   belongs_to :deck_chain, class_name: "Chain"
@@ -33,10 +34,6 @@ class Battle < ApplicationRecord
 
   def opposite_side(side)
     side == "player" ? "opponent" : "player"
-  end
-
-  def turn_count_for(side)
-    side == "player" ? player_turn_count : opponent_turn_count
   end
 
   def placed_card_this_turn?(side)
@@ -73,10 +70,10 @@ class Battle < ApplicationRecord
   end
 
   # The "beginning of a turn" event: resets this side's cards (and their
-  # one-placement-per-turn budget) so they can act again, and -- from this
-  # side's 2nd turn onward -- draws one card from their deck into their
-  # hand (turn 1 keeps the opening hand as-is; confirmed behavior, not an
-  # oversight).
+  # one-placement-per-turn budget) so they can act again, and refills this
+  # side's hand back up to HAND_REFILL_SIZE cards once it's run
+  # completely empty -- not on a fixed per-turn cadence, so a side keeps
+  # playing down whatever hand it has across as many turns as that takes.
   def start_turn!(side)
     if side == "player"
       increment!(:player_turn_count)
@@ -95,7 +92,15 @@ class Battle < ApplicationRecord
     # cards_for/actionable_cards_for would read next, wrongly judging a
     # side "stuck" right after resetting it.
     battle_cards.reset
-    draw_card!(side) if turn_count_for(side) >= 2
+    refill_hand!(side) if cards_for(side).none? { |card| card.zone == "hand" }
+  end
+
+  # Draws HAND_REFILL_SIZE cards in one go. draw_card! already no-ops once
+  # there's nothing left to draw or reshuffle, so calling it past that
+  # point (a side with fewer than HAND_REFILL_SIZE cards left anywhere) is
+  # safe -- the hand just ends up with whatever was actually available.
+  def refill_hand!(side)
+    HAND_REFILL_SIZE.times { draw_card!(side) }
   end
 
   # Draws from this side's deck into hand -- reshuffling their own dead

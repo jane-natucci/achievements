@@ -18,26 +18,35 @@ RSpec.describe Battle do
   end
 
   describe '#start_turn!' do
-    it "does not draw on a side's 1st turn" do
+    it 'does not draw while the hand still has a card in it' do
       battle = build_battle
-      build_card(battle, side: 'player', zone: 'deck')
-
-      battle.start_turn!('player')
-
-      expect(battle.player_cards.none? { |c| c.zone == 'hand' }).to be(true)
-    end
-
-    it "draws one card from deck to hand from a side's 2nd turn onward" do
-      battle = build_battle(player_turn_count: 1)
+      build_card(battle, side: 'player', zone: 'hand')
       deck_card = build_card(battle, side: 'player', zone: 'deck')
 
       battle.start_turn!('player')
 
+      expect(deck_card.reload.zone).to eq('deck')
+    end
+
+    it 'refills the hand up to HAND_REFILL_SIZE cards once it runs completely empty' do
+      battle = build_battle
+      deck_cards = Array.new(described_class::HAND_REFILL_SIZE) { build_card(battle, side: 'player', zone: 'deck') }
+
+      battle.start_turn!('player')
+
+      expect(deck_cards.map { |card| card.reload.zone }).to all(eq('hand'))
+    end
+
+    it "draws as many as are actually available when refilling an empty hand" do
+      battle = build_battle
+      deck_card = build_card(battle, side: 'player', zone: 'deck')
+
+      expect { battle.start_turn!('player') }.not_to raise_error
       expect(deck_card.reload.zone).to eq('hand')
     end
 
-    it "does nothing when that side's deck is already empty" do
-      battle = build_battle(player_turn_count: 1)
+    it "does nothing when that side's hand, deck, and dead pool are all empty" do
+      battle = build_battle
 
       expect { battle.start_turn!('player') }.not_to raise_error
     end
@@ -109,7 +118,7 @@ RSpec.describe Battle do
     end
 
     it "prevents a side from ever running permanently out of actionable cards -- the stuck-battle bug this fixes" do
-      battle = build_battle(player_turn_count: 1)
+      battle = build_battle
       dead_card = build_card(battle, side: 'player', zone: 'dead', hp: 10, dmg: 5)
       dead_card.update!(hp_current: 0)
       expect(battle.actionable_cards_for('player')).to be_empty

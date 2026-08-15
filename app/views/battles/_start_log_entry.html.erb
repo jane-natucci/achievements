@@ -1,3 +1,7 @@
-<li class="battle-log__entry battle-log__entry--result battle-log__entry--start">
-  Battle between <strong><%= battle_player_link(battle) %></strong> and <strong><%= battle_shadow_name(battle) %></strong> started.
+<li class="battle-log__entry battle-log__entry--start">
+  Battle between
+  <span class="battle-log__side battle-log__side--player"><%= battle_player_link(battle) %></span>
+  and
+  <span class="battle-log__side battle-log__side--opponent"><%= battle_shadow_name(battle) %></span>
+  started.
 </li>

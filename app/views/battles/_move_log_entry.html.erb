@@ -1,6 +1,6 @@
 <li class="battle-log__entry">
   <span class="battle-log__side battle-log__side--<%= move.acting_side %>">
-    <%= move.acting_side == "player" ? battle_player_link(battle) : "Opponent" %>
+    <%= move.acting_side == "player" ? battle_player_link(battle) : battle_shadow_name(battle) %>
   </span>
   <span class="battle-log__actor"
         data-battle-card-id="<%= move.acting_battle_card_id %>"
@@ -12,7 +12,12 @@
   </span>
   attacked
   <% if move.target_type == "player" %>
-    <span class="battle-log__target"><%= move.acting_side == "player" ? "the opponent" : battle_player_link(battle) %></span>
+    <% target_side = battle.opposite_side(move.acting_side) %>
+    <span class="battle-log__target">
+      <span class="battle-log__side battle-log__side--<%= target_side %>">
+        <%= target_side == "player" ? battle_player_link(battle) : battle_shadow_name(battle) %>
+      </span>
+    </span>
   <% else %>
     <span class="battle-log__target"
           data-battle-card-id="<%= move.target_battle_card_id %>"

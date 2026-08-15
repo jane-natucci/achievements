@@ -1,7 +1,13 @@
-<li class="battle-log__entry battle-log__entry--result battle-log__entry--<%= battle.status %>">
+<li class="battle-log__entry battle-log__entry--<%= battle.status %>">
   <% if battle.status == "won" %>
-    <strong><%= battle_player_link(battle) %></strong> defeated <strong><%= battle_shadow_name(battle) %></strong> -- You won!
+    <span class="battle-log__side battle-log__side--player"><%= battle_player_link(battle) %></span>
+    defeated
+    <span class="battle-log__side battle-log__side--opponent"><%= battle_shadow_name(battle) %></span>
+    -- Victory.
   <% else %>
-    <strong><%= battle_shadow_name(battle) %></strong> defeated <strong><%= battle_player_link(battle) %></strong> -- You lost.
+    <span class="battle-log__side battle-log__side--opponent"><%= battle_shadow_name(battle) %></span>
+    defeated
+    <span class="battle-log__side battle-log__side--player"><%= battle_player_link(battle) %></span>
+    -- Defeat.
   <% end %>
 </li>

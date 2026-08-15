@@ -127,18 +127,62 @@ RSpec.describe 'Battles', type: :request do
       expect(first_move_pos).to be < start_pos
     end
 
-    it 'says clearly who defeated whom when the battle is over' do
+    it 'says clearly who defeated whom, with a plain Victory/Defeat wording, when the battle is over' do
+      user = create(:user, display_name: 'Jane')
+      chain = build_chain(3, game: create(:game), creator: user)
+      won_battle = CreateBattle.call(user: user, chain: chain).battle
+      won_battle.update!(status: 'won')
+      lost_battle = CreateBattle.call(user: user, chain: build_chain(3, game: create(:game), creator: user)).battle
+      lost_battle.update!(status: 'lost')
+      sign_in(user)
+
+      get battle_path(won_battle)
+      expect(response.body).to include('Jane')
+      expect(response.body).to include('defeated')
+      expect(response.body).to include('Shadow')
+      expect(response.body).to include('Victory.')
+
+      get battle_path(lost_battle)
+      expect(response.body).to include('Defeat.')
+    end
+
+    it "shows the opponent's hand as face-down cards, not the cards themselves" do
+      user = create(:user)
+      chain = build_chain(3, game: create(:game), creator: user)
+      battle = CreateBattle.call(user: user, chain: chain).battle
+      sign_in(user)
+      opponent_hand_count = battle.opponent_cards.count { |c| c.zone == 'hand' }
+
+      get battle_path(battle)
+
+      # Scoped to the opponent-hand tray itself -- achievement titles are
+      # mirrored onto the player's own deck too, so checking the whole page
+      # would find a same-titled card legitimately shown in the player's
+      # own hand/board and give a false failure.
+      hand_section = response.body[response.body.index('battle-hand--opponent')...response.body.index('battle-info-row--opponent')]
+      expect(hand_section.scan('battle-card--facedown').count).to eq(opponent_hand_count)
+      opponent_hand_titles = battle.opponent_cards.select { |c| c.zone == 'hand' }.map { |c| c.achievement.title }
+      opponent_hand_titles.each { |title| expect(hand_section).not_to include(title) }
+    end
+
+    it "labels the opponent's own moves with their shadow name, not the word Opponent" do
+      # Deterministic first mover -- otherwise the opponent's own opening
+      # turn might already occupy the 'left' slot this test places into.
+      allow_any_instance_of(CreateBattle).to receive(:first_mover).and_return('player')
       user = create(:user, display_name: 'Jane')
       chain = build_chain(3, game: create(:game), creator: user)
       battle = CreateBattle.call(user: user, chain: chain).battle
-      battle.update!(status: 'won')
+      opponent_card = battle.opponent_cards.find { |c| c.zone == 'hand' }
+      opponent_card.update!(zone: 'board', slot: 'left', acted_this_turn: false)
+      battle.update!(current_turn_side: 'opponent')
+      ResolveBattleTurn.call(battle: battle, side: 'opponent', acting_card: opponent_card, target: :player)
       sign_in(user)
 
       get battle_path(battle)
 
-      expect(response.body).to include('Jane')
-      expect(response.body).to include('defeated')
-      expect(response.body).to include('Shadow')
+      log_section = response.body[response.body.index('battle-log-section')..]
+      expect(log_section).to include("Jane&#39;s Shadow")
+      expect(log_section).not_to include('>Opponent<')
     end
   end
 
