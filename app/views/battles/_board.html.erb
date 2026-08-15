@@ -24,7 +24,7 @@
            data-hp-avatar="opponent"
            <% if player_can_act %>data-action="click->battle#selectTarget" data-target-type="player"<% end %>>
         <% if opponent_icon.present? %>
-          <%= image_tag opponent_icon, alt: "", class: "battle-avatar-card__icon" %>
+          <%= image_tag opponent_icon, alt: "", class: "battle-avatar-card__icon battle-avatar-card__icon--mirrored" %>
         <% else %>
           <span class="battle-avatar-card__icon battle-avatar-card__icon--placeholder" aria-hidden="true"></span>
         <% end %>

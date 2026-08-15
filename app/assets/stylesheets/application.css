@@ -307,19 +307,7 @@ a {
 }
 
 a.topbar__nav-link--battle {
-  padding: 0.3rem 0.75rem;
-  border-radius: 999px;
-  background: #e05252;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
-}
-
-a.topbar__nav-link--battle:hover,
-a.topbar__nav-link--battle:focus-visible {
-  background: #c93f3f;
-  color: #fff;
+  color: #e05252;
 }
 
 .profile-shell {
@@ -2703,6 +2691,10 @@ a.topbar__nav-link--battle:focus-visible {
   height: 40px;
   border-radius: 4px;
   object-fit: cover;
+}
+
+.battle-avatar-card__icon--mirrored {
+  transform: scaleX(-1);
 }
 
 .battle-avatar-card__icon--placeholder {
