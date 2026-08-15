@@ -6,3 +6,6 @@
     sync_user_profiles:
       cron: "0 4 * * *"
       class: SyncUserProfilesWorker
+    sync_global_achievement_rarity:
+      cron: "30 4 * * *"
+      class: SyncGlobalAchievementRarityWorker

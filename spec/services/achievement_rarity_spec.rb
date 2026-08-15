@@ -4,28 +4,17 @@ require 'rails_helper'
 
 RSpec.describe AchievementRarity do
   describe '.pct_for' do
-    it 'gives 0.0 to an achievement nobody has unlocked' do
-      create(:user)
-      achievement = create(:achievement)
+    it "uses Steam's synced global_unlock_pct when present, converted to a 0..1 fraction" do
+      achievement = create(:achievement, global_unlock_pct: 12.5)
 
       pct_by_id = described_class.pct_for([achievement.id])
 
-      expect(pct_by_id[achievement.id]).to eq(0.0)
+      expect(pct_by_id[achievement.id]).to eq(0.125)
     end
 
-    it 'gives 1.0 to an achievement every registered user has unlocked' do
-      user = create(:user)
-      achievement = create(:achievement)
-      UserAchievementUnlock.create!(user: user, achievement: achievement, source: 'steam')
-
-      pct_by_id = described_class.pct_for([achievement.id])
-
-      expect(pct_by_id[achievement.id]).to eq(1.0)
-    end
-
-    it 'divides by the total registered user count, not just unlockers' do
+    it 'falls back to our own userbase when global_unlock_pct has never been synced' do
       users = create_list(:user, 4)
-      achievement = create(:achievement)
+      achievement = create(:achievement, global_unlock_pct: nil)
       UserAchievementUnlock.create!(user: users.first, achievement: achievement, source: 'steam')
 
       pct_by_id = described_class.pct_for([achievement.id])
@@ -33,10 +22,31 @@ RSpec.describe AchievementRarity do
       expect(pct_by_id[achievement.id]).to eq(0.25)
     end
 
-    it 'does not divide by zero when there are no registered users' do
-      achievement = create(:achievement)
+    it 'gives 0.0 to an unsynced achievement nobody in our userbase has unlocked' do
+      create(:user)
+      achievement = create(:achievement, global_unlock_pct: nil)
+
+      pct_by_id = described_class.pct_for([achievement.id])
+
+      expect(pct_by_id[achievement.id]).to eq(0.0)
+    end
+
+    it 'does not divide by zero when there are no registered users and nothing is synced' do
+      achievement = create(:achievement, global_unlock_pct: nil)
 
       expect { described_class.pct_for([achievement.id]) }.not_to raise_error
+    end
+
+    it 'mixes synced and unsynced achievements correctly in the same batch' do
+      users = create_list(:user, 2)
+      synced = create(:achievement, global_unlock_pct: 40.0)
+      unsynced = create(:achievement, global_unlock_pct: nil)
+      UserAchievementUnlock.create!(user: users.first, achievement: unsynced, source: 'steam')
+
+      pct_by_id = described_class.pct_for([synced.id, unsynced.id])
+
+      expect(pct_by_id[synced.id]).to eq(0.4)
+      expect(pct_by_id[unsynced.id]).to eq(0.5)
     end
   end
 
