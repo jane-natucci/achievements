@@ -4,13 +4,11 @@ require 'rails_helper'
 
 RSpec.describe ResolveBattleTurn do
   subject(:call) do
-    described_class.call(battle: battle, side: side, acting_card: acting_card, target: target, stance: stance, slot: slot)
+    described_class.call(battle: battle, side: side, acting_card: acting_card, target: target)
   end
 
   let(:battle) { build_battle }
   let(:side) { 'player' }
-  let(:stance) { 'neutral' }
-  let(:slot) { 'left' }
   let(:target) { :player }
   let(:acting_card) { battle.player_cards.first }
 
@@ -18,9 +16,10 @@ RSpec.describe ResolveBattleTurn do
     Battle.create!(user: create(:user), deck_chain: create(:chain), current_turn_side: current_turn_side)
   end
 
-  def build_card(battle, side:, zone: 'hand', hp: 10, dmg: 5, slot: nil)
+  def build_card(battle, side:, zone: 'hand', hp: 10, dmg: 5, slot: nil, acted_this_turn: false)
     battle.battle_cards.create!(
-      side: side, achievement: create(:achievement), hp_max: hp, hp_current: hp, dmg: dmg, zone: zone, slot: slot, deck_position: 0
+      side: side, achievement: create(:achievement), hp_max: hp, hp_current: hp, dmg: dmg, zone: zone, slot: slot,
+      deck_position: 0, acted_this_turn: acted_this_turn
     )
   end
 
@@ -29,7 +28,7 @@ RSpec.describe ResolveBattleTurn do
     build_card(battle, side: 'opponent', zone: 'board', hp: 10, dmg: 5, slot: 'left')
   end
 
-  it 'places a hand card onto the board and attacks the opponent directly' do
+  it 'places a hand card onto the board (first open slot) and attacks the opponent directly' do
     expect(call.success?).to be(true)
 
     expect(acting_card.reload.zone).to eq('board')
@@ -41,56 +40,54 @@ RSpec.describe ResolveBattleTurn do
     call
 
     move = battle.battle_moves.last
-    expect(move.turn_number).to eq(1)
+    expect(move.move_number).to eq(1)
     expect(move.acting_side).to eq('player')
     expect(move.acting_battle_card).to eq(acting_card)
     expect(move.target_type).to eq('player')
     expect(move.damage_dealt).to eq(5)
     expect(move.target_hp_after).to eq(Battle::STARTING_HP - 5)
-    expect(move.stance_used).to eq('neutral')
   end
 
-  it 'advances the turn to the other side' do
+  it 'marks the acting card as having acted this turn, but does not change whose turn it is' do
     call
 
-    expect(battle.reload.current_turn_side).to eq('opponent')
+    expect(acting_card.reload.acted_this_turn?).to be(true)
+    expect(battle.reload.current_turn_side).to eq('player')
   end
 
-  it "doesn't require a slot for a card already on the board" do
+  it "doesn't try to re-place a card that's already on the board" do
     board_card = build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'center')
 
-    result = described_class.call(battle: battle, side: 'player', acting_card: board_card, target: :player, stance: 'neutral', slot: nil)
+    result = described_class.call(battle: battle, side: 'player', acting_card: board_card, target: :player)
 
     expect(result.success?).to be(true)
+    expect(board_card.reload.slot).to eq('center')
   end
 
-  describe 'stance damage multipliers' do
-    it 'attack stance deals +25% damage, rounded' do
-      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: :player, stance: 'attack', slot: 'left')
+  describe 'auto-placement' do
+    it 'places into the first open slot when earlier slots are occupied' do
+      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left')
 
-      expect(result.move.damage_dealt).to eq((5 * 1.25).round)
+      call
+
+      expect(acting_card.reload.slot).to eq('center')
     end
 
-    it 'defense stance deals -25% damage, rounded' do
-      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: :player, stance: 'defense', slot: 'left')
+    it 'places into a slot freed up by a dead card' do
+      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left')
+      build_card(battle, side: 'player', zone: 'dead', hp: 0, dmg: 5, slot: 'center')
+      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'right')
 
-      expect(result.move.damage_dealt).to eq((5 * 0.75).round)
-    end
+      call
 
-    it "doesn't apply any stance modifier to the defending side (always neutral unless it's their own turn)" do
-      target_card = battle.opponent_cards.first
-
-      described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: target_card, stance: 'attack', slot: 'left')
-
-      # attacker in Attack stance: 5 * 1.25 = 6.25 -> rounds to 6, regardless of the target's own state
-      expect(target_card.reload.hp_current).to eq(10 - 6)
+      expect(acting_card.reload.slot).to eq('center')
     end
   end
 
   describe 'attacking a card' do
     let(:target) { battle.opponent_cards.first }
 
-    it 'reduces the target hp_current' do
+    it 'reduces the target hp_current by the flat card damage' do
       call
 
       expect(target.reload.hp_current).to eq(5)
@@ -99,7 +96,7 @@ RSpec.describe ResolveBattleTurn do
     it 'kills the target at 0 hp and marks its zone dead' do
       weak_target = build_card(battle, side: 'opponent', zone: 'board', hp: 3, dmg: 1, slot: 'center')
 
-      described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: weak_target, stance: 'neutral', slot: 'left')
+      described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: weak_target)
 
       expect(weak_target.reload.hp_current).to eq(0)
       expect(weak_target.zone).to eq('dead')
@@ -108,7 +105,7 @@ RSpec.describe ResolveBattleTurn do
     it "never drops a card's hp below 0" do
       weak_target = build_card(battle, side: 'opponent', zone: 'board', hp: 2, dmg: 1, slot: 'center')
 
-      described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: weak_target, stance: 'neutral', slot: 'left')
+      described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: weak_target)
 
       expect(weak_target.reload.hp_current).to eq(0)
     end
@@ -127,17 +124,9 @@ RSpec.describe ResolveBattleTurn do
       battle.update!(player_hp: 4, current_turn_side: 'opponent')
       opponent_card = battle.opponent_cards.first
 
-      described_class.call(battle: battle, side: 'opponent', acting_card: opponent_card, target: :player, stance: 'neutral', slot: nil)
+      described_class.call(battle: battle, side: 'opponent', acting_card: opponent_card, target: :player)
 
       expect(battle.reload.status).to eq('lost')
-    end
-
-    it "doesn't advance the turn once the battle is over" do
-      battle.update!(opponent_hp: 4)
-
-      call
-
-      expect(battle.reload.current_turn_side).to eq('player')
     end
   end
 
@@ -159,29 +148,31 @@ RSpec.describe ResolveBattleTurn do
     it "rejects a dead card acting" do
       dead_card = build_card(battle, side: 'player', zone: 'dead', hp: 0, dmg: 5, slot: 'center')
 
-      result = described_class.call(battle: battle, side: 'player', acting_card: dead_card, target: :player, stance: 'neutral', slot: nil)
+      result = described_class.call(battle: battle, side: 'player', acting_card: dead_card, target: :player)
 
       expect(result.success?).to be(false)
     end
 
-    it 'rejects an unknown stance' do
-      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: :player, stance: 'berserk', slot: 'left')
+    it 'rejects a card that has already acted this turn' do
+      acting_card.update!(acted_this_turn: true)
 
-      expect(result.success?).to be(false)
-      expect(result.error).to match(/stance/i)
+      expect(call.success?).to be(false)
+      expect(call.error).to match(/already acted/i)
     end
 
-    it 'rejects placing a hand card without a slot' do
-      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: :player, stance: 'neutral', slot: nil)
+    it 'rejects a hand card when the board has no open slot' do
+      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left')
+      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'center')
+      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'right')
 
-      expect(result.success?).to be(false)
-      expect(result.error).to match(/slot/i)
+      expect(call.success?).to be(false)
+      expect(call.error).to match(/slot/i)
     end
 
     it 'rejects attacking a dead card' do
       dead_target = build_card(battle, side: 'opponent', zone: 'dead', hp: 0, dmg: 5, slot: 'center')
 
-      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: dead_target, stance: 'neutral', slot: 'left')
+      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: dead_target)
 
       expect(result.success?).to be(false)
       expect(result.error).to match(/target/i)
@@ -190,7 +181,7 @@ RSpec.describe ResolveBattleTurn do
     it "rejects attacking your own side's card" do
       own_card = build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'center')
 
-      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: own_card, stance: 'neutral', slot: 'left')
+      result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: own_card)
 
       expect(result.success?).to be(false)
       expect(result.error).to match(/target/i)
@@ -201,7 +192,7 @@ RSpec.describe ResolveBattleTurn do
       deck_target = build_card(battle, side: 'opponent', zone: 'deck', hp: 10, dmg: 5)
 
       [hand_target, deck_target].each do |target|
-        result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: target, stance: 'neutral', slot: 'left')
+        result = described_class.call(battle: battle, side: 'player', acting_card: acting_card, target: target)
 
         expect(result.success?).to be(false)
         expect(result.error).to match(/target/i)

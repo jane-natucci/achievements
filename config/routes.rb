@@ -68,7 +68,10 @@ Rails.application.routes.draw do
       end
     end
     resources :battles, only: [:index, :new, :create, :show] do
-      member { post :turn }
+      member do
+        post :attack
+        post :end_turn
+      end
     end
   end
 end

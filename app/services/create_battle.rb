@@ -34,8 +34,9 @@ class CreateBattle
       battle
     end
 
+    battle.start_turn!(battle.current_turn_side)
     battle.skip_stuck_turns!
-    BattleAiTurn.call(battle: battle) if battle.current_turn_side == "opponent"
+    ResolveAiTurn.call(battle: battle) if battle.active? && battle.current_turn_side == "opponent"
 
     Result.new(battle: battle)
   end

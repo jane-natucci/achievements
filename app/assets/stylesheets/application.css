@@ -2612,35 +2612,79 @@ a {
  * a hand tray, and a move log. See app/javascript/controllers/battle_controller.js.
  */
 .battle-board {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-rows: auto auto auto auto auto;
+  justify-items: center;
+  gap: 0.75rem;
   padding: 1rem;
   border: 1px solid var(--chrome-border);
   border-radius: 8px;
   background: var(--panel);
 }
 
-.battle-side {
+.battle-info-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-.battle-hp {
+.battle-avatar-card {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 120px;
+  align-items: center;
+  gap: 0.6rem;
+  width: 220px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  background: var(--panel-strong);
+  text-align: left;
+  cursor: default;
 }
 
-.battle-hp__label {
-  font-size: 0.75rem;
+.battle-avatar-card--targetable {
+  cursor: pointer;
+}
+
+.battle-avatar-card--targetable:hover {
+  border-color: #e05252;
+}
+
+.battle-avatar-card--attacking {
+  animation: battle-card-pulse 0.4s ease-out;
+}
+
+.battle-avatar-card__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.battle-avatar-card__icon--placeholder {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+}
+
+.battle-avatar-card__title {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
+}
+
+.battle-hp {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
 .battle-hp__bar {
@@ -2663,7 +2707,8 @@ a {
 }
 
 .battle-slots {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 84px);
   gap: 0.6rem;
 }
 
@@ -2675,11 +2720,6 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.battle-slot--selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .battle-card {
@@ -2698,9 +2738,8 @@ a {
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
-.battle-card--targeted {
-  border-color: #e05252;
-  box-shadow: 0 0 0 2px rgba(224, 82, 82, 0.35);
+.battle-card--attacking {
+  animation: battle-card-pulse 0.4s ease-out;
 }
 
 .battle-card--log-highlight {
@@ -2710,6 +2749,11 @@ a {
 
 .battle-card--dead {
   opacity: 0.4;
+  cursor: default;
+}
+
+.battle-card--acted {
+  opacity: 0.55;
   cursor: default;
 }
 
@@ -2778,21 +2822,6 @@ a {
   color: var(--text-muted);
 }
 
-.battle-target-player-button {
-  padding: 0.4rem 0.7rem;
-  border: 1px solid rgba(224, 82, 82, 0.4);
-  border-radius: 6px;
-  background: rgba(224, 82, 82, 0.12);
-  color: #e05252;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.battle-target-player-button--selected {
-  background: rgba(224, 82, 82, 0.28);
-}
-
 .battle-hand {
   display: flex;
   gap: 0.6rem;
@@ -2811,33 +2840,6 @@ a {
   border: 1px solid var(--chrome-border);
   border-radius: 8px;
   background: var(--panel);
-}
-
-.battle-stance-picker {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.battle-stance-picker__label {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.battle-stance-button {
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--chrome-border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text);
-  font-size: 0.78rem;
-  cursor: pointer;
-}
-
-.battle-stance-button--active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
 }
 
 .battle-controls__hint {
@@ -2890,8 +2892,21 @@ a {
   cursor: default;
 }
 
-.battle-log__stance {
-  color: var(--text-muted);
+.battle-log__icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: cover;
+  vertical-align: -3px;
+  margin-right: 0.2rem;
+}
+
+.battle-log__damage {
+  color: #e05252;
+}
+
+.battle-log__damage--heal {
+  color: var(--success);
 }
 
 .battle-log__time {
@@ -2899,6 +2914,44 @@ a {
   margin-top: 0.15rem;
   font-size: 0.68rem;
   color: var(--text-muted);
+}
+
+@keyframes battle-card-pulse {
+  0% {
+    box-shadow: 0 0 0 2px rgba(224, 82, 82, 0.6);
+  }
+
+  100% {
+    box-shadow: 0 0 0 2px rgba(224, 82, 82, 0);
+  }
+}
+
+@keyframes battle-hp-flash {
+  0% {
+    color: #e05252;
+  }
+
+  100% {
+    color: inherit;
+  }
+}
+
+.battle-hp-flash {
+  animation: battle-hp-flash 1.4s ease-out;
+}
+
+@keyframes battle-hp-bar-flash {
+  0% {
+    filter: brightness(1.8) saturate(2);
+  }
+
+  100% {
+    filter: none;
+  }
+}
+
+.battle-hp-bar-flash {
+  animation: battle-hp-bar-flash 1.4s ease-out;
 }
 
 .cookie-banner {

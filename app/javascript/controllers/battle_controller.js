@@ -3,124 +3,98 @@ import { Controller } from "@hotwired/stimulus"
 const AI_MOVE_DELAY_MS = 2500
 
 export default class extends Controller {
-  static targets = ["board", "status", "stancePicker", "readyButton", "hint", "log"]
-  static values = { turnUrl: String, active: Boolean }
+  static targets = ["board", "status", "readyButton", "hint", "log"]
+  static values = { attackUrl: String, endTurnUrl: String, active: Boolean }
 
   connect() {
+    this.requestInFlight = false
     this.resetSelection()
   }
 
   resetSelection() {
     this.selectedCardId = null
-    this.selectedSlot = null
-    this.selectedTargetType = null
-    this.selectedTargetId = null
-    this.stance = "neutral"
-
-    if (this.hasReadyButtonTarget) {
-      this.readyButtonTarget.disabled = true
-      this.readyButtonTarget.textContent = "Ready"
-    }
-
+    this.clearAttackerHighlight()
     this.updateHint()
   }
 
-  selectCard(event) {
-    if (!this.canAct()) return
+  // Step 1 of "select card, select target": arms one of the player's own
+  // hand/board cards as the attacker. Nothing is submitted yet.
+  selectAttacker(event) {
+    if (!this.canAct() || this.requestInFlight) return
+
+    const el = event.currentTarget
+    if (el.dataset.zone === "dead" || el.dataset.acted === "true") return
+
+    this.clearAttackerHighlight()
+    this.selectedCardId = el.dataset.battleCardId
+    el.classList.add("battle-card--selected")
+    this.updateHint()
+  }
+
+  // Step 2: an enemy card, or the opponent avatar itself. Resolves the
+  // attack immediately -- no staging, no separate submit step.
+  selectTarget(event) {
+    if (!this.canAct() || !this.selectedCardId || this.requestInFlight) return
 
     const el = event.currentTarget
     if (el.dataset.zone === "dead") return
 
-    if (el.dataset.side === "player") {
-      if (el.dataset.zone !== "hand" && el.dataset.zone !== "board") return
+    const targetType = el.dataset.targetType
+    const targetBattleCardId = targetType === "card" ? el.dataset.battleCardId : null
 
-      this.clearCardHighlight()
-      this.selectedCardId = el.dataset.battleCardId
-      this.selectedSlot = el.dataset.zone === "board" ? el.closest(".battle-slot")?.dataset.slot : null
-      el.classList.add("battle-card--selected")
-    } else {
-      if (!this.selectedCardId) return
+    el.classList.add(targetType === "player" ? "battle-avatar-card--attacking" : "battle-card--attacking")
 
-      this.clearTargetHighlight()
-      this.selectedTargetType = "card"
-      this.selectedTargetId = el.dataset.battleCardId
-      el.classList.add("battle-card--targeted")
-    }
-
-    this.updateHint()
-    this.maybeEnableReady()
+    this.performAttack(targetType, targetBattleCardId)
   }
 
-  selectSlot(event) {
-    if (!this.canAct() || !this.selectedCardId) return
+  performAttack(targetType, targetBattleCardId) {
+    const body = new URLSearchParams({ acting_card_id: this.selectedCardId, target_type: targetType })
+    if (targetBattleCardId) body.set("target_battle_card_id", targetBattleCardId)
 
-    const slotEl = event.currentTarget
-    if (slotEl.querySelector(".battle-card")) return // occupied
+    this.requestInFlight = true
 
-    const cardEl = this.boardTarget.querySelector(`[data-battle-card-id="${this.selectedCardId}"]`)
-    if (!cardEl || cardEl.dataset.zone !== "hand") return
-
-    this.boardTarget.querySelectorAll(".battle-slot--selected").forEach((el) => el.classList.remove("battle-slot--selected"))
-    slotEl.classList.add("battle-slot--selected")
-    this.selectedSlot = slotEl.dataset.slot
-
-    this.updateHint()
-    this.maybeEnableReady()
-  }
-
-  selectPlayerTarget() {
-    if (!this.canAct() || !this.selectedCardId) return
-
-    this.clearTargetHighlight()
-    this.selectedTargetType = "player"
-    this.selectedTargetId = null
-    this.element.querySelector(".battle-target-player-button")?.classList.add("battle-target-player-button--selected")
-
-    this.updateHint()
-    this.maybeEnableReady()
-  }
-
-  chooseStance(event) {
-    if (!this.canAct()) return
-
-    this.stance = event.currentTarget.dataset.stance
-    this.stancePickerTarget.querySelectorAll(".battle-stance-button").forEach((button) => {
-      button.classList.toggle("battle-stance-button--active", button === event.currentTarget)
-    })
-  }
-
-  submitTurn() {
-    if (!this.readyButtonTarget || this.readyButtonTarget.disabled) return
-
-    this.readyButtonTarget.disabled = true
-    this.readyButtonTarget.textContent = "Resolving..."
-
-    const body = new URLSearchParams({
-      acting_card_id: this.selectedCardId,
-      stance: this.stance,
-      target_type: this.selectedTargetType
-    })
-    if (this.selectedSlot) body.set("slot", this.selectedSlot)
-    if (this.selectedTargetId) body.set("target_battle_card_id", this.selectedTargetId)
-
-    fetch(this.turnUrlValue, {
-      method: "POST",
-      headers: {
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
-        Accept: "application/json"
-      },
-      body
-    })
+    fetch(this.attackUrlValue, { method: "POST", headers: this.jsonHeaders(), body })
       .then((response) => response.json())
-      .then((data) => this.handleTurnResponse(data))
-      .catch(() => {
-        this.hintTarget.textContent = "Something went wrong submitting that turn. Try again."
-        this.readyButtonTarget.disabled = false
-        this.readyButtonTarget.textContent = "Ready"
+      .then((data) => this.handleAttackResponse(data))
+      .catch(() => this.handleRequestError())
+      .finally(() => {
+        this.requestInFlight = false
       })
   }
 
-  handleTurnResponse(data) {
+  handleAttackResponse(data) {
+    if (data.error) {
+      this.hintTarget.textContent = data.error
+      return
+    }
+
+    this.applyBoardHtml(data.board_html)
+    if (data.move_html) this.logTarget.insertAdjacentHTML("beforeend", data.move_html)
+    this.resetSelection()
+
+    if (data.battle_over) this.endBattle(data.battle_over)
+  }
+
+  // "Ready": ends the player's turn regardless of how many cards they used,
+  // then reveals the opponent's whole reply turn a step at a time.
+  endTurn() {
+    if (!this.hasReadyButtonTarget || this.readyButtonTarget.disabled || this.requestInFlight) return
+
+    this.requestInFlight = true
+    this.readyButtonTarget.disabled = true
+    this.readyButtonTarget.textContent = "Resolving..."
+    this.hintTarget.textContent = ""
+
+    fetch(this.endTurnUrlValue, { method: "POST", headers: this.jsonHeaders() })
+      .then((response) => response.json())
+      .then((data) => this.handleEndTurnResponse(data))
+      .catch(() => this.handleRequestError())
+      .finally(() => {
+        this.requestInFlight = false
+      })
+  }
+
+  handleEndTurnResponse(data) {
     if (data.error) {
       this.hintTarget.textContent = data.error
       this.readyButtonTarget.disabled = false
@@ -128,30 +102,48 @@ export default class extends Controller {
       return
     }
 
-    this.boardTarget.innerHTML = data.mid_html
-    if (data.mid_move_html) this.logTarget.insertAdjacentHTML("beforeend", data.mid_move_html)
+    this.statusTarget.textContent = "Opponent's turn..."
+    this.revealSteps(data.steps, 0, data)
+  }
+
+  revealSteps(steps, index, data) {
+    if (index >= steps.length) {
+      this.applyBoardHtml(data.final_html)
+      this.finishEndTurn(data)
+      return
+    }
+
+    setTimeout(() => {
+      const step = steps[index]
+      this.applyBoardHtml(step.board_html)
+      if (step.move_html) this.logTarget.insertAdjacentHTML("beforeend", step.move_html)
+      this.revealSteps(steps, index + 1, data)
+    }, AI_MOVE_DELAY_MS)
+  }
+
+  finishEndTurn(data) {
+    this.readyButtonTarget.disabled = false
+    this.readyButtonTarget.textContent = "Ready"
     this.resetSelection()
 
-    if (data.final_html) {
-      this.statusTarget.textContent = "Opponent's turn..."
-      setTimeout(() => {
-        this.boardTarget.innerHTML = data.final_html
-        if (data.final_move_html) this.logTarget.insertAdjacentHTML("beforeend", data.final_move_html)
-        this.finishTurn(data)
-      }, AI_MOVE_DELAY_MS)
+    if (data.battle_over) {
+      this.endBattle(data.battle_over)
     } else {
-      this.finishTurn(data)
+      this.statusTarget.textContent = "Your turn"
     }
   }
 
-  finishTurn(data) {
-    if (data.battle_over) {
-      this.statusTarget.textContent = data.battle_over === "won" ? "You won!" : "You lost."
-      this.activeValue = false
-      const controls = this.element.querySelector(".battle-controls")
-      if (controls) controls.remove()
-    } else {
-      this.statusTarget.textContent = "Your turn"
+  endBattle(status) {
+    this.statusTarget.textContent = status === "won" ? "You won!" : "You lost."
+    this.activeValue = false
+    this.element.querySelector(".battle-controls")?.remove()
+  }
+
+  handleRequestError() {
+    this.hintTarget.textContent = "Something went wrong. Try again."
+    if (this.hasReadyButtonTarget) {
+      this.readyButtonTarget.disabled = false
+      this.readyButtonTarget.textContent = "Ready"
     }
   }
 
@@ -159,41 +151,63 @@ export default class extends Controller {
     return this.activeValue
   }
 
-  maybeEnableReady() {
-    const cardChosen = !!this.selectedCardId
-    const placementDone = !this.needsPlacement() || !!this.selectedSlot
-    const targetChosen = !!this.selectedTargetType
-
-    this.readyButtonTarget.disabled = !(cardChosen && placementDone && targetChosen)
+  jsonHeaders() {
+    return {
+      "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+      Accept: "application/json"
+    }
   }
 
-  needsPlacement() {
-    if (!this.selectedCardId) return false
-    const cardEl = this.boardTarget.querySelector(`[data-battle-card-id="${this.selectedCardId}"]`)
-    return cardEl && cardEl.dataset.zone === "hand" && !this.selectedSlot
+  // Swaps in new board HTML and flashes red-then-fading on any HP that
+  // changed (dealt or received, card or avatar) -- shared by attack
+  // responses, each AI-turn step, and the final post-turn snapshot, so the
+  // effect is consistent no matter which side did the damage.
+  applyBoardHtml(html) {
+    const before = this.captureHpSnapshot()
+    this.boardTarget.innerHTML = html
+    this.flashChangedHp(before)
+  }
+
+  captureHpSnapshot() {
+    const snapshot = {}
+    this.boardTarget.querySelectorAll("[data-hp-node]").forEach((node) => {
+      const key = this.hpKeyFor(node)
+      if (key) snapshot[key] = node.textContent
+    })
+    return snapshot
+  }
+
+  flashChangedHp(before) {
+    this.boardTarget.querySelectorAll("[data-hp-node]").forEach((node) => {
+      const key = this.hpKeyFor(node)
+      if (!key || before[key] === undefined || before[key] === node.textContent) return
+
+      this.flashNode(node, "battle-hp-flash")
+      const fill = node.closest(".battle-hp")?.querySelector(".battle-hp__fill")
+      if (fill) this.flashNode(fill, "battle-hp-bar-flash")
+    })
+  }
+
+  flashNode(node, className) {
+    node.classList.add(className)
+    node.addEventListener("animationend", () => node.classList.remove(className), { once: true })
+  }
+
+  hpKeyFor(node) {
+    return node.closest("[data-battle-card-id]")?.dataset.battleCardId
+      ?? node.closest("[data-hp-avatar]")?.dataset.hpAvatar
+  }
+
+  clearAttackerHighlight() {
+    this.boardTarget.querySelectorAll(".battle-card--selected").forEach((el) => el.classList.remove("battle-card--selected"))
   }
 
   updateHint() {
     if (!this.hasHintTarget) return
 
-    if (!this.selectedCardId) {
-      this.hintTarget.textContent = "Select a card to attack with."
-    } else if (this.needsPlacement()) {
-      this.hintTarget.textContent = "Choose a slot to place it in."
-    } else if (!this.selectedTargetType) {
-      this.hintTarget.textContent = "Choose a target -- an enemy card, or attack the opponent directly."
-    } else {
-      this.hintTarget.textContent = "Ready when you are."
-    }
-  }
-
-  clearCardHighlight() {
-    this.boardTarget.querySelectorAll(".battle-card--selected").forEach((el) => el.classList.remove("battle-card--selected"))
-  }
-
-  clearTargetHighlight() {
-    this.boardTarget.querySelectorAll(".battle-card--targeted").forEach((el) => el.classList.remove("battle-card--targeted"))
-    this.element.querySelector(".battle-target-player-button--selected")?.classList.remove("battle-target-player-button--selected")
+    this.hintTarget.textContent = this.selectedCardId
+      ? "Choose a target -- an enemy card, or the opponent."
+      : "Select one of your cards, then a target."
   }
 
   highlightCard(event) {

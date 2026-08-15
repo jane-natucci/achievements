@@ -91,7 +91,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'POST /achievements/battles/:id/turn' do
+  describe 'POST /achievements/battles/:id/attack' do
     let(:user) { create(:user) }
     let(:chain) { build_chain(3, game: create(:game), creator: user) }
     let(:battle) { CreateBattle.call(user: user, chain: chain).battle }
@@ -104,32 +104,31 @@ RSpec.describe 'Battles', type: :request do
       sign_in(user)
     end
 
-    it 'resolves a valid turn and returns board html plus an opponent reply' do
+    it "resolves a single attack instantly and doesn't end the player's turn" do
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
-      post turn_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player', stance: 'attack', slot: 'left' }, headers: { 'Accept' => 'application/json' }
+      post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to have_http_status(:ok)
       json = response.parsed_body
-      expect(json['mid_html']).to include('battle-board')
-      expect(json['mid_move_html']).to include('battle-log__entry')
-      # opponent reply resolves within the same request unless the battle already ended
-      expect(json['final_html']).to be_present unless json['battle_over']
+      expect(json['board_html']).to include('battle-board')
+      expect(json['move_html']).to include('battle-log__entry')
+      expect(battle.reload.current_turn_side).to eq('player')
     end
 
-    it 'returns a JSON error for an invalid turn without changing battle state' do
-      post turn_battle_path(battle), params: { acting_card_id: -1, target_type: 'player', stance: 'attack', slot: 'left' }, headers: { 'Accept' => 'application/json' }
+    it 'returns a JSON error for an invalid attack without changing battle state' do
+      post attack_battle_path(battle), params: { acting_card_id: -1, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body['error']).to be_present
       expect(battle.reload.battle_moves.count).to eq(0)
     end
 
-    it 'rejects a turn once the battle is already over' do
+    it 'rejects an attack once the battle is already over' do
       battle.update!(status: 'won')
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
-      post turn_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player', stance: 'attack', slot: 'left' }, headers: { 'Accept' => 'application/json' }
+      post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
 
       expect(response).to have_http_status(:unprocessable_content)
     end
@@ -139,7 +138,47 @@ RSpec.describe 'Battles', type: :request do
       sign_in(visitor)
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
-      post turn_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player', stance: 'attack', slot: 'left' }, headers: { 'Accept' => 'application/json' }
+      post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
+
+      expect(response).to redirect_to(battles_path)
+    end
+  end
+
+  describe 'POST /achievements/battles/:id/end_turn' do
+    let(:user) { create(:user) }
+    let(:chain) { build_chain(3, game: create(:game), creator: user) }
+    let(:battle) { CreateBattle.call(user: user, chain: chain).battle }
+
+    before do
+      allow_any_instance_of(CreateBattle).to receive(:first_mover).and_return('player')
+      sign_in(user)
+    end
+
+    it "resolves the opponent's whole reply turn, one step per action, and hands back to the player" do
+      post end_turn_battle_path(battle), headers: { 'Accept' => 'application/json' }
+
+      expect(response).to have_http_status(:ok)
+      json = response.parsed_body
+      # Mirrored deck -- the opponent has actionable hand cards to act with.
+      expect(json['steps']).to be_present
+      expect(json['steps']).to all(include('board_html' => a_string_including('battle-board'), 'move_html' => a_string_including('battle-log__entry')))
+      expect(json['final_html']).to include('battle-board')
+      expect(battle.reload.current_turn_side).to eq('player')
+    end
+
+    it 'rejects ending the turn once the battle is already over' do
+      battle.update!(status: 'won')
+
+      post end_turn_battle_path(battle), headers: { 'Accept' => 'application/json' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "blocks ending someone else's battle's turn" do
+      visitor = create(:user)
+      sign_in(visitor)
+
+      post end_turn_battle_path(battle), headers: { 'Accept' => 'application/json' }
 
       expect(response).to redirect_to(battles_path)
     end

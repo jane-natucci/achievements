@@ -28,7 +28,6 @@ RSpec.describe BattleAiTurn do
 
       expect(result.success?).to be(true)
       expect(result.move.acting_side).to eq('opponent')
-      expect(%w[attack defense neutral]).to include(result.move.stance_used)
     end
 
     it 'places a hand card onto the board as part of acting' do

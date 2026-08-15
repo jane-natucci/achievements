@@ -56,14 +56,19 @@ RSpec.describe CreateBattle do
       expect(card.dmg).to eq(expected.dmg)
     end
 
-    it 'resolves an opening AI turn if the opponent is picked to go first' do
+    it "resolves the opponent's entire opening turn if they're picked to go first" do
       allow_any_instance_of(described_class).to receive(:first_mover).and_return('opponent')
 
       battle = call.battle
 
-      expect(battle.battle_moves.count).to eq(1)
-      expect(battle.battle_moves.first.acting_side).to eq('opponent')
+      # HAND_SIZE (3) opponent cards, each acting once -- max dmg per card
+      # (CardStats::DMG_BASE + DMG_RANGE = 8) times 3 is 24, comfortably
+      # under STARTING_HP (30), so the battle is guaranteed to still be
+      # active once their whole turn resolves.
+      expect(battle.battle_moves.count).to eq(described_class::HAND_SIZE)
+      expect(battle.battle_moves.pluck(:acting_side)).to all(eq('opponent'))
       expect(battle.current_turn_side).to eq('player')
+      expect(battle.active?).to be(true)
     end
 
     it "doesn't resolve any move if the player is picked to go first" do

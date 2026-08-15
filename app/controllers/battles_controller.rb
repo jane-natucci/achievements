@@ -1,6 +1,6 @@
 class BattlesController < ApplicationController
-  before_action :set_battle, only: [:show, :turn]
-  before_action :require_own_battle!, only: [:show, :turn]
+  before_action :set_battle, only: [:show, :attack, :end_turn]
+  before_action :require_own_battle!, only: [:show, :attack, :end_turn]
 
   def index
     return redirect_to("/achievements/login/", alert: "Log in to see your battles.") unless current_user
@@ -30,44 +30,50 @@ class BattlesController < ApplicationController
   def show
   end
 
-  # JSON: resolves the player's turn, then (unless the battle just ended)
-  # the opponent's reply -- two board snapshots so the client can show
-  # them a couple seconds apart without a page reload.
-  def turn
+  # JSON: resolves a single instant attack for the player. Does not end
+  # their turn -- other cards can still act after this.
+  def attack
     unless @battle.active?
       return render json: { error: "Battle is already over." }, status: :unprocessable_entity
     end
 
     acting_card = @battle.battle_cards.find_by(id: params[:acting_card_id])
     target = resolve_target
-    result = ResolveBattleTurn.call(
-      battle: @battle,
-      side: "player",
-      acting_card: acting_card,
-      target: target,
-      stance: params[:stance].to_s,
-      slot: params[:slot]
-    )
+    result = ResolveBattleTurn.call(battle: @battle, side: "player", acting_card: acting_card, target: target)
 
     return render json: { error: result.error }, status: :unprocessable_entity unless result.success?
 
-    mid_html = render_to_string(partial: "board", formats: [:html], locals: { battle: @battle })
-    mid_move_html = render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: result.move })
+    render json: {
+      board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: result.battle }),
+      move_html: render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: result.move }),
+      battle_over: result.battle.active? ? false : result.battle.status
+    }
+  end
 
-    ai_result = nil
-    if @battle.current_turn_side == "opponent"
-      ai_result = BattleAiTurn.call(battle: @battle)
+  # JSON: ends the player's turn and resolves the opponent's entire reply
+  # turn (however many cards they act with) server-side, returning one
+  # {board_html, move_html} snapshot per opponent action so the client can
+  # reveal them a couple seconds apart without a page reload, plus a final
+  # snapshot reflecting the hand-back to the player (their own draw, etc).
+  def end_turn
+    unless @battle.active?
+      return render json: { error: "Battle is already over." }, status: :unprocessable_entity
     end
 
-    final_html = ai_result ? render_to_string(partial: "board", formats: [:html], locals: { battle: @battle }) : nil
-    final_move_html = ai_result&.move ? render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: ai_result.move }) : nil
+    steps = []
+    result = EndBattleTurn.call(battle: @battle, side: "player") do |battle_snapshot, move|
+      steps << {
+        board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: battle_snapshot }),
+        move_html: render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: move })
+      }
+    end
+
+    return render json: { error: result.error }, status: :unprocessable_entity unless result.success?
 
     render json: {
-      mid_html: mid_html,
-      mid_move_html: mid_move_html,
-      final_html: final_html,
-      final_move_html: final_move_html,
-      battle_over: @battle.active? ? false : @battle.status
+      steps: steps,
+      final_html: render_to_string(partial: "board", formats: [:html], locals: { battle: result.battle }),
+      battle_over: result.battle.active? ? false : result.battle.status
     }
   end
 

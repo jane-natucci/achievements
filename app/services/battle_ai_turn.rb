@@ -1,15 +1,12 @@
-# Resolves the opponent's turn in a PvE battle: a random actionable card
-# attacks a random valid target (another alive player card, or the player
-# directly) in a random stance. No difficulty tuning yet -- this exists so
-# a battle is actually playable before any real opponent-AI design pass.
+# Resolves one action for the opponent in a PvE battle: a random actionable
+# card attacks a random valid target (another alive player card, or the
+# player directly). No difficulty tuning yet -- this exists so a battle is
+# actually playable before any real opponent-AI design pass.
 #
-# By the time this is called, Battle#skip_stuck_turns! (run after every
-# turn transition) has already guaranteed current_turn_side is "opponent"
-# only if the opponent actually has an actionable card -- so no stuck-turn
-# handling needed here.
+# Deliberately scoped to exactly one action (not the opponent's whole turn)
+# so it stays the reusable "one AI move" primitive -- ResolveAiTurn loops
+# this to run a full opponent turn.
 class BattleAiTurn
-  STANCES = %w[attack defense neutral].freeze
-
   def self.call(battle:)
     new(battle).call
   end
@@ -23,9 +20,7 @@ class BattleAiTurn
     return ResolveBattleTurn::Result.new(battle: battle, error: "Opponent has no actionable cards.") unless card
 
     target = pick_target
-    slot = card.zone == "hand" ? BattleCard::SLOTS.sample : nil
-
-    ResolveBattleTurn.call(battle: battle, side: "opponent", acting_card: card, target: target, stance: STANCES.sample, slot: slot)
+    ResolveBattleTurn.call(battle: battle, side: "opponent", acting_card: card, target: target)
   end
 
   private

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_075719) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_200750) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -31,6 +31,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_075719) do
 
   create_table "battle_cards", force: :cascade do |t|
     t.bigint "achievement_id", null: false
+    t.boolean "acted_this_turn", default: false, null: false
     t.bigint "battle_id", null: false
     t.datetime "created_at", null: false
     t.integer "deck_position", null: false
@@ -52,11 +53,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_075719) do
     t.bigint "battle_id", null: false
     t.datetime "created_at", null: false
     t.integer "damage_dealt", null: false
-    t.string "stance_used", null: false
+    t.integer "move_number", null: false
     t.bigint "target_battle_card_id"
     t.integer "target_hp_after", null: false
     t.string "target_type", null: false
-    t.integer "turn_number", null: false
     t.datetime "updated_at", null: false
     t.index ["acting_battle_card_id"], name: "index_battle_moves_on_acting_battle_card_id"
     t.index ["battle_id"], name: "index_battle_moves_on_battle_id"
@@ -68,7 +68,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_075719) do
     t.string "current_turn_side", null: false
     t.bigint "deck_chain_id", null: false
     t.integer "opponent_hp", default: 30, null: false
+    t.integer "opponent_turn_count", default: 0, null: false
     t.integer "player_hp", default: 30, null: false
+    t.integer "player_turn_count", default: 0, null: false
     t.string "status", default: "active", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
