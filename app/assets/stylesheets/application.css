@@ -1030,7 +1030,7 @@ a {
 .chain-card__icon-wrap--glow::after {
   content: "";
   position: absolute;
-  inset: -10px;
+  inset: -6px;
   pointer-events: none;
 }
 
@@ -1038,7 +1038,7 @@ a {
   background:
     radial-gradient(circle, rgba(255, 246, 186, 0.98) 0 18%, rgba(255, 212, 92, 0.94) 28%, rgba(255, 173, 46, 0.82) 48%, rgba(157, 88, 13, 0.34) 66%, transparent 78%);
   opacity: 0.98;
-  filter: blur(7px) saturate(1.2);
+  filter: blur(5px) saturate(1.2);
   transform-origin: center;
   animation: crown-icon-spin 10s linear infinite;
   -webkit-mask-image: url("https://cdn.fastly.steamstatic.com/steamcommunity/public/ssr/star_mask-IH5JP5JD.png");
@@ -1052,10 +1052,10 @@ a {
 }
 
 .chain-card__icon-wrap--glow::after {
-  inset: -4px;
+  inset: -3px;
   border-radius: 0.6rem;
   background: radial-gradient(circle, rgba(255, 206, 97, 0.28), rgba(255, 163, 43, 0.12) 45%, transparent 72%);
-  filter: blur(5px);
+  filter: blur(3px);
 }
 
 .chain-card__icon {
