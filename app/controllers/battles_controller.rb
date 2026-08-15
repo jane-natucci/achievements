@@ -1,6 +1,6 @@
 class BattlesController < ApplicationController
-  before_action :set_battle, only: [:show, :attack, :end_turn]
-  before_action :require_own_battle!, only: [:show, :attack, :end_turn]
+  before_action :set_battle, only: [:show, :place, :attack, :end_turn]
+  before_action :require_own_battle!, only: [:show, :place, :attack, :end_turn]
 
   def index
     return redirect_to("/achievements/login/", alert: "Log in to see your battles.") unless current_user
@@ -30,6 +30,25 @@ class BattlesController < ApplicationController
   def show
   end
 
+  # JSON: places a hand card onto the board. This is that card's whole
+  # action for the turn -- it can't also attack until its side's next
+  # turn -- and only one placement is allowed per side per turn.
+  def place
+    unless @battle.active?
+      return render json: { error: "Battle is already over." }, status: :unprocessable_entity
+    end
+
+    card = @battle.battle_cards.find_by(id: params[:card_id])
+    result = PlaceBattleCard.call(battle: @battle, side: "player", card: card)
+
+    return render json: { error: result.error }, status: :unprocessable_entity unless result.success?
+
+    render json: {
+      board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: result.battle }),
+      battle_over: result.battle.active? ? false : result.battle.status
+    }
+  end
+
   # JSON: resolves a single instant attack for the player. Does not end
   # their turn -- other cards can still act after this.
   def attack
@@ -46,6 +65,7 @@ class BattlesController < ApplicationController
     render json: {
       board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: result.battle }),
       move_html: render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: result.move }),
+      result_log_html: result_log_html_for(result.battle),
       battle_over: result.battle.active? ? false : result.battle.status
     }
   end
@@ -64,7 +84,7 @@ class BattlesController < ApplicationController
     result = EndBattleTurn.call(battle: @battle, side: "player") do |battle_snapshot, move|
       steps << {
         board_html: render_to_string(partial: "board", formats: [:html], locals: { battle: battle_snapshot }),
-        move_html: render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: move })
+        move_html: move ? render_to_string(partial: "move_log_entry", formats: [:html], locals: { move: move }) : nil
       }
     end
 
@@ -73,6 +93,7 @@ class BattlesController < ApplicationController
     render json: {
       steps: steps,
       final_html: render_to_string(partial: "board", formats: [:html], locals: { battle: result.battle }),
+      result_log_html: result_log_html_for(result.battle),
       battle_over: result.battle.active? ? false : result.battle.status
     }
   end
@@ -93,5 +114,11 @@ class BattlesController < ApplicationController
     return :player if params[:target_type] == "player"
 
     @battle.battle_cards.find_by(id: params[:target_battle_card_id])
+  end
+
+  def result_log_html_for(battle)
+    return nil if battle.active?
+
+    render_to_string(partial: "result_log_entry", formats: [:html], locals: { battle: battle })
   end
 end

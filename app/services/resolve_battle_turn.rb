@@ -1,7 +1,8 @@
-# Resolves one attack: an acting card (placed onto the board first if it's
-# still in hand, into the first open slot -- no manual slot choice) attacks
-# a target -- another card, or the opposing player directly (targeting is
-# free, not lane-locked). Damage is flat (acting_card.dmg), no stance.
+# Resolves one attack by a card already on the board -- another card, or
+# the opposing player directly (targeting is free, not lane-locked).
+# Damage is flat (acting_card.dmg), no stance. Placing a hand card onto
+# the board is a separate action (see PlaceBattleCard) -- a card can't
+# attack the same turn it's placed.
 #
 # Does NOT flip whose turn it is -- multiple cards can each act once per
 # side's turn, so turn-ending is a separate, explicit step (see
@@ -31,8 +32,6 @@ class ResolveBattleTurn
     move = nil
 
     ActiveRecord::Base.transaction do
-      place_card! if acting_card.zone == "hand"
-
       damage = acting_card.dmg
       target_hp_after = apply_damage!(damage)
 
@@ -61,23 +60,13 @@ class ResolveBattleTurn
     return "Battle is already over." unless battle.active?
     return "It's not your turn." unless battle.current_turn_side == side
     return "That card can't act." unless acting_card.is_a?(BattleCard) && acting_card.battle_id == battle.id && acting_card.side == side
-    return "That card can't act." unless acting_card.zone == "hand" || (acting_card.zone == "board" && acting_card.alive?)
+    return "That card can't act." unless acting_card.zone == "board" && acting_card.alive?
     return "That card has already acted this turn." if acting_card.acted_this_turn?
-    return "No open slot to place this card." if acting_card.zone == "hand" && open_slot.nil?
     # A target card must actually be on the board -- a hand/deck card isn't
     # "in play" yet and shouldn't be attackable even if technically alive.
     return "Invalid target." unless target == :player || (target.is_a?(BattleCard) && target.battle_id == battle.id && target.side != side && target.zone == "board")
 
     nil
-  end
-
-  def place_card!
-    acting_card.update!(zone: "board", slot: open_slot)
-  end
-
-  def open_slot
-    occupied = battle.cards_for(side).select { |card| card.zone == "board" }.map(&:slot)
-    BattleCard::SLOTS.find { |slot| !occupied.include?(slot) }
   end
 
   def apply_damage!(damage)

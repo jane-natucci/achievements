@@ -17,26 +17,33 @@ RSpec.describe BattleAiTurn do
 
   let(:battle) { build_battle }
 
-  context 'with actionable opponent cards' do
+  context 'when only a hand card is actionable' do
+    before { build_card(battle, side: 'opponent', zone: 'hand') }
+
+    it 'places it onto the board rather than attacking (a placed card cannot also attack this turn)' do
+      card = battle.opponent_cards.first
+
+      result = call
+
+      expect(result.success?).to be(true)
+      expect(result.move).to be_nil
+      expect(card.reload.zone).to eq('board')
+      expect(BattleCard::SLOTS).to include(card.slot)
+      expect(card.acted_this_turn?).to be(true)
+    end
+  end
+
+  context 'with an actionable board card' do
     before do
-      build_card(battle, side: 'opponent', zone: 'hand')
+      build_card(battle, side: 'opponent', zone: 'board', slot: 'left')
       build_card(battle, side: 'player', zone: 'board', slot: 'left')
     end
 
-    it 'resolves a valid opponent move' do
+    it 'resolves a valid opponent attack' do
       result = call
 
       expect(result.success?).to be(true)
       expect(result.move.acting_side).to eq('opponent')
-    end
-
-    it 'places a hand card onto the board as part of acting' do
-      card = battle.opponent_cards.first
-
-      call
-
-      expect(card.reload.zone).to eq('board')
-      expect(BattleCard::SLOTS).to include(card.slot)
     end
 
     it 'only ever targets a player-side board card or the player directly' do
@@ -80,7 +87,7 @@ RSpec.describe BattleAiTurn do
 
       result = described_class.call(battle: fresh_battle)
 
-      next unless result.move.target_type == 'card'
+      next unless result.move&.target_type == 'card'
 
       expect(result.move.target_battle_card_id).to eq(board_card.id)
     end

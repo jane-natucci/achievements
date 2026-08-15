@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_200750) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_205800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,8 +68,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_200750) do
     t.string "current_turn_side", null: false
     t.bigint "deck_chain_id", null: false
     t.integer "opponent_hp", default: 30, null: false
+    t.boolean "opponent_placed_card_this_turn", default: false, null: false
     t.integer "opponent_turn_count", default: 0, null: false
     t.integer "player_hp", default: 30, null: false
+    t.boolean "player_placed_card_this_turn", default: false, null: false
     t.integer "player_turn_count", default: 0, null: false
     t.string "status", default: "active", null: false
     t.datetime "updated_at", null: false

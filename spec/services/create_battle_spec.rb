@@ -61,12 +61,12 @@ RSpec.describe CreateBattle do
 
       battle = call.battle
 
-      # HAND_SIZE (3) opponent cards, each acting once -- max dmg per card
-      # (CardStats::DMG_BASE + DMG_RANGE = 8) times 3 is 24, comfortably
-      # under STARTING_HP (30), so the battle is guaranteed to still be
-      # active once their whole turn resolves.
-      expect(battle.battle_moves.count).to eq(described_class::HAND_SIZE)
-      expect(battle.battle_moves.pluck(:acting_side)).to all(eq('opponent'))
+      # Only one placement is allowed per side per turn, and a freshly
+      # placed card can't also attack the turn it's placed -- so an
+      # opening turn (0 board cards yet) resolves exactly one placement
+      # and no attacks/moves at all.
+      expect(battle.battle_moves.count).to eq(0)
+      expect(battle.opponent_cards.count { |c| c.zone == 'board' }).to eq(1)
       expect(battle.current_turn_side).to eq('player')
       expect(battle.active?).to be(true)
     end

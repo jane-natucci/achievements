@@ -4,7 +4,7 @@ const AI_MOVE_DELAY_MS = 2500
 
 export default class extends Controller {
   static targets = ["board", "status", "readyButton", "hint", "log"]
-  static values = { attackUrl: String, endTurnUrl: String, active: Boolean }
+  static values = { placeUrl: String, attackUrl: String, endTurnUrl: String, active: Boolean }
 
   connect() {
     this.requestInFlight = false
@@ -17,8 +17,43 @@ export default class extends Controller {
     this.updateHint()
   }
 
+  // A hand card has no attack decision to make -- placing it *is* its
+  // whole action for the turn (it can't also attack until next turn) --
+  // so this resolves immediately on click, no target needed.
+  placeCard(event) {
+    if (!this.canAct() || this.requestInFlight) return
+
+    const el = event.currentTarget
+    if (el.dataset.acted === "true") return
+
+    el.classList.add("battle-card--attacking")
+
+    const body = new URLSearchParams({ card_id: el.dataset.battleCardId })
+    this.requestInFlight = true
+
+    fetch(this.placeUrlValue, { method: "POST", headers: this.jsonHeaders(), body })
+      .then((response) => response.json())
+      .then((data) => this.handlePlaceResponse(data))
+      .catch(() => this.handleRequestError())
+      .finally(() => {
+        this.requestInFlight = false
+      })
+  }
+
+  handlePlaceResponse(data) {
+    if (data.error) {
+      this.hintTarget.textContent = data.error
+      return
+    }
+
+    this.applyBoardHtml(data.board_html)
+    this.resetSelection()
+
+    if (data.battle_over) this.endBattle(data.battle_over, data.result_log_html)
+  }
+
   // Step 1 of "select card, select target": arms one of the player's own
-  // hand/board cards as the attacker. Nothing is submitted yet.
+  // board cards as the attacker. Nothing is submitted yet.
   selectAttacker(event) {
     if (!this.canAct() || this.requestInFlight) return
 
@@ -72,7 +107,7 @@ export default class extends Controller {
     if (data.move_html) this.logTarget.insertAdjacentHTML("beforeend", data.move_html)
     this.resetSelection()
 
-    if (data.battle_over) this.endBattle(data.battle_over)
+    if (data.battle_over) this.endBattle(data.battle_over, data.result_log_html)
   }
 
   // "Ready": ends the player's turn regardless of how many cards they used,
@@ -127,14 +162,15 @@ export default class extends Controller {
     this.resetSelection()
 
     if (data.battle_over) {
-      this.endBattle(data.battle_over)
+      this.endBattle(data.battle_over, data.result_log_html)
     } else {
       this.statusTarget.textContent = "Your turn"
     }
   }
 
-  endBattle(status) {
+  endBattle(status, resultLogHtml) {
     this.statusTarget.textContent = status === "won" ? "You won!" : "You lost."
+    if (resultLogHtml) this.logTarget.insertAdjacentHTML("beforeend", resultLogHtml)
     this.activeValue = false
     this.element.querySelector(".battle-controls")?.remove()
   }
@@ -207,7 +243,7 @@ export default class extends Controller {
 
     this.hintTarget.textContent = this.selectedCardId
       ? "Choose a target -- an enemy card, or the opponent."
-      : "Select one of your cards, then a target."
+      : "Click a hand card to place it, or select a board card then a target to attack."
   }
 
   highlightCard(event) {

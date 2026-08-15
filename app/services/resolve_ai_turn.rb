@@ -1,9 +1,10 @@
-# Runs the opponent's entire turn: every actionable opponent card attacks
-# once, in sequence (mirroring the player's "each card gets a turn" rule),
-# until none are left or the battle ends. Yields (battle, move) after each
-# resolved action via the given block, if any -- this is what lets the
-# caller stream a step-by-step snapshot back to the client for a delayed
-# reveal, without this service knowing anything about HTML/JSON.
+# Runs the opponent's entire turn: every actionable opponent card either
+# gets placed or attacks once, in sequence (mirroring the player's "each
+# card gets a turn" rule), until none are left or the battle ends. Yields
+# (battle, move) after each resolved action via the given block, if any --
+# this is what lets the caller stream a step-by-step snapshot back to the
+# client for a delayed reveal, without this service knowing anything about
+# HTML/JSON. move is nil for a placement action (nothing attacked).
 #
 # BattleAiTurn's existing "no actionable cards" error is the natural stop
 # signal for the loop, not a failure -- it just means the opponent's turn
@@ -33,7 +34,7 @@ class ResolveAiTurn
       break if result.error
 
       @battle = result.battle
-      moves << result.move
+      moves << result.move if result.move
       block&.call(battle, result.move)
     end
 

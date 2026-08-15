@@ -1,9 +1,12 @@
-<div class="battle-card<%= " battle-card--dead" unless card.alive? %><%= " battle-card--acted" if card.acted_this_turn? %>"
+<%
+  unavailable = role.in?(%w[attacker place]) && !battle.actionable?(card)
+%>
+<div class="battle-card<%= " battle-card--dead" unless card.alive? %><%= " battle-card--acted" if unavailable && card.alive? %>"
      data-battle-card-id="<%= card.id %>"
      data-side="<%= card.side %>"
      data-zone="<%= card.zone %>"
-     data-acted="<%= card.acted_this_turn? %>"
-     <% if role == "attacker" %>data-action="click->battle#selectAttacker"<% elsif role == "target" %>data-action="click->battle#selectTarget" data-target-type="card"<% end %>>
+     data-acted="<%= unavailable %>"
+     <% if role == "place" %>data-action="click->battle#placeCard"<% elsif role == "attacker" %>data-action="click->battle#selectAttacker"<% elsif role == "target" %>data-action="click->battle#selectTarget" data-target-type="card"<% end %>>
   <% if card.achievement.icon_unlocked.present? %>
     <%= image_tag card.achievement.icon_unlocked, alt: "", class: "battle-card__icon" %>
   <% else %>

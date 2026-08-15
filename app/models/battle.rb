@@ -39,28 +39,44 @@ class Battle < ApplicationRecord
     side == "player" ? player_turn_count : opponent_turn_count
   end
 
-  # Cards this side could still act with this turn: alive board cards that
-  # haven't already attacked this turn, or hand cards -- but only while
-  # there's an open board slot to place them into (otherwise BattleAiTurn
-  # could pick an unplaceable hand card, ResolveBattleTurn would reject it,
-  # and a turn-resolution loop would stop early even though other cards on
-  # this side could still act). Used both to gate whether a side can act at
-  # all (see #skip_stuck_turns!) and to validate an attack.
-  def actionable_cards_for(side)
-    open_slots = BattleCard::SLOTS.size - cards_for(side).count { |card| card.zone == "board" }
-
-    cards_for(side).select do |card|
-      next false if card.acted_this_turn?
-      next true if card.zone == "board" && card.alive?
-
-      card.zone == "hand" && open_slots.positive?
-    end
+  def placed_card_this_turn?(side)
+    side == "player" ? player_placed_card_this_turn : opponent_placed_card_this_turn
   end
 
-  # The "beginning of a turn" event: resets this side's cards so they can
-  # act again, and -- from this side's 2nd turn onward -- draws one card
-  # from their deck into their hand (turn 1 keeps the opening hand as-is;
-  # confirmed behavior, not an oversight).
+  def mark_card_placed!(side)
+    update!(side == "player" ? { player_placed_card_this_turn: true } : { opponent_placed_card_this_turn: true })
+  end
+
+  def open_slot?(side)
+    cards_for(side).count { |card| card.zone == "board" } < BattleCard::SLOTS.size
+  end
+
+  # Whether this specific card could act this turn: an alive board card
+  # that hasn't attacked yet this turn (this also covers a card placed
+  # *this* turn -- placing marks it acted, so it can't attack until its
+  # side's next turn resets that flag), or a hand card -- but only while
+  # this side hasn't already placed a card this turn and has an open slot
+  # (only one placement is allowed per side per turn).
+  def actionable?(card)
+    return false if card.acted_this_turn?
+    return card.alive? if card.zone == "board"
+    return false unless card.zone == "hand"
+
+    !placed_card_this_turn?(card.side) && open_slot?(card.side)
+  end
+
+  # Cards this side could still act with this turn. Used both to gate
+  # whether a side can act at all (see #skip_stuck_turns!) and to pick a
+  # card for the AI to act with.
+  def actionable_cards_for(side)
+    cards_for(side).select { |card| actionable?(card) }
+  end
+
+  # The "beginning of a turn" event: resets this side's cards (and their
+  # one-placement-per-turn budget) so they can act again, and -- from this
+  # side's 2nd turn onward -- draws one card from their deck into their
+  # hand (turn 1 keeps the opening hand as-is; confirmed behavior, not an
+  # oversight).
   def start_turn!(side)
     if side == "player"
       increment!(:player_turn_count)
@@ -68,7 +84,17 @@ class Battle < ApplicationRecord
       increment!(:opponent_turn_count)
     end
 
+    update!(side == "player" ? { player_placed_card_this_turn: false } : { opponent_placed_card_this_turn: false })
+
     battle_cards.where(side: side, zone: %w[hand board]).update_all(acted_this_turn: false)
+    # update_all bypasses ActiveRecord entirely -- it doesn't touch this
+    # battle's own battle_cards association if something already loaded
+    # and cached it earlier in the same request (e.g. rendering a board
+    # snapshot mid-turn for the client). Without this reset, that stale
+    # cache -- still showing the old acted_this_turn values -- is what
+    # cards_for/actionable_cards_for would read next, wrongly judging a
+    # side "stuck" right after resetting it.
+    battle_cards.reset
     draw_card!(side) if turn_count_for(side) >= 2
   end
 

@@ -34,10 +34,10 @@ RSpec.describe EndBattleTurn do
     end
   end
 
-  context 'when the opponent has actionable cards' do
+  context 'when the opponent has actionable board cards' do
     before do
       build_card(battle, side: 'player', zone: 'board', acted_this_turn: true, slot: 'left')
-      2.times { build_card(battle, side: 'opponent', zone: 'hand', dmg: 3) }
+      2.times { |i| build_card(battle, side: 'opponent', zone: 'board', dmg: 3, slot: BattleCard::SLOTS[i]) }
       build_card(battle, side: 'player', zone: 'board', hp: 100, slot: 'center')
     end
 
@@ -73,9 +73,25 @@ RSpec.describe EndBattleTurn do
     end
   end
 
+  context 'when the opponent only has a hand card to place' do
+    before do
+      build_card(battle, side: 'opponent', zone: 'hand')
+      build_card(battle, side: 'player', zone: 'hand')
+    end
+
+    it 'places it (no attack, no move) and still hands control back to the player' do
+      result = call
+
+      expect(result.success?).to be(true)
+      expect(result.moves).to eq([])
+      expect(battle.opponent_cards.first.reload.zone).to eq('board')
+      expect(result.battle.current_turn_side).to eq('player')
+    end
+  end
+
   context "when the opponent's whole turn ends the battle" do
     before do
-      build_card(battle, side: 'opponent', zone: 'hand', dmg: 20)
+      build_card(battle, side: 'opponent', zone: 'board', dmg: 20, slot: 'left')
       battle.update!(player_hp: 5)
     end
 

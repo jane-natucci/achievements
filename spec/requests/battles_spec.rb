@@ -91,6 +91,54 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
+  describe 'POST /achievements/battles/:id/place' do
+    let(:user) { create(:user) }
+    let(:chain) { build_chain(3, game: create(:game), creator: user) }
+    let(:battle) { CreateBattle.call(user: user, chain: chain).battle }
+
+    before do
+      allow_any_instance_of(CreateBattle).to receive(:first_mover).and_return('player')
+      sign_in(user)
+    end
+
+    it 'places a hand card onto the board' do
+      card = battle.player_cards.find { |c| c.zone == 'hand' }
+
+      post place_battle_path(battle), params: { card_id: card.id }, headers: { 'Accept' => 'application/json' }
+
+      expect(response).to have_http_status(:ok)
+      json = response.parsed_body
+      expect(json['board_html']).to include('battle-board')
+      expect(card.reload.zone).to eq('board')
+    end
+
+    it 'returns a JSON error for an invalid placement without changing battle state' do
+      post place_battle_path(battle), params: { card_id: -1 }, headers: { 'Accept' => 'application/json' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body['error']).to be_present
+    end
+
+    it 'rejects placing once the battle is already over' do
+      battle.update!(status: 'won')
+      card = battle.player_cards.find { |c| c.zone == 'hand' }
+
+      post place_battle_path(battle), params: { card_id: card.id }, headers: { 'Accept' => 'application/json' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "blocks acting on someone else's battle" do
+      visitor = create(:user)
+      sign_in(visitor)
+      card = battle.player_cards.find { |c| c.zone == 'hand' }
+
+      post place_battle_path(battle), params: { card_id: card.id }, headers: { 'Accept' => 'application/json' }
+
+      expect(response).to redirect_to(battles_path)
+    end
+  end
+
   describe 'POST /achievements/battles/:id/attack' do
     let(:user) { create(:user) }
     let(:chain) { build_chain(3, game: create(:game), creator: user) }
@@ -104,8 +152,17 @@ RSpec.describe 'Battles', type: :request do
       sign_in(user)
     end
 
-    it "resolves a single attack instantly and doesn't end the player's turn" do
+    # Only a board card can attack -- place one first (bypassing the real
+    # PlaceBattleCard flow, since that's tested on its own) and clear
+    # acted_this_turn since placing marks a card acted.
+    def board_card_for(battle)
       card = battle.player_cards.find { |c| c.zone == 'hand' }
+      card.update!(zone: 'board', slot: 'left', acted_this_turn: false)
+      card
+    end
+
+    it "resolves a single attack instantly and doesn't end the player's turn" do
+      card = board_card_for(battle)
 
       post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
 
@@ -124,8 +181,7 @@ RSpec.describe 'Battles', type: :request do
       expect(battle.reload.battle_moves.count).to eq(0)
     end
 
-    it 'rejects an attack once the battle is already over' do
-      battle.update!(status: 'won')
+    it "rejects a hand card acting directly -- it must be placed first" do
       card = battle.player_cards.find { |c| c.zone == 'hand' }
 
       post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
@@ -133,10 +189,19 @@ RSpec.describe 'Battles', type: :request do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
+    it 'rejects an attack once the battle is already over' do
+      card = board_card_for(battle)
+      battle.update!(status: 'won')
+
+      post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
     it "blocks acting on someone else's battle" do
+      card = board_card_for(battle)
       visitor = create(:user)
       sign_in(visitor)
-      card = battle.player_cards.find { |c| c.zone == 'hand' }
 
       post attack_battle_path(battle), params: { acting_card_id: card.id, target_type: 'player' }, headers: { 'Accept' => 'application/json' }
 
@@ -159,9 +224,13 @@ RSpec.describe 'Battles', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = response.parsed_body
-      # Mirrored deck -- the opponent has actionable hand cards to act with.
-      expect(json['steps']).to be_present
-      expect(json['steps']).to all(include('board_html' => a_string_including('battle-board'), 'move_html' => a_string_including('battle-log__entry')))
+      # Mirrored deck, empty board -- the opponent's reply is a single
+      # placement (only one card may be placed per side per turn, and it
+      # can't also attack the turn it's placed), so exactly one step with
+      # no move (nothing attacked).
+      expect(json['steps'].size).to eq(1)
+      expect(json['steps'].first['board_html']).to include('battle-board')
+      expect(json['steps'].first['move_html']).to be_nil
       expect(json['final_html']).to include('battle-board')
       expect(battle.reload.current_turn_side).to eq('player')
     end

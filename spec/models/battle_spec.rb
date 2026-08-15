@@ -59,6 +59,15 @@ RSpec.describe Battle do
 
       expect(acted_card.reload.acted_this_turn?).to be(false)
     end
+
+    it "resets that side's one-placement-per-turn budget" do
+      battle = build_battle
+      battle.update!(player_placed_card_this_turn: true)
+
+      battle.start_turn!('player')
+
+      expect(battle.placed_card_this_turn?('player')).to be(false)
+    end
   end
 
   describe '#actionable_cards_for' do
@@ -85,6 +94,81 @@ RSpec.describe Battle do
       hand_card = build_card(battle, side: 'player', zone: 'hand')
 
       expect(battle.actionable_cards_for('player')).to include(hand_card)
+    end
+
+    it 'excludes every hand card once this side has already placed one this turn' do
+      battle = build_battle
+      battle.update!(player_placed_card_this_turn: true)
+      hand_card_a = build_card(battle, side: 'player', zone: 'hand')
+      hand_card_b = build_card(battle, side: 'player', zone: 'hand')
+
+      expect(battle.actionable_cards_for('player')).not_to include(hand_card_a, hand_card_b)
+    end
+
+    it "does not exclude the other side's hand cards" do
+      battle = build_battle
+      battle.update!(player_placed_card_this_turn: true)
+      opponent_hand_card = build_card(battle, side: 'opponent', zone: 'hand')
+
+      expect(battle.actionable_cards_for('opponent')).to include(opponent_hand_card)
+    end
+  end
+
+  describe '#actionable?' do
+    it 'is true for an alive board card that has not acted this turn' do
+      battle = build_battle
+      card = build_card(battle, side: 'player', zone: 'board', slot: 'left')
+
+      expect(battle.actionable?(card)).to be(true)
+    end
+
+    it 'is false for a dead board card' do
+      battle = build_battle
+      card = build_card(battle, side: 'player', zone: 'dead', hp: 0, slot: 'left')
+
+      expect(battle.actionable?(card)).to be(false)
+    end
+
+    it 'is false for a hand card once its side has placed a card this turn' do
+      battle = build_battle
+      battle.update!(player_placed_card_this_turn: true)
+      card = build_card(battle, side: 'player', zone: 'hand')
+
+      expect(battle.actionable?(card)).to be(false)
+    end
+
+    it 'is false for a card still in the deck' do
+      battle = build_battle
+      card = build_card(battle, side: 'player', zone: 'deck')
+
+      expect(battle.actionable?(card)).to be(false)
+    end
+  end
+
+  describe '#mark_card_placed!' do
+    it 'sets the placed flag for the given side only' do
+      battle = build_battle
+
+      battle.mark_card_placed!('player')
+
+      expect(battle.placed_card_this_turn?('player')).to be(true)
+      expect(battle.placed_card_this_turn?('opponent')).to be(false)
+    end
+  end
+
+  describe '#open_slot?' do
+    it 'is true when the board has fewer than 3 cards' do
+      battle = build_battle
+      build_card(battle, side: 'player', zone: 'board', slot: 'left')
+
+      expect(battle.open_slot?('player')).to be(true)
+    end
+
+    it 'is false when all 3 slots are occupied by living cards' do
+      battle = build_battle
+      BattleCard::SLOTS.each { |slot| build_card(battle, side: 'player', zone: 'board', slot: slot) }
+
+      expect(battle.open_slot?('player')).to be(false)
     end
   end
 end

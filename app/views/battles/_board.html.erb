@@ -9,67 +9,72 @@
   player_icon = battle.user.avatar_url
 %>
 <div class="battle-board" data-battle-status="<%= battle.status %>" data-current-turn="<%= battle.current_turn_side %>">
-  <div class="battle-info-row battle-info-row--opponent">
-    <div class="battle-avatar-card<%= " battle-avatar-card--targetable" if player_can_act %>"
-         data-hp-avatar="opponent"
-         <% if player_can_act %>data-action="click->battle#selectTarget" data-target-type="player"<% end %>>
-      <% if opponent_icon.present? %>
-        <%= image_tag opponent_icon, alt: "", class: "battle-avatar-card__icon" %>
-      <% else %>
-        <span class="battle-avatar-card__icon battle-avatar-card__icon--placeholder" aria-hidden="true"></span>
-      <% end %>
-      <span class="battle-avatar-card__title">Opponent</span>
-      <div class="battle-hp">
-        <div class="battle-hp__bar"><div class="battle-hp__fill" style="width: <%= (battle.opponent_hp.to_f / Battle::STARTING_HP * 100).round %>%"></div></div>
-        <span class="battle-hp__value" data-hp-node><%= battle.opponent_hp %> / <%= Battle::STARTING_HP %></span>
+  <div class="battle-board__main">
+    <div class="battle-info-row battle-info-row--opponent">
+      <div class="battle-avatar-card<%= " battle-avatar-card--targetable" if player_can_act %>"
+           data-hp-avatar="opponent"
+           <% if player_can_act %>data-action="click->battle#selectTarget" data-target-type="player"<% end %>>
+        <% if opponent_icon.present? %>
+          <%= image_tag opponent_icon, alt: "", class: "battle-avatar-card__icon" %>
+        <% else %>
+          <span class="battle-avatar-card__icon battle-avatar-card__icon--placeholder" aria-hidden="true"></span>
+        <% end %>
+        <span class="battle-avatar-card__title">Opponent</span>
+        <div class="battle-hp">
+          <div class="battle-hp__bar"><div class="battle-hp__fill" style="width: <%= (battle.opponent_hp.to_f / Battle::STARTING_HP * 100).round %>%"></div></div>
+          <span class="battle-hp__value" data-hp-node><%= battle.opponent_hp %> / <%= Battle::STARTING_HP %></span>
+        </div>
       </div>
     </div>
+
+    <div class="battle-slots battle-slots--opponent">
+      <% BattleCard::SLOTS.each do |slot| %>
+        <% card = opponent_board_cards.find { |c| c.slot == slot } %>
+        <div class="battle-slot" data-slot="<%= slot %>" data-side="opponent">
+          <%= render "card", battle: battle, card: card, role: (player_can_act ? "target" : nil) if card %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="battle-slots battle-slots--player">
+      <% BattleCard::SLOTS.each do |slot| %>
+        <% card = player_board_cards.find { |c| c.slot == slot } %>
+        <div class="battle-slot" data-slot="<%= slot %>" data-side="player">
+          <%= render "card", battle: battle, card: card, role: (player_can_act ? "attacker" : nil) if card %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="battle-info-row battle-info-row--player">
+      <div class="battle-avatar-card" data-hp-avatar="player">
+        <% if player_icon.present? %>
+          <%= image_tag player_icon, alt: "", class: "battle-avatar-card__icon" %>
+        <% else %>
+          <span class="battle-avatar-card__icon battle-avatar-card__icon--placeholder" aria-hidden="true"></span>
+        <% end %>
+        <span class="battle-avatar-card__title">You</span>
+        <div class="battle-hp">
+          <div class="battle-hp__bar"><div class="battle-hp__fill" style="width: <%= (battle.player_hp.to_f / Battle::STARTING_HP * 100).round %>%"></div></div>
+          <span class="battle-hp__value" data-hp-node><%= battle.player_hp %> / <%= Battle::STARTING_HP %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="battle-hand" data-battle-target="hand">
+      <% player_hand_cards.each do |card| %>
+        <%= render "card", battle: battle, card: card, role: (player_can_act ? "place" : nil) %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="battle-board__decks">
     <div class="battle-deck-pile" title="<%= opponent_hidden_count %> hidden cards (hand + deck)">
       <span class="battle-card-back" aria-hidden="true"></span>
       <span class="battle-deck-pile__count"><%= opponent_hidden_count %></span>
     </div>
-  </div>
-
-  <div class="battle-slots battle-slots--opponent">
-    <% BattleCard::SLOTS.each do |slot| %>
-      <% card = opponent_board_cards.find { |c| c.slot == slot } %>
-      <div class="battle-slot" data-slot="<%= slot %>" data-side="opponent">
-        <%= render "card", card: card, role: (player_can_act ? "target" : nil) if card %>
-      </div>
-    <% end %>
-  </div>
-
-  <div class="battle-slots battle-slots--player">
-    <% BattleCard::SLOTS.each do |slot| %>
-      <% card = player_board_cards.find { |c| c.slot == slot } %>
-      <div class="battle-slot" data-slot="<%= slot %>" data-side="player">
-        <%= render "card", card: card, role: (player_can_act ? "attacker" : nil) if card %>
-      </div>
-    <% end %>
-  </div>
-
-  <div class="battle-info-row battle-info-row--player">
     <div class="battle-deck-pile" title="<%= player_deck_count %> cards left in your deck">
       <span class="battle-card-back" aria-hidden="true"></span>
       <span class="battle-deck-pile__count"><%= player_deck_count %></span>
     </div>
-    <div class="battle-avatar-card" data-hp-avatar="player">
-      <% if player_icon.present? %>
-        <%= image_tag player_icon, alt: "", class: "battle-avatar-card__icon" %>
-      <% else %>
-        <span class="battle-avatar-card__icon battle-avatar-card__icon--placeholder" aria-hidden="true"></span>
-      <% end %>
-      <span class="battle-avatar-card__title">You</span>
-      <div class="battle-hp">
-        <div class="battle-hp__bar"><div class="battle-hp__fill" style="width: <%= (battle.player_hp.to_f / Battle::STARTING_HP * 100).round %>%"></div></div>
-        <span class="battle-hp__value" data-hp-node><%= battle.player_hp %> / <%= Battle::STARTING_HP %></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="battle-hand" data-battle-target="hand">
-    <% player_hand_cards.each do |card| %>
-      <%= render "card", card: card, role: (player_can_act ? "attacker" : nil) %>
-    <% end %>
   </div>
 </div>

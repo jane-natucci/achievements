@@ -10,7 +10,7 @@ RSpec.describe ResolveBattleTurn do
   let(:battle) { build_battle }
   let(:side) { 'player' }
   let(:target) { :player }
-  let(:acting_card) { battle.player_cards.first }
+  let(:acting_card) { build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left') }
 
   def build_battle(current_turn_side: 'player')
     Battle.create!(user: create(:user), deck_chain: create(:chain), current_turn_side: current_turn_side)
@@ -24,15 +24,12 @@ RSpec.describe ResolveBattleTurn do
   end
 
   before do
-    build_card(battle, side: 'player', zone: 'hand', hp: 10, dmg: 5)
     build_card(battle, side: 'opponent', zone: 'board', hp: 10, dmg: 5, slot: 'left')
   end
 
-  it 'places a hand card onto the board (first open slot) and attacks the opponent directly' do
+  it 'attacks the opponent directly for the card\'s flat damage' do
     expect(call.success?).to be(true)
 
-    expect(acting_card.reload.zone).to eq('board')
-    expect(acting_card.slot).to eq('left')
     expect(battle.reload.opponent_hp).to eq(Battle::STARTING_HP - 5)
   end
 
@@ -53,35 +50,6 @@ RSpec.describe ResolveBattleTurn do
 
     expect(acting_card.reload.acted_this_turn?).to be(true)
     expect(battle.reload.current_turn_side).to eq('player')
-  end
-
-  it "doesn't try to re-place a card that's already on the board" do
-    board_card = build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'center')
-
-    result = described_class.call(battle: battle, side: 'player', acting_card: board_card, target: :player)
-
-    expect(result.success?).to be(true)
-    expect(board_card.reload.slot).to eq('center')
-  end
-
-  describe 'auto-placement' do
-    it 'places into the first open slot when earlier slots are occupied' do
-      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left')
-
-      call
-
-      expect(acting_card.reload.slot).to eq('center')
-    end
-
-    it 'places into a slot freed up by a dead card' do
-      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left')
-      build_card(battle, side: 'player', zone: 'dead', hp: 0, dmg: 5, slot: 'center')
-      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'right')
-
-      call
-
-      expect(acting_card.reload.slot).to eq('center')
-    end
   end
 
   describe 'attacking a card' do
@@ -153,20 +121,20 @@ RSpec.describe ResolveBattleTurn do
       expect(result.success?).to be(false)
     end
 
+    it "rejects a hand card acting -- it must be placed first (see PlaceBattleCard)" do
+      hand_card = build_card(battle, side: 'player', zone: 'hand')
+
+      result = described_class.call(battle: battle, side: 'player', acting_card: hand_card, target: :player)
+
+      expect(result.success?).to be(false)
+      expect(result.error).to match(/can't act/i)
+    end
+
     it 'rejects a card that has already acted this turn' do
       acting_card.update!(acted_this_turn: true)
 
       expect(call.success?).to be(false)
       expect(call.error).to match(/already acted/i)
-    end
-
-    it 'rejects a hand card when the board has no open slot' do
-      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'left')
-      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'center')
-      build_card(battle, side: 'player', zone: 'board', hp: 10, dmg: 5, slot: 'right')
-
-      expect(call.success?).to be(false)
-      expect(call.error).to match(/slot/i)
     end
 
     it 'rejects attacking a dead card' do

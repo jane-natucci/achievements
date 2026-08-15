@@ -17,13 +17,13 @@ RSpec.describe ResolveAiTurn do
     )
   end
 
-  context 'when the opponent has several actionable cards' do
+  context 'when the opponent has several actionable board cards' do
     before do
-      3.times { build_card(battle, side: 'opponent', zone: 'hand', dmg: 5) }
+      3.times { |i| build_card(battle, side: 'opponent', zone: 'board', dmg: 5, slot: BattleCard::SLOTS[i]) }
       build_card(battle, side: 'player', zone: 'board', hp: 100, slot: 'left')
     end
 
-    it 'resolves one move per actionable card, all acting for the opponent' do
+    it 'resolves one attack per actionable card, all acting for the opponent' do
       result = call
 
       expect(result.moves.size).to eq(3)
@@ -47,9 +47,28 @@ RSpec.describe ResolveAiTurn do
     end
   end
 
+  context 'when only a hand card is available' do
+    before do
+      build_card(battle, side: 'opponent', zone: 'hand')
+      build_card(battle, side: 'player', zone: 'hand')
+    end
+
+    it 'places it (no move, since nothing attacked) and then hands back, having used the one placement' do
+      yielded = []
+
+      result = described_class.call(battle: battle) { |b, move| yielded << [b, move] }
+
+      expect(result.moves).to eq([])
+      expect(yielded.size).to eq(1)
+      expect(yielded.first.last).to be_nil
+      expect(battle.opponent_cards.first.reload.zone).to eq('board')
+      expect(result.battle.current_turn_side).to eq('player')
+    end
+  end
+
   context 'when the battle ends mid-loop' do
     before do
-      3.times { build_card(battle, side: 'opponent', zone: 'hand', dmg: 5) }
+      3.times { |i| build_card(battle, side: 'opponent', zone: 'board', dmg: 5, slot: BattleCard::SLOTS[i]) }
       battle.update!(player_hp: 3)
     end
 
