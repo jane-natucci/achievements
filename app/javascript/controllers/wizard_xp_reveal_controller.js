@@ -20,7 +20,7 @@ export default class extends Controller {
     setTimeout(() => {
       this.totalTarget.classList.add("wizard-xp-summary__total--visible")
       this.ready = true
-      this.buttonTargets.forEach((button) => button.classList.remove("wizard-button--disabled"))
+      this.buttonTarget.classList.remove("wizard-button--disabled")
     }, totalDelay)
   }
 

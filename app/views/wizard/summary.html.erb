@@ -10,14 +10,7 @@
 
   <p class="wizard-xp-summary__total" data-wizard-xp-reveal-target="total">Total: +<%= @total_xp %> xp</p>
 
-  <div class="wizard-button-group">
-    <%= link_to "See My Chain", chain_path(@chain),
-          class: "wizard-button wizard-button--disabled",
-          data: { wizard_xp_reveal_target: "button", action: "click->wizard-xp-reveal#handleClick" } %>
-    <% if @chain.chain_nodes.count.between?(1, Battle::MAX_DECK_SIZE) %>
-      <%= button_to "Battle Your Shadow", battles_path(chain_id: @chain.id), method: :post,
-            class: "wizard-button wizard-button--secondary wizard-button--disabled",
-            data: { wizard_xp_reveal_target: "button", action: "click->wizard-xp-reveal#handleClick" } %>
-    <% end %>
-  </div>
+  <%= link_to "See My Chain", chain_path(@chain),
+        class: "wizard-button wizard-button--disabled",
+        data: { wizard_xp_reveal_target: "button", action: "click->wizard-xp-reveal#handleClick" } %>
 </div>

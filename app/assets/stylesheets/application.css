@@ -306,10 +306,6 @@ a {
   color: var(--text);
 }
 
-a.topbar__nav-link--battle {
-  color: #e05252;
-}
-
 .profile-shell {
   padding-top: 1rem;
 }

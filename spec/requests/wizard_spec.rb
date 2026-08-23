@@ -85,13 +85,9 @@ RSpec.describe 'Wizard', type: :request do
     expect(response.body).to include('Chain created')
     expect(response.body).to include("Total: +#{chain_creation_xp} xp")
     expect(response.body).to include('See My Chain')
-    expect(response.body).to include('Battle Your Shadow')
 
     get chain_path(chain)
     expect(response).to have_http_status(:ok)
-
-    post battles_path, params: { chain_id: chain.id }
-    expect(response).to redirect_to(battle_path(Battle.last))
   end
 
   it 'rejects an achievement_id that is not one of the current step candidates' do

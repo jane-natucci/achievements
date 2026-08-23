@@ -1,7 +1,7 @@
 <% if Rails.env.production? && cookies[:cookie_consent].blank? %>
   <div class="cookie-banner" data-controller="cookie-consent" data-cookie-consent-amplitude-key-value="<%= AMPLITUDE_KEY %>">
     <p class="cookie-banner__text">
-      We use <%= link_to "Amplitude", "https://amplitude.com", target: "_blank", rel: "noopener noreferrer" %> to see how the site's used (clicks, session replay) so we can improve it. Everything else here -- signing in, chains, battles -- works exactly the same either way.
+      We use third-party cookies to learn how the project is used, so we can improve it. Everything else here -- signing in, chains, battles -- works exactly the same either way.
     </p>
     <div class="cookie-banner__actions">
       <button type="button" class="cookie-banner__button cookie-banner__button--decline" data-action="cookie-consent#decline">Decline</button>
