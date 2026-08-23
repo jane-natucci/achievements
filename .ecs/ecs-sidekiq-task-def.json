@@ -55,7 +55,8 @@
           "awslogs-stream-prefix": "achievements-sidekiq"
         }
       },
-      "name": "achievements-sidekiq"
+      "name": "achievements-sidekiq",
+      "memoryReservation": 320
     }
   ],
   "cpu": "256",

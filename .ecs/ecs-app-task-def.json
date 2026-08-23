@@ -64,7 +64,8 @@
           "hostPort": 4000,
           "protocol": "tcp"
         }
-      ]
+      ],
+      "memoryReservation": 320
     }
   ],
   "cpu": "256",
