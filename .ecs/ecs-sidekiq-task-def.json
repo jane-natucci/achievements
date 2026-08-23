@@ -56,13 +56,13 @@
         }
       },
       "name": "achievements-sidekiq",
-      "memoryReservation": 320
+      "memoryReservation": 320,
+      "memory": 512
     }
   ],
   "cpu": "256",
   "executionRoleArn": "arn:aws:iam::949665810427:role/ecs_task_role",
   "family": "achievements-sidekiq",
-  "memory": "512",
   "networkMode": "bridge",
   "requiresCompatibilities": [
     "EC2"
