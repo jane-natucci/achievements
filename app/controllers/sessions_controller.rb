@@ -21,6 +21,33 @@ class SessionsController < ApplicationController
     redirect_to "/achievements/", notice: "Now impersonating #{result.user.display_name}."
   end
 
+  # GET entry point for other jane.berlin apps that already know a
+  # visitor's steamid64 (e.g. eu4.jane.berlin, after its own profile-URL
+  # sign-in) to link straight into that person's achievement profile here.
+  # Same trust level as the plain paste-URL flow above -- no Steam OpenID
+  # proof of ownership, just a lookup/sync by steamid64 -- so it's no more
+  # sensitive than the existing POST /login form.
+  def login_with_steam_id
+    steam_id = params[:steam_id].to_s
+
+    if steam_id.blank?
+      return redirect_to "/achievements/login/", alert: "Missing Steam ID."
+    end
+
+    result = SteamProfileLogin.call_for_steam_id(steam_id)
+
+    unless result.success?
+      return redirect_to "/achievements/login/", alert: result.error
+    end
+
+    SyncUserAchievementProgressWorker.perform_async(result.user.id)
+    session[:user_id] = result.user.id
+    session[:steam_verified] = false
+    mark_online!(result.user)
+
+    redirect_to user_path(result.user), notice: "Now impersonating #{result.user.display_name}."
+  end
+
   def steam
     # Rails blocks redirects to other hosts by default; this one is a
     # hardcoded literal Steam URL, not derived from user input, so it's safe.

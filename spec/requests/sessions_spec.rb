@@ -65,6 +65,38 @@ RSpec.describe 'Sessions', type: :request do
     end
   end
 
+  describe 'GET /achievements/login/steam_id' do
+    it 'signs the user in and redirects straight to their profile, unverified' do
+      user = create(:user)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id }
+
+      expect(response).to redirect_to("/achievements/users/#{user.id}")
+      expect(session[:user_id]).to eq(user.id)
+      expect(session[:steam_verified]).to be(false)
+    end
+
+    it 'redirects to login with an alert when no steam_id is given' do
+      get '/achievements/login/steam_id'
+
+      expect(response).to redirect_to('/achievements/login/')
+      follow_redirect!
+      expect(response.body).to include('Missing Steam ID')
+    end
+
+    it 'redirects to login with an alert when the profile cannot be loaded' do
+      allow(Steam::User).to receive(:summary).and_return(nil)
+
+      get '/achievements/login/steam_id', params: { steam_id: '76561197960265728' }
+
+      expect(response).to redirect_to('/achievements/login/')
+      follow_redirect!
+      expect(response.body).to include('Could not load that Steam profile')
+    end
+  end
+
   describe 'DELETE /achievements/logout' do
     it 'clears both the user and the verified flag' do
       user = create(:user)

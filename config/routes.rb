@@ -38,6 +38,7 @@ Rails.application.routes.draw do
     post "login", to: "sessions#create"
     get "login/steam", to: "sessions#steam", as: :login_steam
     get "login/steam/callback", to: "sessions#steam_callback", as: :login_steam_callback
+    get "login/steam_id", to: "sessions#login_with_steam_id", as: :login_with_steam_id
     delete "logout", to: "sessions#destroy"
     post "heartbeat", to: "sessions#heartbeat"
     get "wizard", to: "wizard#profile", as: :wizard
