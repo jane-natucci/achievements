@@ -95,6 +95,28 @@ RSpec.describe 'Sessions', type: :request do
       follow_redirect!
       expect(response.body).to include('Could not load that Steam profile')
     end
+
+    it 'redirects to the named achievement, resolved by steam_api_name against EU4, when given' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      achievement = create(:achievement, game: eu4, steam_api_name: 'ACH_WC_JOIN_HRE')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievement: 'ACH_WC_JOIN_HRE' }
+
+      expect(response).to redirect_to("/achievements/achievements/#{achievement.id}")
+    end
+
+    it 'falls back to the profile page when the named achievement is unknown' do
+      user = create(:user)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievement: 'NOT_A_REAL_ACHIEVEMENT' }
+
+      expect(response).to redirect_to("/achievements/users/#{user.id}")
+    end
   end
 
   describe 'DELETE /achievements/logout' do

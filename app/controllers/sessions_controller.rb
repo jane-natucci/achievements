@@ -23,7 +23,14 @@ class SessionsController < ApplicationController
 
   # GET entry point for other jane.berlin apps that already know a
   # visitor's steamid64 (e.g. eu4.jane.berlin, after its own profile-URL
-  # sign-in) to link straight into that person's achievement profile here.
+  # sign-in) to link straight into that person's achievement profile here --
+  # or, with an `achievement` param (a steam_api_name, e.g. from eu4's own
+  # Achievement rows), straight into that specific achievement's page.
+  # Deliberately keyed by steam_api_name rather than this app's internal
+  # Achievement id -- the two apps' databases assign ids independently, but
+  # both already store the same Steam-assigned steam_api_name, so that's
+  # the only identifier safe to pass across apps without an explicit sync.
+  #
   # Same trust level as the plain paste-URL flow above -- no Steam OpenID
   # proof of ownership, just a lookup/sync by steamid64 -- so it's no more
   # sensitive than the existing POST /login form.
@@ -45,7 +52,7 @@ class SessionsController < ApplicationController
     session[:steam_verified] = false
     mark_online!(result.user)
 
-    redirect_to user_path(result.user), notice: "Now impersonating #{result.user.display_name}."
+    redirect_to landing_path_after_login(result.user), notice: "Now impersonating #{result.user.display_name}."
   end
 
   def steam
@@ -93,5 +100,17 @@ class SessionsController < ApplicationController
 
   def mark_online!(user)
     user.update_column(:last_seen_at, Time.current)
+  end
+
+  # Sends the visitor to the achievement page named by `?achievement=` (a
+  # steam_api_name, currently only resolved against EU4 -- the only game
+  # this cross-app link exists for so far) if given and it actually
+  # resolves, otherwise their own profile.
+  def landing_path_after_login(user)
+    steam_api_name = params[:achievement].to_s
+    return user_path(user) if steam_api_name.blank?
+
+    achievement = Game.eu4 && Achievement.find_by(game: Game.eu4, steam_api_name: steam_api_name)
+    achievement ? achievement_path(achievement) : user_path(user)
   end
 end
