@@ -25,10 +25,17 @@ class AchievementsController < ApplicationController
     # One combined feed of interactions with this achievement -- unlocks and
     # favorites, interleaved by time -- rather than two separate lists.
     # Both event types are already recorded as XpEvents (favoriting at
-    # amount 0, see AwardXp), so this is just a union over reason/subject.
-    unlock_events = XpEvent.where(reason: "achievement_unlocked", subject_type: "ChainNode", subject_id: @achievement.chain_nodes.select(:id))
-    favorite_events = XpEvent.where(reason: "achievement_favorited", subject_type: "Achievement", subject_id: @achievement.id)
-    @history = unlock_events.or(favorite_events).includes(:user).order(created_at: :desc)
+    # amount 0, see AwardXp).
+    unlock_events = XpEvent.where(reason: "achievement_unlocked", subject_type: "ChainNode", subject_id: @achievement.chain_nodes.select(:id)).includes(:user)
+    # An achievement that belongs to several chains gets XP -- and an
+    # XpEvent row -- once per chain_node it fills (see
+    # SyncUserAchievementProgress), which is correct for XP but would
+    # otherwise repeat "unlocked this" once per chain here. Collapse to
+    # the earliest one per user, which is when they actually unlocked it.
+    earliest_unlock_per_user = unlock_events.group_by(&:user_id).values.map { |events| events.min_by(&:created_at) }
+
+    favorite_events = XpEvent.where(reason: "achievement_favorited", subject_type: "Achievement", subject_id: @achievement.id).includes(:user)
+    @history = (earliest_unlock_per_user + favorite_events).sort_by(&:created_at).reverse
 
     @favorited = current_user.present? && current_user.user_achievement_favorites.exists?(achievement: @achievement)
     @favorite_count = UserAchievementFavorite.where(achievement: @achievement).count

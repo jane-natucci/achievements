@@ -128,19 +128,42 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include('No activity yet')
     end
 
-    it 'includes one entry per unlock even if the achievement appears in multiple chains' do
+    it 'collapses one unlock down to a single history entry even if the achievement appears in multiple chains' do
+      # Unlocking an achievement that belongs to several chains awards (and
+      # logs) XP once per chain_node it fills -- see
+      # SyncUserAchievementProgress -- but that's still just one person
+      # unlocking one achievement, and the history feed should read that way.
       achievement = create(:achievement)
       chain_a = create(:chain)
       chain_b = create(:chain)
       node_a = create(:chain_node, chain: chain_a, achievement: achievement)
       node_b = create(:chain_node, chain: chain_b, achievement: achievement)
       alice = create(:user, display_name: 'Alice')
+      AwardXp.call(user: alice, amount: 5, reason: 'achievement_unlocked', subject: node_a, occurred_at: 2.days.ago)
+      AwardXp.call(user: alice, amount: 5, reason: 'achievement_unlocked', subject: node_b, occurred_at: 1.day.ago)
+
+      get achievement_path(achievement)
+
+      expect(response.body).to include('1 event')
+      expect(response.body.scan('unlocked this').size).to eq(1)
+    end
+
+    it 'keeps unlock entries from different users separate, one per achievement per user' do
+      achievement = create(:achievement)
+      chain_a = create(:chain)
+      chain_b = create(:chain)
+      node_a = create(:chain_node, chain: chain_a, achievement: achievement)
+      node_b = create(:chain_node, chain: chain_b, achievement: achievement)
+      alice = create(:user, display_name: 'Alice')
+      bob = create(:user, display_name: 'Bob')
       AwardXp.call(user: alice, amount: 5, reason: 'achievement_unlocked', subject: node_a)
-      AwardXp.call(user: alice, amount: 5, reason: 'achievement_unlocked', subject: node_b)
+      AwardXp.call(user: bob, amount: 5, reason: 'achievement_unlocked', subject: node_b)
 
       get achievement_path(achievement)
 
       expect(response.body).to include('2 events')
+      expect(response.body).to include('Alice')
+      expect(response.body).to include('Bob')
     end
   end
 
