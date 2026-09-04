@@ -117,6 +117,65 @@ RSpec.describe 'Sessions', type: :request do
 
       expect(response).to redirect_to("/achievements/users/#{user.id}")
     end
+
+    it 'auto-creates a chain from achievements[], with the given title and description, and redirects to it' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      first = create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      second = create(:achievement, game: eu4, steam_api_name: 'ACH_SECOND')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: {
+        steam_id: user.steam_id,
+        achievements: [ 'ACH_FIRST', 'ACH_SECOND' ],
+        title: 'My next steps',
+        description: 'Because reasons.'
+      }
+
+      chain = Chain.last
+      expect(response).to redirect_to("/achievements/chains/#{chain.id}")
+      expect(chain.title).to eq('My next steps')
+      expect(chain.description).to eq('Because reasons.')
+      expect(chain.creator).to eq(user)
+      expect(chain.nodes_in_order.map(&:ref_id)).to eq([ first.id, second.id ])
+    end
+
+    it 'defaults the chain title when none is given' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
+
+      expect(Chain.last.title).to eq('Suggested by EU4 Strength Score')
+    end
+
+    it 'awards chain-creation XP the same way the normal chain-builder does' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
+
+      expect(XpEvent.where(user: user, reason: 'chain_created')).to exist
+    end
+
+    it 'falls back to the profile page when none of achievements[] resolve' do
+      user = create(:user)
+      create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'NOT_REAL' ] }
+
+      expect(response).to redirect_to("/achievements/users/#{user.id}")
+      expect(Chain.count).to eq(0)
+    end
   end
 
   describe 'DELETE /achievements/logout' do

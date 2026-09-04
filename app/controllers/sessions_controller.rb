@@ -102,15 +102,58 @@ class SessionsController < ApplicationController
     user.update_column(:last_seen_at, Time.current)
   end
 
-  # Sends the visitor to the achievement page named by `?achievement=` (a
-  # steam_api_name, currently only resolved against EU4 -- the only game
-  # this cross-app link exists for so far) if given and it actually
-  # resolves, otherwise their own profile.
+  # Where to land the visitor after a cross-app login: a freshly-created
+  # Chain if `achievements[]` was given (see #create_chain_from_params),
+  # else the achievement page named by `?achievement=` (a steam_api_name)
+  # if that was given and resolves, else their own profile.
   def landing_path_after_login(user)
-    steam_api_name = params[:achievement].to_s
-    return user_path(user) if steam_api_name.blank?
+    chain = create_chain_from_params(user)
+    return chain_path(chain) if chain
 
-    achievement = Game.eu4 && Achievement.find_by(game: Game.eu4, steam_api_name: steam_api_name)
+    achievement = achievement_from_params
     achievement ? achievement_path(achievement) : user_path(user)
+  end
+
+  # `?achievement=` is a steam_api_name, currently only resolved against
+  # EU4 -- the only game this cross-app link exists for so far. See the
+  # class comment on #login_with_steam_id for why steam_api_name and not
+  # this app's internal Achievement id.
+  def achievement_from_params
+    steam_api_name = params[:achievement].to_s
+    return nil if steam_api_name.blank?
+
+    Game.eu4 && Achievement.find_by(game: Game.eu4, steam_api_name: steam_api_name)
+  end
+
+  # Auto-creates a Chain from `?achievements[]=` (steam_api_names, e.g.
+  # eu4.jane.berlin's "create a chain from my 3 recommended achievements"
+  # link) and `?description=` (e.g. eu4's AI-written "why we think so"
+  # text). Mirrors ChainsController#create's happy path, minus the
+  # user-facing validation there isn't a form to fail here. Returns nil
+  # (falling through to #achievement_from_params, then the profile page)
+  # if no achievements[] were given or none resolve against EU4.
+  def create_chain_from_params(user)
+    steam_api_names = Array(params[:achievements]).map(&:to_s).reject(&:blank?)
+    return nil if steam_api_names.empty? || !Game.eu4
+
+    achievements_by_name = Game.eu4.achievements.where(steam_api_name: steam_api_names).index_by(&:steam_api_name)
+    ordered_achievements = steam_api_names.filter_map { |name| achievements_by_name[name] }
+    return nil if ordered_achievements.empty?
+
+    chain = Chain.new(
+      title: params[:title].to_s.strip.presence || "Suggested by EU4 Strength Score",
+      description: params[:description].to_s.strip.presence,
+      game: Game.eu4,
+      creator: user
+    )
+    selected_achievements = ordered_achievements.map { |achievement| { id: achievement.id, note: nil } }
+
+    ActiveRecord::Base.transaction do
+      chain.save!
+      SyncChainSequence.call(chain, selected_achievements)
+    end
+    AwardChainCreationXp.call(chain)
+
+    chain
   end
 end
