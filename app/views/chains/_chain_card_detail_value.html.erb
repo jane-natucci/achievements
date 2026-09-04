@@ -5,7 +5,7 @@
 <% if node && achievement %>
   <%= link_to achievement_path(achievement), class: "chain-card__detail-value chain-card__detail-value--linked" do %>
     <% if icon_url.present? %>
-      <%= image_tag icon_url, alt: "", class: "chain-card__detail-icon" %>
+      <%= image_tag icon_url, alt: "", class: "chain-card__detail-icon", onerror: achievement_icon_onerror %>
     <% else %>
       <span class="chain-card__detail-icon chain-card__detail-icon--placeholder" aria-hidden="true"></span>
     <% end %>

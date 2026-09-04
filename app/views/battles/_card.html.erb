@@ -8,7 +8,7 @@
      data-acted="<%= unavailable %>"
      <% if role == "place" %>data-action="click->battle#placeCard"<% elsif role == "attacker" %>data-action="click->battle#selectAttacker"<% elsif role == "target" %>data-action="click->battle#selectTarget" data-target-type="card"<% end %>>
   <% if card.achievement.icon_unlocked.present? %>
-    <%= image_tag card.achievement.icon_unlocked, alt: "", class: "battle-card__icon" %>
+    <%= image_tag card.achievement.icon_unlocked, alt: "", class: "battle-card__icon", onerror: achievement_icon_onerror %>
   <% else %>
     <span class="battle-card__icon battle-card__icon--placeholder" aria-hidden="true"></span>
   <% end %>

@@ -52,7 +52,7 @@
   <header class="achievement-detail__header">
     <div class="achievement-detail__icon-wrap">
       <% if @achievement.icon_unlocked.present? %>
-        <%= image_tag @achievement.icon_unlocked, alt: "", class: "achievement-detail__icon" %>
+        <%= image_tag @achievement.icon_unlocked, alt: "", class: "achievement-detail__icon", onerror: achievement_icon_onerror %>
       <% else %>
         <div class="achievement-detail__icon achievement-detail__icon--placeholder" aria-hidden="true"></div>
       <% end %>

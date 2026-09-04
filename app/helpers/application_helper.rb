@@ -23,6 +23,18 @@ module ApplicationHelper
     Rails.env.development? ? "#{title} (local)" : title
   end
 
+  # Every icon slot already has its own CSS-based placeholder for a blank
+  # icon URL (see the *__icon--placeholder classes) -- this instead covers
+  # a *present-but-dead* URL, e.g. old achievements imported when Steam
+  # still served icons from steamcdn-a.akamaihd.net, which Valve has
+  # since retired (404s now). Presence alone can't catch that; the URL
+  # looks valid until the browser actually tries to load it. Add this as
+  # the `onerror:` option on an `image_tag` call to swap in a generic
+  # placeholder image when the real one fails to load.
+  def achievement_icon_onerror
+    "this.onerror=null;this.src='#{image_path('achievement-placeholder.svg')}';"
+  end
+
   private
 
   def local_git_commit_sha

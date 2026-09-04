@@ -158,7 +158,7 @@
               <div class="achievement-row__icon-wrap">
                 <%= link_to achievement_path(node.achievement), class: "achievement-row__link", aria: { label: node.title } do %>
                   <% if icon_url.present? %>
-                    <%= image_tag icon_url, alt: "", class: "achievement-row__icon" %>
+                    <%= image_tag icon_url, alt: "", class: "achievement-row__icon", onerror: achievement_icon_onerror %>
                   <% else %>
                     <div class="achievement-row__icon achievement-row__icon--placeholder" aria-hidden="true">
                       <span><%= index + 1 %></span>

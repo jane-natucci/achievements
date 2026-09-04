@@ -27,7 +27,7 @@
                 class: "achievement-wall__tile#{pinned ? " achievement-wall__tile--pinned" : ""}#{rare ? " achievement-wall__tile--rare" : ""}",
                 aria: { label: achievement.title } do %>
             <% if achievement.icon_unlocked.present? %>
-              <%= image_tag achievement.icon_unlocked, alt: "", class: "achievement-wall__icon" %>
+              <%= image_tag achievement.icon_unlocked, alt: "", class: "achievement-wall__icon", onerror: achievement_icon_onerror %>
             <% else %>
               <span class="achievement-wall__icon achievement-wall__icon--placeholder" aria-hidden="true"></span>
             <% end %>

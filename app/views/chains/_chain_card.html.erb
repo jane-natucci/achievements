@@ -13,7 +13,7 @@
         <%= link_to chain_path(chain), class: "chain-card__icon-link", aria: { label: "Open #{chain.title}" } do %>
           <div class="chain-card__icon-wrap <%= "chain-card__icon-wrap--glow" if last_icon_url.present? %>">
             <% if last_icon_url.present? %>
-              <%= image_tag last_icon_url, alt: "", class: "chain-card__icon" %>
+              <%= image_tag last_icon_url, alt: "", class: "chain-card__icon", onerror: achievement_icon_onerror %>
             <% else %>
               <div class="chain-card__icon chain-card__icon--placeholder" aria-hidden="true">
                 <span><%= display_nodes.size %></span>

@@ -60,6 +60,7 @@
     class="chain-builder"
     data-controller="chain-builder"
     data-chain-builder-games-value="<%= json_escape(games_payload.to_json) %>"
+    data-chain-builder-placeholder-icon-value="<%= image_path('achievement-placeholder.svg') %>"
   >
     <%= form_with model: @chain, url: form_url, class: "chain-builder__form" do |form| %>
       <div class="chain-builder__layout">

@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["achievementSelect", "count", "emptyState", "gameSelect", "hiddenInput", "list"]
-  static values = { games: Array }
+  static values = { games: Array, placeholderIcon: String }
 
   connect() {
     this.selectedAchievements = this.initialSelectedAchievements()
@@ -106,8 +106,11 @@ export default class extends Controller {
       const item = document.createElement("li")
       item.className = "chain-builder-item"
 
+      // onerror covers a present-but-dead icon URL (e.g. achievements
+      // imported from Steam's now-retired steamcdn-a.akamaihd.net) --
+      // blank URLs already get the CSS-styled placeholder div below.
       const iconMarkup = achievement.icon_unlocked
-        ? `<img src="${this.escapeHtml(achievement.icon_unlocked)}" alt="" class="chain-builder-item__icon">`
+        ? `<img src="${this.escapeHtml(achievement.icon_unlocked)}" alt="" class="chain-builder-item__icon" onerror="this.onerror=null;this.src='${this.escapeHtml(this.placeholderIconValue)}';">`
         : `<div class="chain-builder-item__icon chain-builder-item__icon--placeholder">${index + 1}</div>`
 
       item.innerHTML = `

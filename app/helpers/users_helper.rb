@@ -88,7 +88,7 @@ module UsersHelper
       return content_tag(:span, "", class: "xp-feed__icon xp-feed__icon--placeholder", aria: { hidden: true })
     end
 
-    icon = image_tag(achievement.icon_unlocked, alt: "")
+    icon = image_tag(achievement.icon_unlocked, alt: "", onerror: achievement_icon_onerror)
     link_to icon, achievement_path(achievement), class: "xp-feed__icon xp-feed__icon-link", title: achievement.title
   end
 
@@ -97,7 +97,7 @@ module UsersHelper
 
     icon_content = capture do
       parts = []
-      parts << image_tag(cover_achievement.icon_unlocked, alt: "", class: "xp-feed__icon-cover") if cover_achievement&.icon_unlocked.present?
+      parts << image_tag(cover_achievement.icon_unlocked, alt: "", class: "xp-feed__icon-cover", onerror: achievement_icon_onerror) if cover_achievement&.icon_unlocked.present?
       parts << content_tag(:span, "⛓️", class: "xp-feed__icon-glyph")
       parts << content_tag(:span, "✨", class: "xp-feed__icon-status-glyph") unless reason.in?(%w[chain_completed chain_favorited])
       safe_join(parts)
