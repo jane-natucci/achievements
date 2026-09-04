@@ -3,14 +3,11 @@ class AchievementsController < ApplicationController
 
   def index
     @page = [params[:page].to_i, 1].max
-    # A chain with a lot of achievements floods the feed with one
-    # "added X to a chain" row per achievement -- the chain_created row
-    # already summarizes the count (see UsersHelper#xp_event_description),
-    # so skip the individual rows here.
-    visible_events = XpEvent.where.not(reason: "achievement_added")
-    @recent_events = visible_events.includes(:user).order(created_at: :desc)
-                                    .offset((@page - 1) * NEWS_PAGE_SIZE).limit(NEWS_PAGE_SIZE)
-    @has_next_page = visible_events.count > @page * NEWS_PAGE_SIZE
+
+    visible_ids = visible_event_ids
+    @recent_events = XpEvent.where(id: visible_ids).includes(:user).order(created_at: :desc)
+                             .offset((@page - 1) * NEWS_PAGE_SIZE).limit(NEWS_PAGE_SIZE)
+    @has_next_page = visible_ids.size > @page * NEWS_PAGE_SIZE
 
     chains = Chain.kept
     @total_chains = chains.size
@@ -109,5 +106,38 @@ class AchievementsController < ApplicationController
     current_user.user_achievement_pins.find_by(achievement: achievement)&.destroy
 
     redirect_back fallback_location: achievement_path(achievement), notice: "Unpinned."
+  end
+
+  private
+
+  # A chain with a lot of achievements floods the feed with one
+  # "added X to a chain" row per achievement -- the chain_created row
+  # already summarizes the count (see UsersHelper#xp_event_description),
+  # so those are dropped entirely. And an achievement that belongs to
+  # several chains gets an XpEvent per chain_node it fills when unlocked
+  # (see SyncUserAchievementProgress) -- correct for XP, but the feed
+  # would otherwise show one "unlocked" row per chain for what's really
+  # one person unlocking one achievement (same issue as the per-achievement
+  # history feed in #show), so those collapse to the earliest one per
+  # user+achievement.
+  def visible_event_ids
+    candidates = XpEvent.where.not(reason: "achievement_added")
+    # Only an achievement_unlocked event with a ChainNode subject is the
+    # per-chain duplication case -- anything else (including any stray
+    # achievement_unlocked event without one) passes through untouched.
+    chain_node_unlocks = candidates.where(reason: "achievement_unlocked", subject_type: "ChainNode")
+    other_ids = candidates.where.not(id: chain_node_unlocks.select(:id)).pluck(:id)
+
+    unlock_rows = chain_node_unlocks.pluck(:id, :user_id, :subject_id, :created_at)
+    achievement_id_by_chain_node_id = ChainNode.where(id: unlock_rows.map { |row| row[2] }).pluck(:id, :ref_id).to_h
+
+    earliest_unlock_ids = unlock_rows.group_by do |(_id, user_id, chain_node_id, _created_at)|
+      achievement_id = achievement_id_by_chain_node_id[chain_node_id]
+      # No achievement to resolve to (e.g. an orphaned chain_node) -- don't
+      # risk merging unrelated unlocks together, just leave it ungrouped.
+      achievement_id ? [user_id, achievement_id] : [user_id, :chain_node, chain_node_id]
+    end.values.map { |rows| rows.min_by { |row| row[3] }[0] }
+
+    other_ids + earliest_unlock_ids
   end
 end

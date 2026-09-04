@@ -77,6 +77,38 @@ RSpec.describe 'Achievements home', type: :request do
 
       expect(response.body).not_to include('news-feed__pagination')
     end
+
+    it 'collapses one unlock into a single feed row even if the achievement appears in multiple chains' do
+      achievement = create(:achievement, title: 'The Ostenders')
+      chain_a = create(:chain)
+      chain_b = create(:chain)
+      node_a = create(:chain_node, chain: chain_a, achievement: achievement)
+      node_b = create(:chain_node, chain: chain_b, achievement: achievement)
+      user = create(:user, display_name: 'Berit')
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_unlocked', subject: node_a, occurred_at: 2.days.ago)
+      AwardXp.call(user: user, amount: 5, reason: 'achievement_unlocked', subject: node_b, occurred_at: 1.day.ago)
+
+      get root_path
+
+      expect(response.body.scan('Unlocked').size).to eq(1)
+    end
+
+    it "doesn't collapse achievement_unlocked events across different users or achievements" do
+      achievement = create(:achievement)
+      other_achievement = create(:achievement, game: achievement.game)
+      chain = create(:chain)
+      node = create(:chain_node, chain: chain, achievement: achievement)
+      other_node = create(:chain_node, chain: chain, achievement: other_achievement)
+      alice = create(:user, display_name: 'Alice')
+      bob = create(:user, display_name: 'Bob')
+      AwardXp.call(user: alice, amount: 5, reason: 'achievement_unlocked', subject: node)
+      AwardXp.call(user: bob, amount: 5, reason: 'achievement_unlocked', subject: node)
+      AwardXp.call(user: alice, amount: 5, reason: 'achievement_unlocked', subject: other_node)
+
+      get root_path
+
+      expect(response.body.scan('Unlocked').size).to eq(3)
+    end
   end
 
   def sign_in(user)
