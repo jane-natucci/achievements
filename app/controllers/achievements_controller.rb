@@ -45,16 +45,17 @@ class AchievementsController < ApplicationController
   def help
   end
 
-  # Public GET entry point for other jane.berlin apps (e.g. eu4.jane.berlin)
-  # to link straight to an achievement's info page, resolved by
-  # steam_api_name -- the only identifier both apps' databases agree on,
-  # since each assigns its own internal ids independently. Deliberately
-  # doesn't touch the session: viewing an achievement's public info page
-  # doesn't need a login, unlike SessionsController#login_with_steam_id
-  # (used instead when the visitor actually needs to be signed in, e.g.
-  # to auto-create a chain).
+  # Public GET entry point for other jane.berlin apps (e.g. eu4.jane.berlin,
+  # paradox-scores' game subdomains) to link straight to an achievement's
+  # info page, resolved by steam_app_id + steam_api_name -- the only
+  # identifiers every such app's database agrees on, since each assigns its
+  # own internal ids independently. Deliberately doesn't touch the session:
+  # viewing an achievement's public info page doesn't need a login, unlike
+  # SessionsController#login_with_steam_id (used instead when the visitor
+  # actually needs to be signed in, e.g. to auto-create a chain).
   def by_steam_api_name
-    achievement = Game.eu4 && Achievement.find_by(game: Game.eu4, steam_api_name: params[:steam_api_name])
+    game = Game.find_by(steam_app_id: params[:steam_app_id])
+    achievement = game && Achievement.find_by(game: game, steam_api_name: params[:steam_api_name])
     return redirect_to("/achievements/", alert: "Unknown achievement.") unless achievement
 
     redirect_to achievement_path(achievement)

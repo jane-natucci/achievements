@@ -54,7 +54,7 @@ Rails.application.routes.draw do
     get "users/:id", to: "users#show", as: :user
     get "users/:id/wall", to: "users#wall", as: :user_wall
     resources :comments, only: [:create, :destroy]
-    get "achievement/:steam_api_name", to: "achievements#by_steam_api_name", as: :achievement_by_steam_api_name
+    get "achievement/:steam_app_id/:steam_api_name", to: "achievements#by_steam_api_name", as: :achievement_by_steam_api_name
     resources :achievements do
       member do
         post :favorite
