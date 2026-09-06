@@ -17,4 +17,6 @@
         keeps the listing plain-text regardless. %>
     <%= simple_format(@news_post.body, {}, sanitize: false) %>
   </div>
+
+  <%= render "comments/comments", commentable: @news_post %>
 </section>

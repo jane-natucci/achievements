@@ -1,7 +1,7 @@
 class CommentsController < ApplicationController
   # Never constantize a polymorphic type straight from params without an
   # allowlist -- otherwise commentable_type is an arbitrary-class-lookup gadget.
-  COMMENTABLE_TYPES = %w[Chain Achievement User].freeze
+  COMMENTABLE_TYPES = %w[Chain Achievement User NewsPost].freeze
 
   before_action :require_login!
 

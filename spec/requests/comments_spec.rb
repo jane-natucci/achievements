@@ -52,6 +52,18 @@ RSpec.describe 'Comments', type: :request do
       expect(response).to redirect_to(achievement_path(achievement))
     end
 
+    it 'posts a comment on a news post' do
+      user = create(:user)
+      news_post = NewsPost.create!(title: 'Launch', body: 'Body', published_at: 1.day.ago)
+      sign_in(user)
+
+      expect {
+        post comments_path, params: { commentable_type: 'NewsPost', commentable_id: news_post.id, comment: { body: 'Nice update!' } }
+      }.to change { news_post.comments.count }.by(1)
+
+      expect(response).to redirect_to(news_path(news_post))
+    end
+
     it "posts a comment on a user's profile" do
       user = create(:user)
       profile_owner = create(:user)
@@ -131,6 +143,27 @@ RSpec.describe 'Comments', type: :request do
       chain = create(:chain)
 
       get chain_path(chain)
+
+      expect(response.body).to include('to leave a comment')
+      expect(response.body).not_to include('Post Comment')
+    end
+
+    it 'shows existing comments and a form on a news post' do
+      user = create(:user)
+      news_post = NewsPost.create!(title: 'Launch', body: 'Body', published_at: 1.day.ago)
+      create(:comment, commentable: news_post, body: 'Congrats on the launch!')
+      sign_in(user)
+
+      get news_path(news_post)
+
+      expect(response.body).to include('Congrats on the launch!')
+      expect(response.body).to include('Post Comment')
+    end
+
+    it 'prompts a logged-out visitor to log in instead of showing the form on a news post' do
+      news_post = NewsPost.create!(title: 'Launch', body: 'Body', published_at: 1.day.ago)
+
+      get news_path(news_post)
 
       expect(response.body).to include('to leave a comment')
       expect(response.body).not_to include('Post Comment')
