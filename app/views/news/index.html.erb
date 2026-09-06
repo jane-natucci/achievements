@@ -1,0 +1,32 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back Home", "/achievements/", class: "sidebar-button" %>
+  </div>
+<% end %>
+
+<section class="chain-index">
+  <header class="chain-index__header">
+    <p class="eyebrow">Updates</p>
+    <h1>News</h1>
+    <p class="chain-index__description">
+      What's new with Achievement ChainZ and its sibling apps.
+    </p>
+  </header>
+
+  <% if @news_posts.any? %>
+    <div class="chain-card-list">
+      <% @news_posts.each do |post| %>
+        <div class="chain-card">
+          <h2><%= link_to post.title, news_path(post) %></h2>
+          <p class="eyebrow"><%= post.published_at.strftime("%B %-d, %Y") %></p>
+          <p><%= truncate(strip_tags(post.body), length: 280, separator: " ") %></p>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="achievement-empty-state">
+      <h3>No news yet</h3>
+      <p>Check back soon for updates.</p>
+    </div>
+  <% end %>
+</section>

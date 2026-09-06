@@ -51,6 +51,7 @@ Rails.application.routes.draw do
     post "wizard/achievements/:step", to: "wizard#set_achievement", constraints: { step: /[1-3]/ }
     get "wizard/summary", to: "wizard#summary", as: :wizard_summary
     get "leaderboard", to: "users#index", as: :leaderboard
+    resources :news, only: [ :index, :show ]
     get "users/:id", to: "users#show", as: :user
     get "users/:id/wall", to: "users#wall", as: :user_wall
     resources :comments, only: [:create, :destroy]

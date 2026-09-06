@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_233250) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_06_055636) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -144,6 +144,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_233250) do
     t.string "name"
     t.integer "steam_app_id"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "news_posts", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "published_at"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["published_at"], name: "index_news_posts_on_published_at"
   end
 
   create_table "user_achievement_favorites", force: :cascade do |t|

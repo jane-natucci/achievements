@@ -1,0 +1,20 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back to News", news_index_path, class: "sidebar-button" %>
+  </div>
+<% end %>
+
+<section class="chain-index help-page">
+  <header class="chain-index__header">
+    <p class="eyebrow"><%= @news_post.published_at.strftime("%B %-d, %Y") %></p>
+    <h1><%= @news_post.title %></h1>
+  </header>
+
+  <div class="chain-card">
+    <%# Posts are only ever authored by me (via console -- see the model
+        comment), so allowing raw HTML here is a controlled admin-content
+        choice, not user input; strip_tags in the index excerpt above
+        keeps the listing plain-text regardless. %>
+    <%= simple_format(@news_post.body, {}, sanitize: false) %>
+  </div>
+</section>

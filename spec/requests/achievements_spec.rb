@@ -389,12 +389,12 @@ RSpec.describe 'Achievements home', type: :request do
     end
   end
 
-  describe 'GET /achievements/achievement/:steam_api_name' do
+  describe 'GET /achievements/achievement/:steam_app_id/:steam_api_name' do
     it 'redirects to the achievement page without touching the session' do
       eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
       achievement = create(:achievement, game: eu4, steam_api_name: 'ACH_SOMETHING')
 
-      get achievement_by_steam_api_name_path('ACH_SOMETHING')
+      get achievement_by_steam_api_name_path(Game::EU4_STEAM_APP_ID, 'ACH_SOMETHING')
 
       expect(response).to redirect_to(achievement_path(achievement))
       expect(session[:user_id]).to be_nil
@@ -403,7 +403,7 @@ RSpec.describe 'Achievements home', type: :request do
     it 'redirects home with an alert when the steam_api_name is unknown' do
       create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
 
-      get achievement_by_steam_api_name_path('NOT_REAL')
+      get achievement_by_steam_api_name_path(Game::EU4_STEAM_APP_ID, 'NOT_REAL')
 
       expect(response).to redirect_to('/achievements/')
       follow_redirect!

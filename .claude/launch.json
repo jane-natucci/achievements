@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "achievements",
+      "runtimeExecutable": "bin/dev",
+      "runtimeArgs": [],
+      "port": 4000
+    }
+  ]
+}
