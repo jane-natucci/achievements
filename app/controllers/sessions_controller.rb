@@ -22,14 +22,16 @@ class SessionsController < ApplicationController
   end
 
   # GET entry point for other jane.berlin apps that already know a
-  # visitor's steamid64 (e.g. eu4.jane.berlin, after its own profile-URL
-  # sign-in) to link straight into that person's achievement profile here --
-  # or, with an `achievement` param (a steam_api_name, e.g. from eu4's own
-  # Achievement rows), straight into that specific achievement's page.
-  # Deliberately keyed by steam_api_name rather than this app's internal
-  # Achievement id -- the two apps' databases assign ids independently, but
-  # both already store the same Steam-assigned steam_api_name, so that's
-  # the only identifier safe to pass across apps without an explicit sync.
+  # visitor's steamid64 (e.g. eu4.jane.berlin or paradox-scores' game
+  # subdomains, after their own profile-URL sign-in) to link straight into
+  # that person's achievement profile here -- or, with an `achievement`
+  # param (a steam_api_name) plus `steam_app_id` naming the game, straight
+  # into that specific achievement's page.
+  # Deliberately keyed by steam_api_name (+ steam_app_id) rather than this
+  # app's internal Achievement id -- every such app's database assigns ids
+  # independently, but they all already store the same Steam-assigned
+  # steam_app_id/steam_api_name, so that's the only identifier safe to
+  # pass across apps without an explicit sync. See #game_from_params.
   #
   # Same trust level as the plain paste-URL flow above -- no Steam OpenID
   # proof of ownership, just a lookup/sync by steamid64 -- so it's no more
@@ -114,36 +116,48 @@ class SessionsController < ApplicationController
     achievement ? achievement_path(achievement) : user_path(user)
   end
 
-  # `?achievement=` is a steam_api_name, currently only resolved against
-  # EU4 -- the only game this cross-app link exists for so far. See the
-  # class comment on #login_with_steam_id for why steam_api_name and not
-  # this app's internal Achievement id.
+  # `?steam_app_id=` names which game's achievements to resolve against --
+  # defaults to EU4 (the only game this cross-app link existed for
+  # originally) so eu4.jane.berlin's existing links keep working even
+  # before they're updated to pass it explicitly. Every other Paradox
+  # game site (paradox-scores' Vic3/HOI4/CK3/EU5 subdomains) passes its
+  # own steam_app_id.
+  def game_from_params
+    steam_app_id = params[:steam_app_id].presence || Game::EU4_STEAM_APP_ID
+    Game.find_by(steam_app_id: steam_app_id)
+  end
+
+  # `?achievement=` is a steam_api_name -- see the class comment on
+  # #login_with_steam_id for why that and not this app's internal
+  # Achievement id.
   def achievement_from_params
     steam_api_name = params[:achievement].to_s
     return nil if steam_api_name.blank?
 
-    Game.eu4 && Achievement.find_by(game: Game.eu4, steam_api_name: steam_api_name)
+    game = game_from_params
+    game && Achievement.find_by(game: game, steam_api_name: steam_api_name)
   end
 
   # Auto-creates a Chain from `?achievements[]=` (steam_api_names, e.g.
   # eu4.jane.berlin's "create a chain from my 3 recommended achievements"
-  # link) and `?description=` (e.g. eu4's AI-written "why we think so"
-  # text). Mirrors ChainsController#create's happy path, minus the
+  # link) and `?description=` (e.g. the site's AI-written "why we think
+  # so" text). Mirrors ChainsController#create's happy path, minus the
   # user-facing validation there isn't a form to fail here. Returns nil
   # (falling through to #achievement_from_params, then the profile page)
-  # if no achievements[] were given or none resolve against EU4.
+  # if no achievements[] were given or none resolve against that game.
   def create_chain_from_params(user)
     steam_api_names = Array(params[:achievements]).map(&:to_s).reject(&:blank?)
-    return nil if steam_api_names.empty? || !Game.eu4
+    game = game_from_params
+    return nil if steam_api_names.empty? || !game
 
-    achievements_by_name = Game.eu4.achievements.where(steam_api_name: steam_api_names).index_by(&:steam_api_name)
+    achievements_by_name = game.achievements.where(steam_api_name: steam_api_names).index_by(&:steam_api_name)
     ordered_achievements = steam_api_names.filter_map { |name| achievements_by_name[name] }
     return nil if ordered_achievements.empty?
 
     chain = Chain.new(
-      title: params[:title].to_s.strip.presence || "Suggested by EU4 Strength Score",
+      title: params[:title].to_s.strip.presence || "Suggested by #{game.name} Strength Score",
       description: params[:description].to_s.strip.presence,
-      game: Game.eu4,
+      game: game,
       creator: user
     )
     selected_achievements = ordered_achievements.map { |achievement| { id: achievement.id, note: nil } }

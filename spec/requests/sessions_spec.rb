@@ -143,14 +143,14 @@ RSpec.describe 'Sessions', type: :request do
 
     it 'defaults the chain title when none is given' do
       user = create(:user)
-      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID, name: 'Europa Universalis IV')
       create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
       get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
 
-      expect(Chain.last.title).to eq('Suggested by EU4 Strength Score')
+      expect(Chain.last.title).to eq('Suggested by Europa Universalis IV Strength Score')
     end
 
     it 'awards chain-creation XP the same way the normal chain-builder does' do
@@ -175,6 +175,36 @@ RSpec.describe 'Sessions', type: :request do
 
       expect(response).to redirect_to("/achievements/users/#{user.id}")
       expect(Chain.count).to eq(0)
+    end
+
+    it 'resolves the named achievement against the game named by steam_app_id, not EU4' do
+      user = create(:user)
+      vic3 = create(:game, steam_app_id: 529_340, name: 'Victoria 3')
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_SHARED_NAME')
+      vic3_achievement = create(:achievement, game: vic3, steam_api_name: 'ACH_SHARED_NAME')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, steam_app_id: 529_340, achievement: 'ACH_SHARED_NAME' }
+
+      expect(response).to redirect_to("/achievements/achievements/#{vic3_achievement.id}")
+    end
+
+    it 'auto-creates a chain for a non-EU4 game named by steam_app_id, with a matching default title' do
+      user = create(:user)
+      vic3 = create(:game, steam_app_id: 529_340, name: 'Victoria 3')
+      achievement = create(:achievement, game: vic3, steam_api_name: 'ACH_FIRST')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, steam_app_id: 529_340, achievements: [ 'ACH_FIRST' ] }
+
+      chain = Chain.last
+      expect(response).to redirect_to("/achievements/chains/#{chain.id}")
+      expect(chain.game).to eq(vic3)
+      expect(chain.title).to eq('Suggested by Victoria 3 Strength Score')
+      expect(chain.nodes_in_order.map(&:ref_id)).to eq([ achievement.id ])
     end
   end
 
