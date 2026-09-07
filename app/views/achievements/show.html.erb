@@ -62,7 +62,12 @@
       <p class="eyebrow">Achievement</p>
       <h1><%= @achievement.title %></h1>
       <% if @achievement.game&.name.present? %>
-        <p class="achievement-detail__game"><%= @achievement.game.name %></p>
+        <p class="achievement-detail__game">
+          <%= @achievement.game.name %>
+          <% if (wiki_url = wiki_achievement_url(@achievement)) %>
+            &middot; <%= link_to "Wiki ↗", wiki_url, target: "_blank", rel: "noopener noreferrer" %>
+          <% end %>
+        </p>
       <% end %>
       <% if @achievement.description.present? %>
         <div class="achievement-detail__description"><%= simple_format(@achievement.description) %></div>

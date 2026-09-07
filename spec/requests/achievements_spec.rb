@@ -147,6 +147,24 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include('No activity yet')
     end
 
+    it 'links to the achievement\'s entry on the game\'s wiki when one exists' do
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      achievement = create(:achievement, game: eu4, title: 'World Conqueror')
+
+      get achievement_path(achievement)
+
+      expect(response.body).to include('Wiki ↗')
+      expect(response.body).to include('https://eu4.paradoxwikis.com/Achievements#World_Conqueror')
+    end
+
+    it 'does not show a wiki link for a game without a known wiki' do
+      achievement = create(:achievement)
+
+      get achievement_path(achievement)
+
+      expect(response.body).not_to include('Wiki ↗')
+    end
+
     it "doesn't include unlocks belonging to a different achievement" do
       achievement = create(:achievement)
       other_achievement = create(:achievement, game: achievement.game)
