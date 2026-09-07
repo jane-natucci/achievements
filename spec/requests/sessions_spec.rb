@@ -141,6 +141,67 @@ RSpec.describe 'Sessions', type: :request do
       expect(chain.nodes_in_order.map(&:ref_id)).to eq([ first.id, second.id ])
     end
 
+    it 'reuses an existing chain instead of creating a duplicate for the same achievements[] and description' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      create(:achievement, game: eu4, steam_api_name: 'ACH_SECOND')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+      params = { steam_id: user.steam_id, achievements: [ 'ACH_FIRST', 'ACH_SECOND' ], description: 'Because reasons.' }
+
+      get '/achievements/login/steam_id', params: params
+      first_chain = Chain.last
+
+      get '/achievements/login/steam_id', params: params
+
+      expect(Chain.count).to eq(1)
+      expect(response).to redirect_to("/achievements/chains/#{first_chain.id}")
+    end
+
+    it 'creates a new chain when the description differs, even with the same achievements' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'First reason.' }
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Second reason.' }
+
+      expect(Chain.count).to eq(2)
+    end
+
+    it 'creates a new chain when the achievement sequence differs, even with the same description' do
+      user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      create(:achievement, game: eu4, steam_api_name: 'ACH_SECOND')
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST', 'ACH_SECOND' ], description: 'Same text.' }
+
+      expect(Chain.count).to eq(2)
+    end
+
+    it "does not reuse another user's matching chain" do
+      user = create(:user)
+      other_user = create(:user)
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      create(:achievement, game: eu4, steam_api_name: 'ACH_FIRST')
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+
+      allow(Steam::User).to receive(:summary).and_return('personaname' => other_user.display_name)
+      get '/achievements/login/steam_id', params: { steam_id: other_user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
+
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
+
+      expect(Chain.count).to eq(2)
+    end
+
     it 'defaults the chain title when none is given' do
       user = create(:user)
       eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID, name: 'Europa Universalis IV')

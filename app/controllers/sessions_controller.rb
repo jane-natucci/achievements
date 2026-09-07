@@ -154,9 +154,13 @@ class SessionsController < ApplicationController
     ordered_achievements = steam_api_names.filter_map { |name| achievements_by_name[name] }
     return nil if ordered_achievements.empty?
 
+    description = params[:description].to_s.strip.presence
+    existing_chain = matching_chain(user, game, ordered_achievements, description)
+    return existing_chain if existing_chain
+
     chain = Chain.new(
       title: params[:title].to_s.strip.presence || "Suggested by #{game.name} Strength Score",
-      description: params[:description].to_s.strip.presence,
+      description: description,
       game: game,
       creator: user
     )
@@ -169,5 +173,21 @@ class SessionsController < ApplicationController
     AwardChainCreationXp.call(chain)
 
     chain
+  end
+
+  # Avoids creating a duplicate chain (and re-awarding XP) when the visitor
+  # clicks the same "create a chain from these achievements" link again --
+  # e.g. revisiting the same eu4 result page, or eu4 recomputing the exact
+  # same recommendation twice in a row. Matches on the same creator, game,
+  # description text, and achievement sequence (order matters -- the whole
+  # point of a Chain). Only ever looks at this user's own chains, and only
+  # a handful exist per user, so loading each candidate's node order is
+  # cheap -- not worth a schema change (e.g. a fingerprint column) for.
+  def matching_chain(user, game, ordered_achievements, description)
+    target_ids = ordered_achievements.map(&:id)
+
+    Chain.kept.where(creator_user_id: user.id, game: game, description: description).find do |chain|
+      chain.nodes_in_order.map(&:ref_id) == target_ids
+    end
   end
 end
