@@ -146,6 +146,17 @@ RSpec.describe SyncUserAchievementProgress do
     end
   end
 
+  context 'a game with no chains at all' do
+    it 'is skipped entirely -- no Steam API call made for it' do
+      chainless_game = create(:game, steam_app_id: 12_345)
+      stub_unlocked('ach_a')
+
+      expect(Steam::UserStats).not_to receive(:player_achievements).with(12_345, anything)
+
+      call
+    end
+  end
+
   context 'when the player owns a game not yet in our catalog' do
     def schema_with_achievements(count)
       {

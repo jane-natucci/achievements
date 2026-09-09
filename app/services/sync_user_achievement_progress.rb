@@ -10,7 +10,16 @@ class SyncUserAchievementProgress
   def call
     import_newly_played_games!
 
-    Game.find_each do |game|
+    # Scoped to games that actually have a chain -- a game with none can
+    # never produce a matching chain_node below, so syncing it is pure
+    # waste. Games get auto-imported uncapped for ANY title a user has
+    # ever played (see #import_newly_played_games!), so the unscoped
+    # table grows far larger than the handful of games anyone's actually
+    # built a chain for. Confirmed live: this loop was running against
+    # ~2,900 games (only 16 with any chain at all) for every user on every
+    # hourly sync -- up to ~150k wasted Steam API calls an hour across the
+    # user base, which is what was driving sidekiq's repeated OOM kills.
+    Game.joins(:chains).distinct.find_each do |game|
       sync_progress_for_game!(game)
     rescue StandardError
       next
