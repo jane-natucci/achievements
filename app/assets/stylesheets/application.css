@@ -222,6 +222,21 @@ a {
   border-width: 3px;
 }
 
+.topbar__nav-link-with-dot {
+  display: inline-flex;
+  align-items: center;
+}
+
+.unread-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-left: 0.35rem;
+  border-radius: 50%;
+  background: #e5484d;
+  box-shadow: 0 0 6px rgba(229, 72, 77, 0.6);
+}
+
 .topbar__nav {
   display: flex;
   flex-wrap: wrap;

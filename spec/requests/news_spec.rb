@@ -51,4 +51,52 @@ RSpec.describe 'News', type: :request do
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe 'unread news indicator' do
+    def sign_in(user)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+      post '/achievements/login', params: { profile_url: user.steam_id }
+    end
+
+    it 'shows a dot for a logged-out visitor when published news exists' do
+      NewsPost.create!(title: 'Hello', body: 'Body', published_at: 1.day.ago)
+
+      get '/achievements/'
+
+      expect(response.body).to include('unread-dot')
+    end
+
+    it 'shows no dot when there is no published news' do
+      NewsPost.create!(title: 'Draft', body: 'Body', published_at: nil)
+
+      get '/achievements/'
+
+      expect(response.body).not_to include('unread-dot')
+    end
+
+    it "shows a dot for a logged-in user who hasn't read the latest post, and clears it after visiting the news index" do
+      user = create(:user)
+      NewsPost.create!(title: 'Hello', body: 'Body', published_at: 1.day.ago)
+      sign_in(user)
+
+      get '/achievements/'
+      expect(response.body).to include('unread-dot')
+
+      get news_index_path
+      get '/achievements/'
+
+      expect(response.body).not_to include('unread-dot')
+    end
+
+    it 'shows the dot again once a newer post is published after the user last read' do
+      user = create(:user, last_news_read_at: 1.hour.ago)
+      NewsPost.create!(title: 'Brand new', body: 'Body', published_at: Time.current)
+      sign_in(user)
+
+      get '/achievements/'
+
+      expect(response.body).to include('unread-dot')
+    end
+  end
 end
