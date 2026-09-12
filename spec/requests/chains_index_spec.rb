@@ -37,7 +37,7 @@ RSpec.describe 'Chains index filters', type: :request do
       expect(response.body).to include('Alice')
     end
 
-    it "labels the signed-in viewer's own chip \"You\" and puts it first" do
+    it "labels the signed-in viewer's own chip \"Me\" and puts it first" do
       viewer = create(:user, display_name: 'AAAA First Alphabetically')
       other = create(:user, display_name: 'ZZZZ Should Sort Last Anyway')
       create(:chain, creator: viewer)
@@ -48,7 +48,7 @@ RSpec.describe 'Chains index filters', type: :request do
 
       doc = Nokogiri::HTML::Document.parse(response.body)
       names = doc.css('.game-filter-list')[1].css('a').map(&:text)
-      expect(names).to eq([ 'All Owners', 'You', 'ZZZZ Should Sort Last Anyway' ])
+      expect(names).to eq([ 'All Owners', 'Me', 'ZZZZ Should Sort Last Anyway' ])
     end
 
     it 'says "you" (not their own name) when the viewer filters to their own chains' do
