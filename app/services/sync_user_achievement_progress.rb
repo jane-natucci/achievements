@@ -10,16 +10,22 @@ class SyncUserAchievementProgress
   def call
     import_newly_played_games!
 
-    # Scoped to games that actually have a chain -- a game with none can
-    # never produce a matching chain_node below, so syncing it is pure
-    # waste. Games get auto-imported uncapped for ANY title a user has
-    # ever played (see #import_newly_played_games!), so the unscoped
-    # table grows far larger than the handful of games anyone's actually
-    # built a chain for. Confirmed live: this loop was running against
-    # ~2,900 games (only 16 with any chain at all) for every user on every
-    # hourly sync -- up to ~150k wasted Steam API calls an hour across the
-    # user base, which is what was driving sidekiq's repeated OOM kills.
-    Game.joins(:chains).distinct.find_each do |game|
+    # Every game here gets a full sync (first-class unlocks AND chain-node
+    # progress, one Steam API call each) -- games get auto-imported uncapped
+    # for ANY title a user has ever played (see #import_newly_played_games!),
+    # so syncing literally every owned game every hour was running against
+    # ~2,900 games per user (only 16 with any chain at all) on every hourly
+    # sync -- up to ~150k wasted Steam API calls an hour across the user
+    # base, which is what was driving sidekiq's repeated OOM kills. Two
+    # sources instead, kept small deliberately:
+    #  - games with a chain (the only ones that can ever produce a matching
+    #    chain_node below -- a handful, site-wide).
+    #  - games Steam says were played in the last two weeks (per-user, and
+    #    "typically very small" per Valve's own docs regardless of how big
+    #    someone's total library is) -- otherwise a game with no chain
+    #    (the vast majority) would never get its first-class unlocks
+    #    (achievement wall) synced at all once it drops out of both sets.
+    (chain_games + recently_played_games).uniq(&:id).each do |game|
       sync_progress_for_game!(game)
     rescue StandardError
       next
@@ -27,6 +33,18 @@ class SyncUserAchievementProgress
   end
 
   private
+
+  def chain_games
+    Game.joins(:chains).distinct.to_a
+  end
+
+  def recently_played_games
+    recently_played = Steam::Player.recently_played_games(user.steam_id)
+    app_ids = Array(recently_played["games"]).map { |entry| entry["appid"] }
+    Game.where(steam_app_id: app_ids).to_a
+  rescue StandardError
+    []
+  end
 
   attr_reader :user
 

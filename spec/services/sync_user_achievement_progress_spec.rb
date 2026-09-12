@@ -20,6 +20,7 @@ RSpec.describe SyncUserAchievementProgress do
 
   before do
     allow(Steam::Player).to receive(:owned_games).with(user.steam_id, anything).and_return('games' => [])
+    allow(Steam::Player).to receive(:recently_played_games).with(user.steam_id).and_return('games' => [])
   end
 
   context 'when a single achievement is newly unlocked' do
@@ -147,13 +148,52 @@ RSpec.describe SyncUserAchievementProgress do
   end
 
   context 'a game with no chains at all' do
-    it 'is skipped entirely -- no Steam API call made for it' do
+    it "is skipped entirely if it wasn't played in the last two weeks either -- no Steam API call made for it" do
       chainless_game = create(:game, steam_app_id: 12_345)
       stub_unlocked('ach_a')
 
       expect(Steam::UserStats).not_to receive(:player_achievements).with(12_345, anything)
 
       call
+    end
+
+    it "still gets its first-class unlocks synced if Steam says it was played in the last two weeks" do
+      # Regression test: a game with no chain used to never get its
+      # first-class unlocks (achievement wall) synced at all once the
+      # chain-only scoping landed (see #call) -- recently-played coverage
+      # exists precisely so a game someone's actively playing right now
+      # still shows up, even with no chain built for it.
+      chainless_game = create(:game, steam_app_id: 12_345)
+      achievement = create(:achievement, game: chainless_game, steam_api_name: 'chainless_ach')
+      allow(Steam::Player).to receive(:recently_played_games).with(user.steam_id).and_return(
+        'games' => [{ 'appid' => 12_345 }]
+      )
+      allow(Steam::UserStats).to receive(:player_achievements).with(12_345, user.steam_id).and_return(
+        'achievements' => [{ 'apiname' => 'chainless_ach', 'achieved' => 1, 'unlocktime' => 0 }]
+      )
+      stub_unlocked('ach_a')
+
+      call
+
+      expect(user.user_achievement_unlocks.find_by(achievement: achievement)).to be_present
+    end
+
+    it "doesn't sync a recently-played game twice just because it also has a chain" do
+      allow(Steam::Player).to receive(:recently_played_games).with(user.steam_id).and_return(
+        'games' => [{ 'appid' => 440 }]
+      )
+      stub_unlocked('ach_a')
+
+      call
+
+      expect(Steam::UserStats).to have_received(:player_achievements).with(440, user.steam_id).once
+    end
+
+    it "tolerates the recently-played lookup itself failing, still syncing chain games" do
+      allow(Steam::Player).to receive(:recently_played_games).and_raise(StandardError, 'boom')
+      stub_unlocked('ach_a')
+
+      expect { call }.to change { user.reload.total_xp }.by(XpRules::ACHIEVEMENT_UNLOCKED)
     end
   end
 
