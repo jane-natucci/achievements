@@ -75,8 +75,8 @@ RSpec.describe 'News', type: :request do
       expect(response.body).not_to include('unread-dot')
     end
 
-    it "shows a dot for a logged-in user who hasn't read the latest post, and clears it after visiting the news index" do
-      user = create(:user)
+    it "shows a dot for a logged-in user who hasn't read a post published since they joined, and clears it after visiting the news index" do
+      user = create(:user, created_at: 2.days.ago)
       NewsPost.create!(title: 'Hello', body: 'Body', published_at: 1.day.ago)
       sign_in(user)
 
@@ -97,6 +97,21 @@ RSpec.describe 'News', type: :request do
       get '/achievements/'
 
       expect(response.body).to include('unread-dot')
+    end
+
+    it "does not show a dot for a new signup over a backlog of news that predates their registration" do
+      # Regression test: last_news_read_at starts nil for every new user,
+      # and treating nil as "everything ever published is unread" would
+      # mean a signup joining after 100 old news posts already existed
+      # sees the dot lit for that entire backlog, none of which was ever
+      # actually new to them.
+      NewsPost.create!(title: 'Old news', body: 'Body', published_at: 10.days.ago)
+      user = create(:user, created_at: Time.current, last_news_read_at: nil)
+      sign_in(user)
+
+      get '/achievements/'
+
+      expect(response.body).not_to include('unread-dot')
     end
   end
 end

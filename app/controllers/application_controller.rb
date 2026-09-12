@@ -19,11 +19,20 @@ class ApplicationController < ActionController::Base
   # always see the dot as long as any news exists -- the alternative
   # (never showing it to them) would just hide news from anyone who
   # hasn't logged in, which defeats the point of surfacing it at all.
+  #
+  # A logged-in user who's never visited the news index (last_news_read_at
+  # nil) falls back to their own created_at, not "everything ever
+  # published" -- otherwise a new signup joining after 100 news posts
+  # already existed would see the dot lit for that whole backlog, when
+  # none of it was ever actually new to them. Only posts published since
+  # they joined (whether or not they've since read them) count as unread.
   def unread_news?
     latest_published_at = NewsPost.published.maximum(:published_at)
     return false unless latest_published_at
+    return true unless current_user
 
-    current_user.nil? || current_user.last_news_read_at.nil? || latest_published_at > current_user.last_news_read_at
+    baseline = current_user.last_news_read_at || current_user.created_at
+    latest_published_at > baseline
   end
 
   # True only when the current session was established via a real Steam
