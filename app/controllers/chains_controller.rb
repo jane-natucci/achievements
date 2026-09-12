@@ -7,9 +7,16 @@ class ChainsController < ApplicationController
   def index
     @filter_games = Game.joins(:chains).distinct.order(:name)
     @active_game = @filter_games.find_by(id: params[:game])
+    creators = User.joins(:created_chains).merge(Chain.kept).distinct.order(:display_name).to_a
+    # Pin the viewer's own entry first (rendered as "You" -- see
+    # chains/_owner_filters), since it's the one they're most likely
+    # looking for; everyone else stays alphabetical.
+    @filter_creators = current_user && creators.include?(current_user) ? [ current_user ] + (creators - [ current_user ]) : creators
+    @active_creator = creators.find { |creator| creator.id.to_s == params[:creator] }
     @favorites_only = current_user.present? && params[:favorites] == "1"
     @chains = Chain.kept.includes(:game, :creator, chain_nodes: :achievement, chain_edges: :achievement).order(created_at: :desc)
     @chains = @chains.where(game: @active_game) if @active_game
+    @chains = @chains.where(creator: @active_creator) if @active_creator
     if @favorites_only
       @chains = @chains.joins(:user_chain_progresses).where(user_chain_progresses: { user_id: current_user.id, favorite: true })
     end

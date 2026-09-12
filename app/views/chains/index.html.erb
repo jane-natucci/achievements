@@ -30,9 +30,19 @@
       <%= render "game_filters",
             games: @filter_games,
             active_game_id: @active_game&.id,
-            all_path: chains_path,
+            all_path: chains_path(creator: @active_creator&.id),
             label_all: "All Games",
-            filter_path: ->(game) { chains_path(game: game.id) } %>
+            filter_path: ->(game) { chains_path(game: game.id, creator: @active_creator&.id) } %>
+    </section>
+
+    <section class="sidebar-section">
+      <h3>By Owner</h3>
+      <%= render "owner_filters",
+            creators: @filter_creators,
+            active_creator_id: @active_creator&.id,
+            all_path: chains_path(game: @active_game&.id),
+            label_all: "All Owners",
+            filter_path: ->(creator) { chains_path(game: @active_game&.id, creator: creator.id) } %>
     </section>
 
     <% if current_user %>
@@ -56,6 +66,9 @@
       Explore curated achievement routes, with each chain ordered into a clear progression from first unlock to final target.
       <% if @active_game %>
         Showing chains for <strong><%= @active_game.name %></strong>.
+      <% end %>
+      <% if @active_creator %>
+        Showing chains by <strong><%= @active_creator == current_user ? "you" : @active_creator.display_name %></strong>.
       <% end %>
       <% if @favorites_only %>
         Showing only chains saved to your library.

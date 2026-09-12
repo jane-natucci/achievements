@@ -1,0 +1,9 @@
+<div class="game-filter-list">
+  <%= link_to label_all, all_path, class: ["game-filter-chip", (active_creator_id.blank? ? "game-filter-chip--active" : nil)].compact.join(" ") %>
+
+  <% creators.each do |creator| %>
+    <%= link_to (creator == current_user ? "You" : creator.display_name),
+          filter_path.call(creator),
+          class: ["game-filter-chip", (active_creator_id == creator.id ? "game-filter-chip--active" : nil)].compact.join(" ") %>
+  <% end %>
+</div>
