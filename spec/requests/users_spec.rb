@@ -120,6 +120,29 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).not_to include('✅')
     end
 
+    it "rephrases chain_completed as \"someone else's chain\" when the viewer didn't create it" do
+      creator = create(:user, display_name: 'Creator')
+      completer = create(:user, display_name: 'Completer')
+      chain = create(:chain, creator: creator, title: 'Not Mine')
+      AwardXp.call(user: completer, amount: 100, reason: 'chain_completed', subject: chain)
+
+      get user_path(completer)
+
+      expect(response.body).to include('Completed someone else')
+      expect(response.body).to include('Not Mine')
+    end
+
+    it "doesn't rephrase chain_completed for a chain the viewer created themselves" do
+      user = create(:user)
+      chain = create(:chain, creator: user, title: 'Mine')
+      AwardXp.call(user: user, amount: 100, reason: 'chain_completed', subject: chain)
+
+      get user_path(user)
+
+      expect(response.body).to include('Completed')
+      expect(response.body).not_to include('someone else')
+    end
+
     it 'shows how many achievements were in the chain on the chain_created event' do
       user = create(:user)
       chain = create(:chain, creator: user, title: 'Small Chain')

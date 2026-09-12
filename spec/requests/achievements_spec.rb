@@ -78,6 +78,33 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).not_to include('news-feed__pagination')
     end
 
+    it "shows a chain_completed event when the completer is the chain's own creator" do
+      creator = create(:user, display_name: 'Creator')
+      chain = create(:chain, creator: creator, title: 'My Own Chain')
+      AwardXp.call(user: creator, amount: 100, reason: 'chain_completed', subject: chain)
+
+      get root_path
+
+      expect(response.body).to include('Completed')
+      expect(response.body).to include('My Own Chain')
+    end
+
+    it "hides a chain_completed event when the completer isn't the chain's creator" do
+      # SyncUserAchievementProgress awards chain_completed to anyone whose
+      # already-unlocked achievements happen to satisfy a chain's nodes,
+      # not just someone who deliberately followed it -- one new player's
+      # sync can incidentally "complete" many other players' small
+      # auto-generated suggestion chains at once, flooding the dashboard.
+      creator = create(:user, display_name: 'Creator')
+      completer = create(:user, display_name: 'Completer')
+      chain = create(:chain, creator: creator, title: 'Suggested by EU4 Strength Score')
+      AwardXp.call(user: completer, amount: 100, reason: 'chain_completed', subject: chain)
+
+      get root_path
+
+      expect(response.body).not_to include('Suggested by EU4 Strength Score')
+    end
+
     it 'collapses one unlock into a single feed row even if the achievement appears in multiple chains' do
       achievement = create(:achievement, title: 'The Ostenders')
       chain_a = create(:chain)

@@ -22,7 +22,8 @@ module UsersHelper
     when "chain_description"
       safe_join(["Added a description to ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_completed"
-      safe_join(["Completed ", chain_link(event.subject), " ", xp_amount_badge(event.amount)])
+      lead = own_chain?(event) ? "Completed " : "Completed someone else's chain, "
+      safe_join([lead, chain_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "first_comment"
       safe_join(["Left their first comment ", first_comment_location_link(event.subject), " ", xp_amount_badge(event.amount)])
     when "chain_favorited"
@@ -129,6 +130,16 @@ module UsersHelper
     return chain_node.title unless achievement
 
     link_to achievement.title, achievement_path(achievement), class: "xp-feed__entity-link"
+  end
+
+  # The dashboard only shows chain_completed events a chain's own creator
+  # earned (see AchievementsController#incidental_chain_completion_ids),
+  # but a profile page shows a user's own events unfiltered, including
+  # incidental completions of chains other people made -- flag those so
+  # the copy doesn't read like they deliberately followed a chain someone
+  # else built and shared.
+  def own_chain?(event)
+    event.subject && event.subject.creator_user_id == event.user_id
   end
 
   def chain_link(chain)

@@ -127,7 +127,8 @@ class AchievementsController < ApplicationController
     # per-chain duplication case -- anything else (including any stray
     # achievement_unlocked event without one) passes through untouched.
     chain_node_unlocks = candidates.where(reason: "achievement_unlocked", subject_type: "ChainNode")
-    other_ids = candidates.where.not(id: chain_node_unlocks.select(:id)).pluck(:id)
+    other_candidates = candidates.where.not(id: chain_node_unlocks.select(:id))
+    other_ids = other_candidates.where.not(id: incidental_chain_completion_ids(other_candidates)).pluck(:id)
 
     unlock_rows = chain_node_unlocks.pluck(:id, :user_id, :subject_id, :created_at)
     achievement_id_by_chain_node_id = ChainNode.where(id: unlock_rows.map { |row| row[2] }).pluck(:id, :ref_id).to_h
@@ -140,5 +141,23 @@ class AchievementsController < ApplicationController
     end.values.map { |rows| rows.min_by { |row| row[3] }[0] }
 
     other_ids + earliest_unlock_ids
+  end
+
+  # SyncUserAchievementProgress#award_chain_completion_bonuses! awards a
+  # chain_completed event to EVERY user whose already-unlocked achievements
+  # happen to satisfy a chain's nodes, not just someone who deliberately
+  # followed it. Most chains are a player's own auto-generated "next steps"
+  # suggestion (see SessionsController#create_chain_from_params), so a
+  # single new player syncing their (often extensive) existing Steam
+  # history can incidentally "complete" dozens of other players' tiny
+  # suggestion chains in one go, drowning out everything else in the feed.
+  # Keep the dashboard to a chain's own creator completing it; other
+  # completions still count for XP and still show on the completer's own
+  # profile (see UsersHelper#xp_event_description), just not here.
+  def incidental_chain_completion_ids(candidates)
+    candidates.where(reason: "chain_completed", subject_type: "Chain")
+              .joins("INNER JOIN chains ON chains.id = xp_events.subject_id")
+              .where.not("chains.creator_user_id = xp_events.user_id")
+              .select(:id)
   end
 end
