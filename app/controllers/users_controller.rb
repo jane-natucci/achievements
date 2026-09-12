@@ -1,8 +1,9 @@
 class UsersController < ApplicationController
   ACHIEVEMENT_WALL_LIMIT = 120
+  LEADERBOARD_LIMIT = 250
 
   def index
-    @users = User.order(total_xp: :desc, created_at: :asc).limit(50)
+    @users = User.order(total_xp: :desc, created_at: :asc).limit(LEADERBOARD_LIMIT)
     user_ids = @users.map(&:id)
 
     @achievements_unlocked_counts = UserNodeProgress.where(user_id: user_ids, status: "completed")

@@ -17,6 +17,17 @@ RSpec.describe 'Users', type: :request do
       expect(body.index(mid.display_name)).to be < body.index(low.display_name)
     end
 
+    it "shows up to #{UsersController::LEADERBOARD_LIMIT} players, dropping anyone past that" do
+      create_list(:user, UsersController::LEADERBOARD_LIMIT, total_xp: 10)
+      lowest = create(:user, display_name: 'Lowest', total_xp: 1)
+
+      get leaderboard_path
+
+      doc = Nokogiri::HTML::Document.parse(response.body)
+      expect(doc.css('.leaderboard-row').size).to eq(UsersController::LEADERBOARD_LIMIT)
+      expect(response.body).not_to include(lowest.display_name)
+    end
+
     it 'links each row to that player\'s profile' do
       user = create(:user, total_xp: 42)
 
