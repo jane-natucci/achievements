@@ -65,8 +65,8 @@
           "protocol": "tcp"
         }
       ],
-      "memoryReservation": 320,
-      "memory": 512
+      "memoryReservation": 640,
+      "memory": 1024
     }
   ],
   "cpu": "256",
