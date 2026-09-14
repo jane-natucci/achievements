@@ -14,18 +14,21 @@ end
 Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Legacy: jane.berlin/achievements/(anything) -> achievements.jane.berlin/(anything).
-  # This app used to live at that path prefix (jane.berlin's shared,
-  # multi-app CloudFront distribution); it now has its own subdomain and
-  # serves at "/" directly. Host-constrained so this can never shadow
-  # achievements.jane.berlin's own real /achievements/* routes (from
-  # `resources :achievements` below) -- without the constraint, a
-  # legitimate request to achievements.jane.berlin/achievements/5 would
-  # wrongly get caught by this same catch-all. Query string preserved
-  # deliberately: eu4/paradox-scores' cross-app deep links
-  # (achievements_app_login_url/achievements_app_create_chain_url) pass
-  # steam_id/achievements[]/title/description as query params.
-  constraints(host: "jane.berlin") do
+  # Legacy: jane.berlin/achievements/(anything) and yabaleys.com/achievements/(anything)
+  # -> achievements.jane.berlin/(anything). This app used to live at that path
+  # prefix on both of those (separate, unrelated) CloudFront distributions
+  # (jane.berlin's shared, multi-app one, and yabaleys.com's own -- see
+  # terraform-cloud/main/cloudfront.tf's "/achievements*" behavior there);
+  # it now has its own subdomain and serves at "/" directly. Host-constrained
+  # so this can never shadow achievements.jane.berlin's own real
+  # /achievements/* routes (from `resources :achievements` below) --
+  # without the constraint, a legitimate request to
+  # achievements.jane.berlin/achievements/5 would wrongly get caught by
+  # this same catch-all. Query string preserved deliberately:
+  # eu4/paradox-scores' cross-app deep links (achievements_app_login_url/
+  # achievements_app_create_chain_url) pass steam_id/achievements[]/title/
+  # description as query params.
+  constraints(host: /\A(jane\.berlin|yabaleys\.com)\z/) do
     get "achievements", to: redirect { |_params, _req| "https://achievements.jane.berlin/" }
     get "achievements/*path", to: redirect { |params, req|
       query = "?#{req.query_string}" if req.query_string.present?
