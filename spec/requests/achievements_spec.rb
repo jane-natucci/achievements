@@ -473,4 +473,38 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include('Unknown achievement')
     end
   end
+
+  describe 'random header achievement avatar for a logged-out visitor' do
+    it "only ever links to an achievement that's in a chain" do
+      in_chain = create(:achievement, icon_unlocked: 'https://example.com/icon_in_chain.png')
+      create(:chain_node, chain: create(:chain, game: in_chain.game), achievement: in_chain)
+      not_in_any_chain = create(:achievement, icon_unlocked: 'https://example.com/icon_not_in_chain.png')
+
+      get root_path
+
+      expect(response.body).to include(achievement_path(in_chain))
+      expect(response.body).not_to include(achievement_path(not_in_any_chain))
+    end
+
+    it "doesn't link to an achievement whose only chain has been discarded" do
+      only_in_discarded_chain = create(:achievement, icon_unlocked: 'https://example.com/icon_discarded.png')
+      discarded_chain = create(:chain, game: only_in_discarded_chain.game, discarded_at: Time.current)
+      create(:chain_node, chain: discarded_chain, achievement: only_in_discarded_chain)
+      in_kept_chain = create(:achievement, icon_unlocked: 'https://example.com/icon_kept.png')
+      create(:chain_node, chain: create(:chain, game: in_kept_chain.game), achievement: in_kept_chain)
+
+      get root_path
+
+      expect(response.body).to include(achievement_path(in_kept_chain))
+      expect(response.body).not_to include(achievement_path(only_in_discarded_chain))
+    end
+
+    it 'falls back to the initial-letter placeholder when no achievement is in any chain' do
+      create(:achievement, icon_unlocked: 'https://example.com/icon.png')
+
+      get root_path
+
+      expect(response.body).to include('topbar__avatar-initial')
+    end
+  end
 end

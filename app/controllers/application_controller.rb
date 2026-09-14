@@ -60,7 +60,20 @@ class ApplicationController < ActionController::Base
     "Log In"
   end
 
+  # Restricted to achievements that actually appear in some (non-discarded)
+  # chain -- otherwise this could land a logged-out visitor on an
+  # achievement's page with no chain to explore from there, which is the
+  # whole point of clicking it in the first place.
   def random_header_achievement
-    @random_header_achievement ||= Achievement.where.not(icon_unlocked: [nil, ""]).order(Arel.sql("RANDOM()")).first
+    # A subquery (rather than .distinct on the joined rows directly) --
+    # Postgres rejects `SELECT DISTINCT ... ORDER BY RANDOM()` since RANDOM()
+    # isn't in the select list. Filtering the outer query by `id IN (...)`
+    # sidesteps that (and dedupes an achievement that's in several chains)
+    # while still doing the random pick in SQL via LIMIT 1.
+    eligible_ids = Achievement.where.not(icon_unlocked: [nil, ""])
+                               .joins(chain_nodes: :chain)
+                               .merge(Chain.kept)
+                               .select(:id)
+    @random_header_achievement ||= Achievement.where(id: eligible_ids).order(Arel.sql("RANDOM()")).first
   end
 end
