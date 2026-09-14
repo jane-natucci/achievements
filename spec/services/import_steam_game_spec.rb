@@ -68,4 +68,27 @@ RSpec.describe ImportSteamGame do
 
     expect { call }.not_to change(Game, :count)
   end
+
+  it "rewrites achievement icon URLs off Steam's dead CDN domain onto the live one" do
+    schema = schema_with_achievements(1)
+    schema['availableGameStats']['achievements'][0]['icon'] =
+      'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/100/abc.jpg'
+    schema['availableGameStats']['achievements'][0]['icongray'] =
+      'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/100/def.jpg'
+    allow(Steam::UserStats).to receive(:game_schema).with(app_id).and_return(schema)
+
+    call
+
+    achievement = Achievement.find_by(steam_api_name: 'ach_0')
+    expect(achievement.icon_unlocked).to eq('https://shared.akamai.steamstatic.com/community_assets/images/apps/100/abc.jpg')
+    expect(achievement.icon_locked).to eq('https://shared.akamai.steamstatic.com/community_assets/images/apps/100/def.jpg')
+  end
+
+  it 'leaves an icon URL already on the live CDN domain untouched' do
+    allow(Steam::UserStats).to receive(:game_schema).with(app_id).and_return(schema_with_achievements(1))
+
+    call
+
+    expect(Achievement.find_by(steam_api_name: 'ach_0').icon_unlocked).to eq('unlocked.jpg')
+  end
 end
