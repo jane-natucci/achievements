@@ -16,7 +16,7 @@
       <%= submit_tag "Post Comment", class: "sidebar-button comment-form__submit" %>
     <% end %>
   <% else %>
-    <p class="chain-builder__hint"><%= link_to "Log in", "/achievements/login/" %> to leave a comment.</p>
+    <p class="chain-builder__hint"><%= link_to "Log in", "/login/" %> to leave a comment.</p>
   <% end %>
 
   <% if comments.any? %>

@@ -22,7 +22,7 @@
   </head>
 
   <body class="wizard-shell">
-    <%= link_to "✕", "/achievements/", class: "wizard-shell__close", aria: { label: "Exit" } %>
+    <%= link_to "✕", "/", class: "wizard-shell__close", aria: { label: "Exit" } %>
 
     <main class="wizard-stage">
       <% if flash[:notice].present? || flash[:alert].present? %>

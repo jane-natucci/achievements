@@ -54,7 +54,7 @@
             <% end %>
 
             <div class="brand-lockup">
-              <h1><a href="/achievements/">Achievement Chainz</a></h1>
+              <h1><a href="/">Achievement Chainz</a></h1>
             </div>
           </div>
 
@@ -86,17 +86,17 @@
             </div>
           <% end %>
           <% if current_user %>
-            <%= button_to "Log Out", "/achievements/logout/", method: :delete, class: "topbar__nav-button" %>
+            <%= button_to "Log Out", "/logout/", method: :delete, class: "topbar__nav-button" %>
           <% else %>
-            <a href="/achievements/login/">Log In</a>
+            <a href="/login/">Log In</a>
           <% end %>
-          <a href="/achievements/">Home</a>
-          <a href="/achievements/chains/">Chains</a>
+          <a href="/">Home</a>
+          <a href="/chains/">Chains</a>
           <%= link_to "Leaderboard", leaderboard_path %>
           <%= link_to news_index_path, class: "topbar__nav-link-with-dot" do %>
             News<% if unread_news? %><span class="unread-dot" aria-label="Unread news"></span><% end %>
           <% end %>
-          <a href="/achievements/help/">Help</a>
+          <a href="/help/">Help</a>
         </nav>
       </div>
     </header>

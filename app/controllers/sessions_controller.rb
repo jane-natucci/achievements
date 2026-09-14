@@ -18,7 +18,7 @@ class SessionsController < ApplicationController
     session[:steam_verified] = false
     mark_online!(result.user)
 
-    redirect_to "/achievements/", notice: "Now impersonating #{result.user.display_name}."
+    redirect_to "/", notice: "Now impersonating #{result.user.display_name}."
   end
 
   # GET entry point for other jane.berlin apps that already know a
@@ -40,13 +40,13 @@ class SessionsController < ApplicationController
     steam_id = params[:steam_id].to_s
 
     if steam_id.blank?
-      return redirect_to "/achievements/login/", alert: "Missing Steam ID."
+      return redirect_to "/login/", alert: "Missing Steam ID."
     end
 
     result = SteamProfileLogin.call_for_steam_id(steam_id)
 
     unless result.success?
-      return redirect_to "/achievements/login/", alert: result.error
+      return redirect_to "/login/", alert: result.error
     end
 
     SyncUserAchievementProgressWorker.perform_async(result.user.id)
@@ -67,13 +67,13 @@ class SessionsController < ApplicationController
     steam_id = SteamOpenid.verify_steam_id(request.query_parameters)
 
     unless steam_id
-      return redirect_to "/achievements/login/", alert: "Steam sign-in failed. Please try again."
+      return redirect_to "/login/", alert: "Steam sign-in failed. Please try again."
     end
 
     result = SteamProfileLogin.call_for_steam_id(steam_id)
 
     unless result.success?
-      return redirect_to "/achievements/login/", alert: result.error
+      return redirect_to "/login/", alert: result.error
     end
 
     SyncUserAchievementProgressWorker.perform_async(result.user.id)
@@ -81,13 +81,13 @@ class SessionsController < ApplicationController
     session[:steam_verified] = true
     mark_online!(result.user)
 
-    redirect_to "/achievements/", notice: "Signed in as #{result.user.display_name} via Steam."
+    redirect_to "/", notice: "Signed in as #{result.user.display_name} via Steam."
   end
 
   def destroy
     session.delete(:user_id)
     session.delete(:steam_verified)
-    redirect_to "/achievements/", notice: "Logged out."
+    redirect_to "/", notice: "Logged out."
   end
 
   # Pinged every ~1 minute by presence_controller.js while a logged-in

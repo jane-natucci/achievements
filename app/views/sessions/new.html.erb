@@ -1,6 +1,6 @@
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
-    <%= link_to "Back Home", "/achievements/", class: "sidebar-button" %>
+    <%= link_to "Back Home", "/", class: "sidebar-button" %>
 
     <% if current_user %>
       <section class="sidebar-section">
@@ -19,7 +19,7 @@
             <dd><%= steam_verified? ? "Yes, via Steam sign-in" : "No, paste-URL login" %></dd>
           </div>
         </dl>
-        <%= button_to "Log Out", "/achievements/logout/", method: :delete, class: "sidebar-button sidebar-button--secondary" %>
+        <%= button_to "Log Out", "/logout/", method: :delete, class: "sidebar-button sidebar-button--secondary" %>
       </section>
     <% end %>
   </div>
@@ -42,7 +42,7 @@
 
     <div class="login-divider">or</div>
 
-    <%= form_with url: "/achievements/login/", method: :post, class: "login-form" do |form| %>
+    <%= form_with url: "/login/", method: :post, class: "login-form" do |form| %>
       <div class="chain-builder-panel__section">
         <%= form.label :profile_url, "Steam Profile URL Or SteamID64", class: "chain-builder__label" %>
         <%= form.text_field :profile_url,

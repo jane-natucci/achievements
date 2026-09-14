@@ -50,7 +50,7 @@ class ApplicationController < ActionController::Base
     return user_path(current_user) if current_user
     return achievement_path(random_header_achievement) if random_header_achievement
 
-    "/achievements/login/"
+    "/login/"
   end
 
   def header_avatar_link_label

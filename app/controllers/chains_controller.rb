@@ -95,7 +95,7 @@ class ChainsController < ApplicationController
   end
 
   def favorite
-    return redirect_to("/achievements/login/", alert: "Log in to save chains.") unless current_user
+    return redirect_to("/login/", alert: "Log in to save chains.") unless current_user
 
     chain = Chain.kept.find(params[:id])
     progress = UserChainProgress.find_or_initialize_by(user: current_user, chain: chain)
@@ -109,7 +109,7 @@ class ChainsController < ApplicationController
   end
 
   def unfavorite
-    return redirect_to("/achievements/login/", alert: "Log in to manage saved chains.") unless current_user
+    return redirect_to("/login/", alert: "Log in to manage saved chains.") unless current_user
 
     chain = Chain.kept.find(params[:id])
     progress = UserChainProgress.find_by(user: current_user, chain: chain)

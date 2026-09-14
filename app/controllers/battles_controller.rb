@@ -3,13 +3,13 @@ class BattlesController < ApplicationController
   before_action :require_own_battle!, only: [:show, :place, :attack, :end_turn]
 
   def index
-    return redirect_to("/achievements/login/", alert: "Log in to see your battles.") unless current_user
+    return redirect_to("/login/", alert: "Log in to see your battles.") unless current_user
 
     @battles = current_user.battles.order(created_at: :desc)
   end
 
   def new
-    return redirect_to("/achievements/login/", alert: "Log in to start a battle.") unless current_user
+    return redirect_to("/login/", alert: "Log in to start a battle.") unless current_user
 
     active_battle = current_user.battles.find_by(status: "active")
     return redirect_to(battle_path(active_battle), notice: "You already have a battle in progress.") if active_battle
@@ -18,7 +18,7 @@ class BattlesController < ApplicationController
   end
 
   def create
-    return redirect_to("/achievements/login/", alert: "Log in to start a battle.") unless current_user
+    return redirect_to("/login/", alert: "Log in to start a battle.") unless current_user
 
     chain = Chain.kept.find(params[:chain_id])
     result = CreateBattle.call(user: current_user, chain: chain)

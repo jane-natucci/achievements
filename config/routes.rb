@@ -14,6 +14,25 @@ end
 Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
+  # Legacy: jane.berlin/achievements/(anything) -> achievements.jane.berlin/(anything).
+  # This app used to live at that path prefix (jane.berlin's shared,
+  # multi-app CloudFront distribution); it now has its own subdomain and
+  # serves at "/" directly. Host-constrained so this can never shadow
+  # achievements.jane.berlin's own real /achievements/* routes (from
+  # `resources :achievements` below) -- without the constraint, a
+  # legitimate request to achievements.jane.berlin/achievements/5 would
+  # wrongly get caught by this same catch-all. Query string preserved
+  # deliberately: eu4/paradox-scores' cross-app deep links
+  # (achievements_app_login_url/achievements_app_create_chain_url) pass
+  # steam_id/achievements[]/title/description as query params.
+  constraints(host: "jane.berlin") do
+    get "achievements", to: redirect { |_params, _req| "https://achievements.jane.berlin/" }
+    get "achievements/*path", to: redirect { |params, req|
+      query = "?#{req.query_string}" if req.query_string.present?
+      "https://achievements.jane.berlin/#{params[:path]}#{query}"
+    }
+  end
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -22,60 +41,53 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # True bare "/" shows the minimal welcome/landing page (the app itself
-  # still lives under /achievements below; this doesn't use `root` so it
-  # doesn't touch the existing root_path helper used throughout the app).
-  get "/", to: "welcome#index"
-
   mount Sidekiq::Web => "/sidekiq"
   get "/debug", to: "debug#index"
 
-  scope path: "achievements" do
-    root "achievements#index"
-    get "welcome", to: "welcome#index", as: :welcome
-    get "help", to: "achievements#help"
-    get "login", to: "sessions#new"
-    post "login", to: "sessions#create"
-    get "login/steam", to: "sessions#steam", as: :login_steam
-    get "login/steam/callback", to: "sessions#steam_callback", as: :login_steam_callback
-    get "login/steam_id", to: "sessions#login_with_steam_id", as: :login_with_steam_id
-    delete "logout", to: "sessions#destroy"
-    post "heartbeat", to: "sessions#heartbeat"
-    get "wizard", to: "wizard#profile", as: :wizard
-    post "wizard", to: "wizard#create_profile"
-    get "wizard/syncing", to: "wizard#syncing", as: :wizard_syncing
-    get "wizard/sync_status", to: "wizard#sync_status", as: :wizard_sync_status
-    get "wizard/game", to: "wizard#game", as: :wizard_game
-    post "wizard/game", to: "wizard#set_game"
-    get "wizard/achievements/:step", to: "wizard#achievement", as: :wizard_achievement, constraints: { step: /[1-3]/ }
-    post "wizard/achievements/:step", to: "wizard#set_achievement", constraints: { step: /[1-3]/ }
-    get "wizard/summary", to: "wizard#summary", as: :wizard_summary
-    get "leaderboard", to: "users#index", as: :leaderboard
-    resources :news, only: [ :index, :show ]
-    get "users/:id", to: "users#show", as: :user
-    get "users/:id/wall", to: "users#wall", as: :user_wall
-    resources :comments, only: [:create, :destroy]
-    get "achievement/:steam_app_id/:steam_api_name", to: "achievements#by_steam_api_name", as: :achievement_by_steam_api_name
-    resources :achievements do
-      member do
-        post :favorite
-        delete :favorite, action: :unfavorite
-        post :pin
-        delete :pin, action: :unpin
-      end
+  root "achievements#index"
+  get "welcome", to: "welcome#index", as: :welcome
+  get "help", to: "achievements#help"
+  get "login", to: "sessions#new"
+  post "login", to: "sessions#create"
+  get "login/steam", to: "sessions#steam", as: :login_steam
+  get "login/steam/callback", to: "sessions#steam_callback", as: :login_steam_callback
+  get "login/steam_id", to: "sessions#login_with_steam_id", as: :login_with_steam_id
+  delete "logout", to: "sessions#destroy"
+  post "heartbeat", to: "sessions#heartbeat"
+  get "wizard", to: "wizard#profile", as: :wizard
+  post "wizard", to: "wizard#create_profile"
+  get "wizard/syncing", to: "wizard#syncing", as: :wizard_syncing
+  get "wizard/sync_status", to: "wizard#sync_status", as: :wizard_sync_status
+  get "wizard/game", to: "wizard#game", as: :wizard_game
+  post "wizard/game", to: "wizard#set_game"
+  get "wizard/achievements/:step", to: "wizard#achievement", as: :wizard_achievement, constraints: { step: /[1-3]/ }
+  post "wizard/achievements/:step", to: "wizard#set_achievement", constraints: { step: /[1-3]/ }
+  get "wizard/summary", to: "wizard#summary", as: :wizard_summary
+  get "leaderboard", to: "users#index", as: :leaderboard
+  resources :news, only: [ :index, :show ]
+  get "users/:id", to: "users#show", as: :user
+  get "users/:id/wall", to: "users#wall", as: :user_wall
+  resources :comments, only: [:create, :destroy]
+  get "achievement/:steam_app_id/:steam_api_name", to: "achievements#by_steam_api_name", as: :achievement_by_steam_api_name
+  resources :achievements do
+    member do
+      post :favorite
+      delete :favorite, action: :unfavorite
+      post :pin
+      delete :pin, action: :unpin
     end
-    resources :chains do
-      member do
-        post :favorite
-        delete :favorite, action: :unfavorite
-      end
+  end
+  resources :chains do
+    member do
+      post :favorite
+      delete :favorite, action: :unfavorite
     end
-    resources :battles, only: [:index, :new, :create, :show] do
-      member do
-        post :place
-        post :attack
-        post :end_turn
-      end
+  end
+  resources :battles, only: [:index, :new, :create, :show] do
+    member do
+      post :place
+      post :attack
+      post :end_turn
     end
   end
 end

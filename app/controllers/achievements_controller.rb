@@ -56,13 +56,13 @@ class AchievementsController < ApplicationController
   def by_steam_api_name
     game = Game.find_by(steam_app_id: params[:steam_app_id])
     achievement = game && Achievement.find_by(game: game, steam_api_name: params[:steam_api_name])
-    return redirect_to("/achievements/", alert: "Unknown achievement.") unless achievement
+    return redirect_to("/", alert: "Unknown achievement.") unless achievement
 
     redirect_to achievement_path(achievement)
   end
 
   def favorite
-    return redirect_to("/achievements/login/", alert: "Log in to save achievements.") unless current_user
+    return redirect_to("/login/", alert: "Log in to save achievements.") unless current_user
 
     achievement = Achievement.find(params[:id])
     favorite = UserAchievementFavorite.find_or_initialize_by(user: current_user, achievement: achievement)
@@ -75,7 +75,7 @@ class AchievementsController < ApplicationController
   end
 
   def unfavorite
-    return redirect_to("/achievements/login/", alert: "Log in to manage saved achievements.") unless current_user
+    return redirect_to("/login/", alert: "Log in to manage saved achievements.") unless current_user
 
     achievement = Achievement.find(params[:id])
     favorite = UserAchievementFavorite.find_by(user: current_user, achievement: achievement)
@@ -88,7 +88,7 @@ class AchievementsController < ApplicationController
   end
 
   def pin
-    return redirect_to("/achievements/login/", alert: "Log in to pin achievements.") unless current_user
+    return redirect_to("/login/", alert: "Log in to pin achievements.") unless current_user
 
     achievement = Achievement.find(params[:id])
     pin = current_user.user_achievement_pins.new(achievement: achievement)
@@ -101,7 +101,7 @@ class AchievementsController < ApplicationController
   end
 
   def unpin
-    return redirect_to("/achievements/login/", alert: "Log in to manage your wall.") unless current_user
+    return redirect_to("/login/", alert: "Log in to manage your wall.") unless current_user
 
     achievement = Achievement.find(params[:id])
     current_user.user_achievement_pins.find_by(achievement: achievement)&.destroy

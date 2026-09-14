@@ -7,7 +7,7 @@ class CommentsController < ApplicationController
 
   def create
     commentable = find_commentable
-    return redirect_to "/achievements/", alert: "Could not find that." unless commentable
+    return redirect_to "/", alert: "Could not find that." unless commentable
 
     is_first_comment = current_user.authored_comments.none?
     comment = commentable.comments.new(comment_params.merge(user: current_user))
@@ -24,7 +24,7 @@ class CommentsController < ApplicationController
 
   def destroy
     comment = Comment.find_by(id: params[:id])
-    return redirect_to "/achievements/", alert: "Comment not found." unless comment
+    return redirect_to "/", alert: "Comment not found." unless comment
 
     commentable = comment.commentable
 
@@ -41,7 +41,7 @@ class CommentsController < ApplicationController
   def require_login!
     return if current_user
 
-    redirect_to "/achievements/login/", alert: "Log in to comment."
+    redirect_to "/login/", alert: "Log in to comment."
   end
 
   def find_commentable
