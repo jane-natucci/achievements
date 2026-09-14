@@ -141,10 +141,10 @@ RSpec.describe 'Achievements home', type: :request do
   def sign_in(user)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
-  describe 'GET /achievements/achievements/:id combined history' do
+  describe 'GET /achievements/:id combined history' do
     it 'interleaves unlocks and favorites by time, most recent first' do
       achievement = create(:achievement)
       chain = create(:chain)
@@ -293,7 +293,7 @@ RSpec.describe 'Achievements home', type: :request do
         post favorite_achievement_path(achievement)
       }.not_to change { UserAchievementFavorite.count }
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
     end
 
     it 'puts a no-xp "favorited" entry on the timeline, and removes it on unfavorite' do
@@ -372,7 +372,7 @@ RSpec.describe 'Achievements home', type: :request do
         post pin_achievement_path(achievement)
       }.not_to change { UserAchievementPin.count }
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
     end
 
     it 'blocks pinning past the per-user limit with a clear message' do
@@ -434,7 +434,7 @@ RSpec.describe 'Achievements home', type: :request do
     end
   end
 
-  describe 'GET /achievements/achievement/:steam_app_id/:steam_api_name' do
+  describe 'GET /achievement/:steam_app_id/:steam_api_name' do
     it 'redirects to the achievement page without touching the session' do
       eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
       achievement = create(:achievement, game: eu4, steam_api_name: 'ACH_SOMETHING')
@@ -450,7 +450,7 @@ RSpec.describe 'Achievements home', type: :request do
 
       get achievement_by_steam_api_name_path(Game::EU4_STEAM_APP_ID, 'NOT_REAL')
 
-      expect(response).to redirect_to('/achievements/')
+      expect(response).to redirect_to('/')
       follow_redirect!
       expect(response.body).to include('Unknown achievement')
     end

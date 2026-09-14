@@ -6,7 +6,7 @@ RSpec.describe 'Chains index filters', type: :request do
   def sign_in(user)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
   describe 'By Owner' do

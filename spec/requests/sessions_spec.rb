@@ -3,24 +3,24 @@
 require 'rails_helper'
 
 RSpec.describe 'Sessions', type: :request do
-  describe 'GET /achievements/login/steam' do
+  describe 'GET /login/steam' do
     it 'redirects to the Steam OpenID authorize URL' do
-      get '/achievements/login/steam'
+      get '/login/steam'
 
       expect(response).to redirect_to(a_string_starting_with('https://steamcommunity.com/openid/login'))
     end
   end
 
-  describe 'GET /achievements/login/steam/callback' do
+  describe 'GET /login/steam/callback' do
     it 'signs the user in and marks the session as steam-verified when Steam confirms the identity' do
       user = create(:user)
       allow(SteamOpenid).to receive(:verify_steam_id).and_return(user.steam_id)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam/callback'
+      get '/login/steam/callback'
 
-      expect(response).to redirect_to('/achievements/')
+      expect(response).to redirect_to('/')
       expect(session[:user_id]).to eq(user.id)
       expect(session[:steam_verified]).to be(true)
     end
@@ -28,21 +28,21 @@ RSpec.describe 'Sessions', type: :request do
     it 'redirects back to login with an alert when Steam verification fails' do
       allow(SteamOpenid).to receive(:verify_steam_id).and_return(nil)
 
-      get '/achievements/login/steam/callback'
+      get '/login/steam/callback'
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
       follow_redirect!
       expect(response.body).to include('Steam sign-in failed')
     end
   end
 
-  describe 'POST /achievements/login' do
+  describe 'POST /login' do
     it 'signs the user in without marking the session as steam-verified' do
       user = create(:user)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      post '/achievements/login', params: { profile_url: user.steam_id }
+      post '/login', params: { profile_url: user.steam_id }
 
       expect(session[:user_id]).to eq(user.id)
       expect(session[:steam_verified]).to be(false)
@@ -54,34 +54,34 @@ RSpec.describe 'Sessions', type: :request do
       allow(SteamOpenid).to receive(:verify_steam_id).and_return(verified_user.steam_id)
       allow(Steam::User).to receive(:summary).and_return('personaname' => verified_user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-      get '/achievements/login/steam/callback'
+      get '/login/steam/callback'
       expect(session[:steam_verified]).to be(true)
 
       allow(Steam::User).to receive(:summary).and_return('personaname' => other_user.display_name)
-      post '/achievements/login', params: { profile_url: other_user.steam_id }
+      post '/login', params: { profile_url: other_user.steam_id }
 
       expect(session[:user_id]).to eq(other_user.id)
       expect(session[:steam_verified]).to be(false)
     end
   end
 
-  describe 'GET /achievements/login/steam_id' do
+  describe 'GET /login/steam_id' do
     it 'signs the user in and redirects straight to their profile, unverified' do
       user = create(:user)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id }
+      get '/login/steam_id', params: { steam_id: user.steam_id }
 
-      expect(response).to redirect_to("/achievements/users/#{user.id}")
+      expect(response).to redirect_to("/users/#{user.id}")
       expect(session[:user_id]).to eq(user.id)
       expect(session[:steam_verified]).to be(false)
     end
 
     it 'redirects to login with an alert when no steam_id is given' do
-      get '/achievements/login/steam_id'
+      get '/login/steam_id'
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
       follow_redirect!
       expect(response.body).to include('Missing Steam ID')
     end
@@ -89,9 +89,9 @@ RSpec.describe 'Sessions', type: :request do
     it 'redirects to login with an alert when the profile cannot be loaded' do
       allow(Steam::User).to receive(:summary).and_return(nil)
 
-      get '/achievements/login/steam_id', params: { steam_id: '76561197960265728' }
+      get '/login/steam_id', params: { steam_id: '76561197960265728' }
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
       follow_redirect!
       expect(response.body).to include('Could not load that Steam profile')
     end
@@ -103,9 +103,9 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievement: 'ACH_WC_JOIN_HRE' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievement: 'ACH_WC_JOIN_HRE' }
 
-      expect(response).to redirect_to("/achievements/achievements/#{achievement.id}")
+      expect(response).to redirect_to("/achievements/#{achievement.id}")
     end
 
     it 'falls back to the profile page when the named achievement is unknown' do
@@ -113,9 +113,9 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievement: 'NOT_A_REAL_ACHIEVEMENT' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievement: 'NOT_A_REAL_ACHIEVEMENT' }
 
-      expect(response).to redirect_to("/achievements/users/#{user.id}")
+      expect(response).to redirect_to("/users/#{user.id}")
     end
 
     it 'auto-creates a chain from achievements[], with the given title and description, and redirects to it' do
@@ -126,7 +126,7 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: {
+      get '/login/steam_id', params: {
         steam_id: user.steam_id,
         achievements: [ 'ACH_FIRST', 'ACH_SECOND' ],
         title: 'My next steps',
@@ -134,7 +134,7 @@ RSpec.describe 'Sessions', type: :request do
       }
 
       chain = Chain.last
-      expect(response).to redirect_to("/achievements/chains/#{chain.id}")
+      expect(response).to redirect_to("/chains/#{chain.id}")
       expect(chain.title).to eq('My next steps')
       expect(chain.description).to eq('Because reasons.')
       expect(chain.creator).to eq(user)
@@ -150,13 +150,13 @@ RSpec.describe 'Sessions', type: :request do
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
       params = { steam_id: user.steam_id, achievements: [ 'ACH_FIRST', 'ACH_SECOND' ], description: 'Because reasons.' }
 
-      get '/achievements/login/steam_id', params: params
+      get '/login/steam_id', params: params
       first_chain = Chain.last
 
-      get '/achievements/login/steam_id', params: params
+      get '/login/steam_id', params: params
 
       expect(Chain.count).to eq(1)
-      expect(response).to redirect_to("/achievements/chains/#{first_chain.id}")
+      expect(response).to redirect_to("/chains/#{first_chain.id}")
     end
 
     it 'creates a new chain when the description differs, even with the same achievements' do
@@ -166,8 +166,8 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'First reason.' }
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Second reason.' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'First reason.' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Second reason.' }
 
       expect(Chain.count).to eq(2)
     end
@@ -180,8 +180,8 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST', 'ACH_SECOND' ], description: 'Same text.' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST', 'ACH_SECOND' ], description: 'Same text.' }
 
       expect(Chain.count).to eq(2)
     end
@@ -194,10 +194,10 @@ RSpec.describe 'Sessions', type: :request do
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
       allow(Steam::User).to receive(:summary).and_return('personaname' => other_user.display_name)
-      get '/achievements/login/steam_id', params: { steam_id: other_user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
+      get '/login/steam_id', params: { steam_id: other_user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
 
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ], description: 'Same text.' }
 
       expect(Chain.count).to eq(2)
     end
@@ -209,7 +209,7 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
 
       expect(Chain.last.title).to eq('Suggested by Europa Universalis IV Strength Score')
     end
@@ -221,7 +221,7 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
 
       expect(XpEvent.where(user: user, reason: 'chain_created')).to exist
     end
@@ -232,9 +232,9 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'NOT_REAL' ] }
+      get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'NOT_REAL' ] }
 
-      expect(response).to redirect_to("/achievements/users/#{user.id}")
+      expect(response).to redirect_to("/users/#{user.id}")
       expect(Chain.count).to eq(0)
     end
 
@@ -247,9 +247,9 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, steam_app_id: 529_340, achievement: 'ACH_SHARED_NAME' }
+      get '/login/steam_id', params: { steam_id: user.steam_id, steam_app_id: 529_340, achievement: 'ACH_SHARED_NAME' }
 
-      expect(response).to redirect_to("/achievements/achievements/#{vic3_achievement.id}")
+      expect(response).to redirect_to("/achievements/#{vic3_achievement.id}")
     end
 
     it 'auto-creates a chain for a non-EU4 game named by steam_app_id, with a matching default title' do
@@ -259,25 +259,25 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam_id', params: { steam_id: user.steam_id, steam_app_id: 529_340, achievements: [ 'ACH_FIRST' ] }
+      get '/login/steam_id', params: { steam_id: user.steam_id, steam_app_id: 529_340, achievements: [ 'ACH_FIRST' ] }
 
       chain = Chain.last
-      expect(response).to redirect_to("/achievements/chains/#{chain.id}")
+      expect(response).to redirect_to("/chains/#{chain.id}")
       expect(chain.game).to eq(vic3)
       expect(chain.title).to eq('Suggested by Victoria 3 Strength Score')
       expect(chain.nodes_in_order.map(&:ref_id)).to eq([ achievement.id ])
     end
   end
 
-  describe 'DELETE /achievements/logout' do
+  describe 'DELETE /logout' do
     it 'clears both the user and the verified flag' do
       user = create(:user)
       allow(SteamOpenid).to receive(:verify_steam_id).and_return(user.steam_id)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-      get '/achievements/login/steam/callback'
+      get '/login/steam/callback'
 
-      delete '/achievements/logout'
+      delete '/logout'
 
       expect(session[:user_id]).to be_nil
       expect(session[:steam_verified]).to be_nil
@@ -291,7 +291,7 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      get '/achievements/login/steam/callback'
+      get '/login/steam/callback'
 
       expect(user.reload.online?).to be(true)
     end
@@ -301,27 +301,27 @@ RSpec.describe 'Sessions', type: :request do
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
 
-      post '/achievements/login', params: { profile_url: user.steam_id }
+      post '/login', params: { profile_url: user.steam_id }
 
       expect(user.reload.online?).to be(true)
     end
   end
 
-  describe 'POST /achievements/heartbeat' do
+  describe 'POST /heartbeat' do
     it "updates the logged-in user's last_seen_at" do
       user = create(:user, last_seen_at: 1.hour.ago)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-      post '/achievements/login', params: { profile_url: user.steam_id }
+      post '/login', params: { profile_url: user.steam_id }
 
-      post '/achievements/heartbeat'
+      post '/heartbeat'
 
       expect(response).to have_http_status(:ok)
       expect(user.reload.online?).to be(true)
     end
 
     it 'no-ops when logged out, without raising' do
-      post '/achievements/heartbeat'
+      post '/heartbeat'
 
       expect(response).to have_http_status(:ok)
     end

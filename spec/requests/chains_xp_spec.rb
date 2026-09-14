@@ -12,7 +12,7 @@ RSpec.describe 'Chains XP on edit', type: :request do
   before do
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
   def selected_ids_json(achievements_with_notes)

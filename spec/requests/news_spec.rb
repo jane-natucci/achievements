@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'News', type: :request do
-  describe 'GET /achievements/news' do
+  describe 'GET /news' do
     it 'lists published posts, newest first' do
       older = NewsPost.create!(title: 'Older post', body: 'Body', published_at: 2.days.ago)
       newer = NewsPost.create!(title: 'Newer post', body: 'Body', published_at: 1.day.ago)
@@ -32,7 +32,7 @@ RSpec.describe 'News', type: :request do
     end
   end
 
-  describe 'GET /achievements/news/:id' do
+  describe 'GET /news/:id' do
     it 'shows a published post' do
       post = NewsPost.create!(title: 'Hello world', body: 'Some announcement.', published_at: 1.day.ago)
 
@@ -56,13 +56,13 @@ RSpec.describe 'News', type: :request do
     def sign_in(user)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
       allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-      post '/achievements/login', params: { profile_url: user.steam_id }
+      post '/login', params: { profile_url: user.steam_id }
     end
 
     it 'shows a dot for a logged-out visitor when published news exists' do
       NewsPost.create!(title: 'Hello', body: 'Body', published_at: 1.day.ago)
 
-      get '/achievements/'
+      get '/'
 
       expect(response.body).to include('unread-dot')
     end
@@ -70,7 +70,7 @@ RSpec.describe 'News', type: :request do
     it 'shows no dot when there is no published news' do
       NewsPost.create!(title: 'Draft', body: 'Body', published_at: nil)
 
-      get '/achievements/'
+      get '/'
 
       expect(response.body).not_to include('unread-dot')
     end
@@ -80,11 +80,11 @@ RSpec.describe 'News', type: :request do
       NewsPost.create!(title: 'Hello', body: 'Body', published_at: 1.day.ago)
       sign_in(user)
 
-      get '/achievements/'
+      get '/'
       expect(response.body).to include('unread-dot')
 
       get news_index_path
-      get '/achievements/'
+      get '/'
 
       expect(response.body).not_to include('unread-dot')
     end
@@ -94,7 +94,7 @@ RSpec.describe 'News', type: :request do
       NewsPost.create!(title: 'Brand new', body: 'Body', published_at: Time.current)
       sign_in(user)
 
-      get '/achievements/'
+      get '/'
 
       expect(response.body).to include('unread-dot')
     end
@@ -109,7 +109,7 @@ RSpec.describe 'News', type: :request do
       user = create(:user, created_at: Time.current, last_news_read_at: nil)
       sign_in(user)
 
-      get '/achievements/'
+      get '/'
 
       expect(response.body).not_to include('unread-dot')
     end

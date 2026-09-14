@@ -6,10 +6,10 @@ RSpec.describe 'Comments', type: :request do
   def sign_in(user)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
-  describe 'POST /achievements/comments' do
+  describe 'POST /comments' do
     it 'posts a comment on a chain when logged in' do
       user = create(:user)
       chain = create(:chain)
@@ -83,7 +83,7 @@ RSpec.describe 'Comments', type: :request do
         post comments_path, params: { commentable_type: 'Chain', commentable_id: chain.id, comment: { body: 'Nice chain!' } }
       }.not_to change { Comment.count }
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
     end
 
     it 'rejects a commentable_type outside the allowlist instead of constantizing arbitrary input' do
@@ -106,7 +106,7 @@ RSpec.describe 'Comments', type: :request do
     end
   end
 
-  describe 'DELETE /achievements/comments/:id' do
+  describe 'DELETE /comments/:id' do
     it "lets a user delete their own comment" do
       user = create(:user)
       comment = create(:comment, user: user)

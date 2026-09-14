@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Users', type: :request do
-  describe 'GET /achievements/leaderboard' do
+  describe 'GET /leaderboard' do
     it 'orders players by total_xp descending' do
       low = create(:user, display_name: 'Low', total_xp: 10)
       high = create(:user, display_name: 'High', total_xp: 500)
@@ -73,7 +73,7 @@ RSpec.describe 'Users', type: :request do
     end
   end
 
-  describe 'GET /achievements/users/:id' do
+  describe 'GET /users/:id' do
     it 'shows the basic summary and computes a tied rank correctly' do
       create(:user, total_xp: 150) # ahead of user
       user = create(:user, display_name: 'Jane', total_xp: 100)
@@ -303,7 +303,7 @@ RSpec.describe 'Users', type: :request do
   def sign_in(user)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
   describe 'achievement wall' do
@@ -472,7 +472,7 @@ RSpec.describe 'Users', type: :request do
     end
   end
 
-  describe 'GET /achievements/users/:id/wall' do
+  describe 'GET /users/:id/wall' do
     it 'shows every unlocked achievement, uncapped' do
       user = create(:user)
       (UsersController::ACHIEVEMENT_WALL_LIMIT + 5).times do |i|

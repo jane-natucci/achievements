@@ -7,16 +7,16 @@ RSpec.describe 'Chains deletion', type: :request do
     allow(SteamOpenid).to receive(:verify_steam_id).and_return(user.steam_id)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    get '/achievements/login/steam/callback'
+    get '/login/steam/callback'
   end
 
   def sign_in_via_paste_url(user)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
-  describe 'GET /achievements/chains/:id delete button' do
+  describe 'GET /chains/:id delete button' do
     it 'shows an active delete button for a steam-verified creator' do
       user = create(:user)
       chain = create(:chain, creator: user)
@@ -38,11 +38,11 @@ RSpec.describe 'Chains deletion', type: :request do
 
       expect(response.body).to include('sidebar-icon-button--muted')
       expect(response.body).to include('Sign in with Steam to remove chains')
-      expect(response.body).to include('/achievements/login/steam')
+      expect(response.body).to include('/login/steam')
     end
   end
 
-  describe 'DELETE /achievements/chains/:id' do
+  describe 'DELETE /chains/:id' do
     it 'discards the chain when the creator is signed in via Steam' do
       user = create(:user)
       chain = create(:chain, creator: user)

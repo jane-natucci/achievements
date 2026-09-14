@@ -6,7 +6,7 @@ RSpec.describe 'Battles', type: :request do
   def sign_in(user)
     allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
     allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
-    post '/achievements/login', params: { profile_url: user.steam_id }
+    post '/login', params: { profile_url: user.steam_id }
   end
 
   def build_chain(node_count, game:, creator: nil)
@@ -16,11 +16,11 @@ RSpec.describe 'Battles', type: :request do
     chain
   end
 
-  describe 'GET /achievements/battles/new' do
+  describe 'GET /battles/new' do
     it 'redirects a logged-out visitor to log in' do
       get new_battle_path
 
-      expect(response).to redirect_to('/achievements/login/')
+      expect(response).to redirect_to('/login/')
     end
 
     it 'only lists the current user\'s own battle-eligible chains' do
@@ -50,7 +50,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'POST /achievements/battles' do
+  describe 'POST /battles' do
     it 'starts a battle and redirects to it' do
       user = create(:user)
       sign_in(user)
@@ -90,7 +90,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'GET /achievements/battles/:id' do
+  describe 'GET /battles/:id' do
     it "blocks viewing someone else's battle" do
       owner = create(:user)
       visitor = create(:user)
@@ -264,7 +264,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'POST /achievements/battles/:id/place' do
+  describe 'POST /battles/:id/place' do
     let(:user) { create(:user) }
     let(:chain) { build_chain(3, game: create(:game), creator: user) }
     let(:battle) { CreateBattle.call(user: user, chain: chain).battle }
@@ -313,7 +313,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'POST /achievements/battles/:id/attack' do
+  describe 'POST /battles/:id/attack' do
     let(:user) { create(:user) }
     let(:chain) { build_chain(3, game: create(:game), creator: user) }
     let(:battle) { CreateBattle.call(user: user, chain: chain).battle }
@@ -393,7 +393,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'POST /achievements/battles/:id/end_turn' do
+  describe 'POST /battles/:id/end_turn' do
     let(:user) { create(:user) }
     let(:chain) { build_chain(3, game: create(:game), creator: user) }
     let(:battle) { CreateBattle.call(user: user, chain: chain).battle }
@@ -437,7 +437,7 @@ RSpec.describe 'Battles', type: :request do
     end
   end
 
-  describe 'GET /achievements/battles' do
+  describe 'GET /battles' do
     it "lists the current user's battles" do
       user = create(:user)
       chain = build_chain(3, game: create(:game), creator: user)
