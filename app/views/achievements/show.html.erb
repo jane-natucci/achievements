@@ -64,6 +64,9 @@
       <% if @achievement.game&.name.present? %>
         <p class="achievement-detail__game">
           <%= @achievement.game.name %>
+          <% if (steam_url = steam_store_url(@achievement)) %>
+            &middot; <%= link_to "Steam ↗", steam_url, target: "_blank", rel: "noopener noreferrer" %>
+          <% end %>
           <% if (wiki_url = wiki_achievement_url(@achievement)) %>
             &middot; <%= link_to "Wiki ↗", wiki_url, target: "_blank", rel: "noopener noreferrer" %>
           <% end %>

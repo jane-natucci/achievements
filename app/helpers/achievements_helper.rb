@@ -10,4 +10,11 @@ module AchievementsHelper
 
     "#{base}##{achievement.title.tr(" ", "_")}"
   end
+
+  def steam_store_url(achievement)
+    app_id = achievement.game&.steam_app_id
+    return unless app_id
+
+    "https://store.steampowered.com/app/#{app_id}"
+  end
 end

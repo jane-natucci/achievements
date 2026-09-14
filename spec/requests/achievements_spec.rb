@@ -192,6 +192,24 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).not_to include('Wiki ↗')
     end
 
+    it "links to the achievement's game on the Steam store" do
+      eu4 = create(:game, steam_app_id: Game::EU4_STEAM_APP_ID)
+      achievement = create(:achievement, game: eu4)
+
+      get achievement_path(achievement)
+
+      expect(response.body).to include('Steam ↗')
+      expect(response.body).to include("https://store.steampowered.com/app/#{Game::EU4_STEAM_APP_ID}")
+    end
+
+    it 'does not show a Steam link for a game without a known steam_app_id' do
+      achievement = create(:achievement)
+
+      get achievement_path(achievement)
+
+      expect(response.body).not_to include('Steam ↗')
+    end
+
     it "doesn't include unlocks belonging to a different achievement" do
       achievement = create(:achievement)
       other_achievement = create(:achievement, game: achievement.game)
