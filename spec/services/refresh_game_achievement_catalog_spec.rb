@@ -52,4 +52,25 @@ RSpec.describe RefreshGameAchievementCatalog do
     expect { call }.not_to change(Achievement, :count)
     expect(call).to eq(0)
   end
+
+  context 'for EU5 (steam_app_id 3450310)' do
+    let(:game) { create(:game, steam_app_id: 3_450_310) }
+
+    it "rewrites icon URLs off Steam's dead CDN domain" do
+      allow(Steam::UserStats).to receive(:game_schema).with(game.steam_app_id).and_return(
+        'availableGameStats' => { 'achievements' => [
+          { 'name' => 'ach', 'displayName' => 'Ach', 'description' => 'd',
+            'icon' => 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/3450310/abc.jpg',
+            'icongray' => 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/3450310/def.jpg',
+            'hidden' => 0 }
+        ] }
+      )
+
+      call
+
+      added = game.achievements.find_by(steam_api_name: 'ach')
+      expect(added.icon_unlocked).to eq('https://shared.akamai.steamstatic.com/community_assets/images/apps/3450310/abc.jpg')
+      expect(added.icon_locked).to eq('https://shared.akamai.steamstatic.com/community_assets/images/apps/3450310/def.jpg')
+    end
+  end
 end

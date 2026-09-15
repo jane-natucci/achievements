@@ -68,4 +68,35 @@ RSpec.describe ImportSteamGame do
 
     expect { call }.not_to change(Game, :count)
   end
+
+  context 'for EU5 (app_id 3450310)' do
+    let(:app_id) { 3_450_310 }
+
+    it "rewrites achievement icon URLs off Steam's dead CDN domain" do
+      schema = schema_with_achievements(1)
+      schema['availableGameStats']['achievements'][0]['icon'] =
+        'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/3450310/abc.jpg'
+      schema['availableGameStats']['achievements'][0]['icongray'] =
+        'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/3450310/def.jpg'
+      allow(Steam::UserStats).to receive(:game_schema).with(app_id).and_return(schema)
+
+      call
+
+      achievement = Achievement.find_by(steam_api_name: 'ach_0')
+      expect(achievement.icon_unlocked).to eq('https://shared.akamai.steamstatic.com/community_assets/images/apps/3450310/abc.jpg')
+      expect(achievement.icon_locked).to eq('https://shared.akamai.steamstatic.com/community_assets/images/apps/3450310/def.jpg')
+    end
+  end
+
+  it 'leaves a non-EU5 icon URL on the dead CDN domain untouched' do
+    schema = schema_with_achievements(1)
+    schema['availableGameStats']['achievements'][0]['icon'] =
+      'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/100/abc.jpg'
+    allow(Steam::UserStats).to receive(:game_schema).with(app_id).and_return(schema)
+
+    call
+
+    expect(Achievement.find_by(steam_api_name: 'ach_0').icon_unlocked)
+      .to eq('https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/100/abc.jpg')
+  end
 end
