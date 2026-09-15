@@ -14,4 +14,9 @@ namespace :games do
       puts "#{game.name} (#{game.steam_app_id}): failed -- #{e.class}: #{e.message}"
     end
   end
+
+  desc "Checks EU5's achievement icon URLs are still resolving (see CheckEu5IconUrls) -- alerts via Sentry if any broke"
+  task check_eu5_icon_urls: :environment do
+    CheckEu5IconUrls.call
+  end
 end
