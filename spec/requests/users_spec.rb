@@ -333,6 +333,16 @@ RSpec.describe 'Users', type: :request do
       expect(response.body).to include('Standalone')
     end
 
+    it 'shows the achievement description in its tooltip' do
+      user = create(:user)
+      achievement = create(:achievement, title: 'Deep Diver', description: 'Reach the bottom of the ocean.')
+      UserAchievementUnlock.create!(user: user, achievement: achievement, unlocked_at: 1.day.ago, source: 'steam')
+
+      get user_path(user)
+
+      expect(response.body).to include('Reach the bottom of the ocean.')
+    end
+
     it 'links each tile straight to the achievement page (a plain click navigates)' do
       user = create(:user)
       achievement = create(:achievement)

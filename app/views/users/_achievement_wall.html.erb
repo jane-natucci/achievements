@@ -40,6 +40,10 @@
             <div class="wall-popup__inner">
               <h4><%= achievement.title %></h4>
 
+              <% if achievement.description.present? %>
+                <p class="wall-popup__description"><%= achievement.description %></p>
+              <% end %>
+
               <% if achievement.game&.name.present? %>
                 <p class="wall-popup__game">
                   <%= link_to achievement.game.name, chains_path(game: achievement.game.id) %>
