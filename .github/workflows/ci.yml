@@ -121,6 +121,14 @@ jobs:
         run: bundle exec rspec
 
   build:
+    # Deploy only, never for a pull_request -- `on: pull_request` above has
+    # no branch/fork restriction of its own, so without this guard *any*
+    # PR (a real one from this repo, not just a fork/Dependabot one that
+    # happens to lack AWS secrets) would build and ecspresso-deploy
+    # whatever's on that branch straight to production, merged or not.
+    # Confirmed live on paradox-scores: an exploratory, explicitly-
+    # not-ready-to-merge branch got deployed exactly this way.
+    if: github.event_name == 'push'
     needs: [ scan_ruby, scan_js, lint, test ]
     runs-on: ubuntu-24.04-arm
     env:
