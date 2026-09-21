@@ -15,7 +15,18 @@ class UsersController < ApplicationController
   def show
     @user = User.find(params[:id])
     @rank = User.where("total_xp > ?", @user.total_xp).count + 1
-    @xp_events = @user.xp_events.order(created_at: :desc).limit(20)
+    # An achievement in several chains gets one XpEvent per chain_node it
+    # fills when unlocked (see SyncUserAchievementProgress) -- correct for
+    # XP, but this feed would otherwise repeat "unlocked X" once per chain
+    # for what's really one unlock (confirmed live: a player's profile
+    # showing the same achievement's unlock 4 times). Collapse those to
+    # the earliest one, same as the sitewide feed (XpEvent.visible_ids)
+    # does -- but deliberately not that method itself: its other rule
+    # (hiding a chain completion when the visitor isn't its creator) is
+    # sitewide-feed-specific, and a player's own profile should still show
+    # every chain they've genuinely completed, per XpEvent's own comment.
+    visible_ids = XpEvent.collapse_achievement_unlock_duplicates(@user.xp_events)
+    @xp_events = XpEvent.where(id: visible_ids).order(created_at: :desc).limit(20)
 
     load_achievement_wall(limit: ACHIEVEMENT_WALL_LIMIT)
   end

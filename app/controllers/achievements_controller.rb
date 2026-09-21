@@ -4,7 +4,7 @@ class AchievementsController < ApplicationController
   def index
     @page = [params[:page].to_i, 1].max
 
-    visible_ids = visible_event_ids
+    visible_ids = XpEvent.visible_ids
     @recent_events = XpEvent.where(id: visible_ids).includes(:user).order(created_at: :desc)
                              .offset((@page - 1) * NEWS_PAGE_SIZE).limit(NEWS_PAGE_SIZE)
     @has_next_page = visible_ids.size > @page * NEWS_PAGE_SIZE
@@ -23,7 +23,13 @@ class AchievementsController < ApplicationController
     # favorites, interleaved by time -- rather than two separate lists.
     # Both event types are already recorded as XpEvents (favoriting at
     # amount 0, see AwardXp).
-    unlock_events = XpEvent.where(reason: "achievement_unlocked", subject_type: "ChainNode", subject_id: @achievement.chain_nodes.select(:id)).includes(:user)
+    # A Paradox-game achievement not attached to any chain still gets a
+    # first-class achievement_unlocked event (see
+    # SyncUserAchievementProgress#sync_first_class_unlocks!) -- included
+    # here too so its own page shows who unlocked it either way.
+    unlock_events = XpEvent.where(reason: "achievement_unlocked", subject_type: "ChainNode", subject_id: @achievement.chain_nodes.select(:id))
+                            .or(XpEvent.where(reason: "achievement_unlocked", subject_type: "Achievement", subject_id: @achievement.id))
+                            .includes(:user)
     # An achievement that belongs to several chains gets XP -- and an
     # XpEvent row -- once per chain_node it fills (see
     # SyncUserAchievementProgress), which is correct for XP but would
@@ -107,57 +113,5 @@ class AchievementsController < ApplicationController
     current_user.user_achievement_pins.find_by(achievement: achievement)&.destroy
 
     redirect_back fallback_location: achievement_path(achievement), notice: "Unpinned."
-  end
-
-  private
-
-  # A chain with a lot of achievements floods the feed with one
-  # "added X to a chain" row per achievement -- the chain_created row
-  # already summarizes the count (see UsersHelper#xp_event_description),
-  # so those are dropped entirely. And an achievement that belongs to
-  # several chains gets an XpEvent per chain_node it fills when unlocked
-  # (see SyncUserAchievementProgress) -- correct for XP, but the feed
-  # would otherwise show one "unlocked" row per chain for what's really
-  # one person unlocking one achievement (same issue as the per-achievement
-  # history feed in #show), so those collapse to the earliest one per
-  # user+achievement.
-  def visible_event_ids
-    candidates = XpEvent.where.not(reason: "achievement_added")
-    # Only an achievement_unlocked event with a ChainNode subject is the
-    # per-chain duplication case -- anything else (including any stray
-    # achievement_unlocked event without one) passes through untouched.
-    chain_node_unlocks = candidates.where(reason: "achievement_unlocked", subject_type: "ChainNode")
-    other_candidates = candidates.where.not(id: chain_node_unlocks.select(:id))
-    other_ids = other_candidates.where.not(id: incidental_chain_completion_ids(other_candidates)).pluck(:id)
-
-    unlock_rows = chain_node_unlocks.pluck(:id, :user_id, :subject_id, :created_at)
-    achievement_id_by_chain_node_id = ChainNode.where(id: unlock_rows.map { |row| row[2] }).pluck(:id, :ref_id).to_h
-
-    earliest_unlock_ids = unlock_rows.group_by do |(_id, user_id, chain_node_id, _created_at)|
-      achievement_id = achievement_id_by_chain_node_id[chain_node_id]
-      # No achievement to resolve to (e.g. an orphaned chain_node) -- don't
-      # risk merging unrelated unlocks together, just leave it ungrouped.
-      achievement_id ? [user_id, achievement_id] : [user_id, :chain_node, chain_node_id]
-    end.values.map { |rows| rows.min_by { |row| row[3] }[0] }
-
-    other_ids + earliest_unlock_ids
-  end
-
-  # SyncUserAchievementProgress#award_chain_completion_bonuses! awards a
-  # chain_completed event to EVERY user whose already-unlocked achievements
-  # happen to satisfy a chain's nodes, not just someone who deliberately
-  # followed it. Most chains are a player's own auto-generated "next steps"
-  # suggestion (see SessionsController#create_chain_from_params), so a
-  # single new player syncing their (often extensive) existing Steam
-  # history can incidentally "complete" dozens of other players' tiny
-  # suggestion chains in one go, drowning out everything else in the feed.
-  # Keep the dashboard to a chain's own creator completing it; other
-  # completions still count for XP and still show on the completer's own
-  # profile (see UsersHelper#xp_event_description), just not here.
-  def incidental_chain_completion_ids(candidates)
-    candidates.where(reason: "chain_completed", subject_type: "Chain")
-              .joins("INNER JOIN chains ON chains.id = xp_events.subject_id")
-              .where.not("chains.creator_user_id = xp_events.user_id")
-              .select(:id)
   end
 end
