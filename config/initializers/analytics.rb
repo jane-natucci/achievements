@@ -1,1 +1,0 @@
-AMPLITUDE_KEY = "36828638be1a93e5486a5df48cce64c6".freeze

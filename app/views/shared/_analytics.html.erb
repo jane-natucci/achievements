@@ -1,7 +1,0 @@
-<% if Rails.env.production? && cookies[:cookie_consent] == "accepted" %>
-  <script src="https://cdn.amplitude.com/script/<%= AMPLITUDE_KEY %>.js"></script>
-  <script>
-    window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
-    window.amplitude.init('<%= AMPLITUDE_KEY %>', {"fetchRemoteConfig":true,"autocapture":true});
-  </script>
-<% end %>

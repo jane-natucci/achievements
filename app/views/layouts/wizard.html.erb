@@ -18,7 +18,6 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
-    <%= render "shared/analytics" %>
   </head>
 
   <body class="wizard-shell">
@@ -38,7 +37,5 @@
 
       <%= yield %>
     </main>
-
-    <%= render "shared/cookie_consent_banner" %>
   </body>
 </html>
