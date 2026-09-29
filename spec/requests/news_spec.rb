@@ -94,6 +94,25 @@ RSpec.describe 'News', type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include('Post news')
       end
+
+      # Regression test for a real bug caught live: NewsPost.model_name is
+      # overridden (see the model), which changes form_with's default
+      # param key away from the Rails-conventional "news_post" -- every
+      # real submission 400'd with ActionController::ParameterMissing
+      # because the controller expected :news_post while the actual
+      # rendered form (and thus every real request) sent :news. A hand-typed
+      # params hash in a controller spec can't catch a mismatch like this
+      # since it's just as easy to hand-type the same wrong key on both
+      # sides -- this parses the real rendered field names instead.
+      it "renders form fields under the same param key the controller actually reads (not a hand-typed assumption)" do
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+
+        get new_news_path
+
+        expect(response.body).to match(/name="news\[title\]"/)
+        expect(response.body).to match(/name="news\[body\]"/)
+        expect(response.body).to match(/name="news\[publish_now\]"/)
+      end
     end
 
     describe 'POST /news' do
@@ -101,7 +120,7 @@ RSpec.describe 'News', type: :request do
         sign_in_verified(create(:user, steam_id: admin_steam_id))
 
         post news_index_path, params: {
-          news_post: { title: 'Big update', body: "**Bold** and <script>alert(1)</script>", publish_now: '1' }
+          news: { title: 'Big update', body: "**Bold** and <script>alert(1)</script>", publish_now: '1' }
         }
 
         post_record = NewsPost.find_by!(title: 'Big update')
@@ -116,7 +135,7 @@ RSpec.describe 'News', type: :request do
       it 'creates a draft (published_at nil) when publish now is left unchecked' do
         sign_in_verified(create(:user, steam_id: admin_steam_id))
 
-        post news_index_path, params: { news_post: { title: 'Draft', body: 'Body' } }
+        post news_index_path, params: { news: { title: 'Draft', body: 'Body' } }
 
         expect(NewsPost.find_by!(title: 'Draft').published_at).to be_nil
       end
@@ -125,7 +144,7 @@ RSpec.describe 'News', type: :request do
         sign_in_verified(create(:user, steam_id: '76561199000000002'))
 
         expect {
-          post news_index_path, params: { news_post: { title: 'Nope', body: 'Body' } }
+          post news_index_path, params: { news: { title: 'Nope', body: 'Body' } }
         }.not_to change(NewsPost, :count)
       end
     end
@@ -161,7 +180,7 @@ RSpec.describe 'News', type: :request do
         draft = NewsPost.create!(title: 'WIP', body: 'Old body', published_at: nil)
         sign_in_verified(create(:user, steam_id: admin_steam_id))
 
-        patch news_path(draft), params: { news_post: { title: 'WIP', body: 'New body', publish_now: '1' } }
+        patch news_path(draft), params: { news: { title: 'WIP', body: 'New body', publish_now: '1' } }
 
         draft.reload
         expect(draft.body).to eq('New body')
@@ -172,7 +191,7 @@ RSpec.describe 'News', type: :request do
         post_record = NewsPost.create!(title: 'Live', body: 'Body', published_at: 1.day.ago)
         sign_in_verified(create(:user, steam_id: '76561199000000005'))
 
-        patch news_path(post_record), params: { news_post: { title: 'Live', body: 'Hacked' } }
+        patch news_path(post_record), params: { news: { title: 'Live', body: 'Hacked' } }
 
         expect(post_record.reload.body).to eq('Body')
       end

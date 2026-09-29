@@ -38,7 +38,7 @@
 
       <div class="chain-builder-panel__section">
         <label class="chain-builder__label">
-          <%= check_box_tag "news_post[publish_now]", "1", @news_post.published_at.present? %>
+          <%= check_box_tag "news[publish_now]", "1", @news_post.published_at.present? %>
           <%= @news_post.published_at.present? ? "Published" : "Publish now" %>
         </label>
         <% if @news_post.published_at.blank? %>

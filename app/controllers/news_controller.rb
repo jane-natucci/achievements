@@ -50,12 +50,18 @@ class NewsController < ApplicationController
     @news_post = admin? ? NewsPost.find(params[:id]) : NewsPost.published.find(params[:id])
   end
 
+  # NewsPost.model_name is overridden (see the model) to make
+  # polymorphic_path/comment redirects resolve to the real news_path
+  # helper -- that override also changes form_with's default param key
+  # away from the Rails-conventional "news_post" to "news", which is what
+  # actually gets submitted. Confirmed live: the original :news_post here
+  # raised ActionController::ParameterMissing on every real submission.
   def news_post_params
-    params.require(:news_post).permit(:title, :body)
+    params.require(:news).permit(:title, :body)
   end
 
   def publish_now?
-    params.dig(:news_post, :publish_now) == "1"
+    params.dig(:news, :publish_now) == "1"
   end
 
   def require_admin!
