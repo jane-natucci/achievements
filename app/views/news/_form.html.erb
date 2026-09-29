@@ -1,0 +1,61 @@
+<%
+  submit_label = local_assigns.fetch(:submit_label)
+  heading_title = local_assigns.fetch(:heading_title)
+  form_url = local_assigns.fetch(:form_url)
+%>
+
+<% if @news_post.errors.any? %>
+  <div class="form-errors">
+    <h3>Couldn't save that</h3>
+    <ul>
+      <% @news_post.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<section class="chain-index help-page">
+  <header class="chain-index__header">
+    <p class="eyebrow">News</p>
+    <h1><%= heading_title %></h1>
+  </header>
+
+  <div class="chain-card">
+    <%= form_with model: @news_post, url: form_url, class: "login-form" do |form| %>
+      <div class="chain-builder-panel__section">
+        <%= form.label :title, class: "chain-builder__label" %>
+        <%= form.text_field :title, class: "chain-builder__input" %>
+      </div>
+
+      <div class="chain-builder-panel__section">
+        <%= form.label :body, "Body (Markdown)", class: "chain-builder__label" %>
+        <%= form.text_area :body, class: "chain-builder__input chain-builder__textarea", rows: 16 %>
+        <p class="chain-builder__hint">
+          Headings, **bold**, *italic*, [links](https://…), lists, and fenced code blocks are all supported.
+        </p>
+      </div>
+
+      <div class="chain-builder-panel__section">
+        <label class="chain-builder__label">
+          <%= check_box_tag "news_post[publish_now]", "1", @news_post.published_at.present? %>
+          <%= @news_post.published_at.present? ? "Published" : "Publish now" %>
+        </label>
+        <% if @news_post.published_at.blank? %>
+          <p class="chain-builder__hint">Leave unchecked to save as a draft -- only you can preview it, at its own page.</p>
+        <% end %>
+      </div>
+
+      <div class="chain-builder-panel__section">
+        <%= form.submit submit_label, class: "sidebar-button chain-builder__submit" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @news_post.persisted? %>
+    <div class="chain-card">
+      <h3>Preview</h3>
+      <%= render_news_body(@news_post.body) %>
+    </div>
+  <% end %>
+</section>

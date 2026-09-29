@@ -1,6 +1,9 @@
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
     <%= link_to "Back Home", "/", class: "sidebar-button" %>
+    <% if admin? %>
+      <%= link_to "Post news", new_news_path, class: "sidebar-button" %>
+    <% end %>
   </div>
 <% end %>
 
@@ -18,7 +21,13 @@
       <% @news_posts.each do |post| %>
         <div class="chain-card">
           <h2><%= link_to post.title, news_path(post) %></h2>
-          <p class="eyebrow"><%= post.published_at.strftime("%B %-d, %Y") %></p>
+          <p class="eyebrow">
+            <% if post.published_at %>
+              <%= post.published_at.strftime("%B %-d, %Y") %>
+            <% else %>
+              Draft
+            <% end %>
+          </p>
           <p><%= truncate(strip_tags(post.body), length: 280, separator: " ") %></p>
         </div>
       <% end %>

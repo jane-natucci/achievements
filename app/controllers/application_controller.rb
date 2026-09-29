@@ -6,7 +6,7 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   helper_method :current_user, :steam_verified?, :header_avatar_link_path, :header_avatar_link_label,
-                :random_header_achievement_icon_url, :unread_news?
+                :random_header_achievement_icon_url, :unread_news?, :admin?
 
   private
 
@@ -40,6 +40,17 @@ class ApplicationController < ActionController::Base
   # path that actually proves the visitor owns the Steam account.
   def steam_verified?
     session[:steam_verified].present?
+  end
+
+  # Gates news authoring (see NewsController) -- there's exactly one admin
+  # (the site owner), identified by steamid64 via ENV rather than a
+  # hardcoded literal or a DB role column, matching the SIDEKIQ_USERNAME/
+  # PASSWORD pattern already used for this app's other ops-only surface.
+  # Requires steam_verified? too: current_user alone only proves "someone
+  # pasted this steamid64 as a profile URL," not that they actually
+  # control the account.
+  def admin?
+    steam_verified? && current_user && ENV["ADMIN_STEAM_ID"].present? && current_user.steam_id == ENV["ADMIN_STEAM_ID"]
   end
 
   def random_header_achievement_icon_url

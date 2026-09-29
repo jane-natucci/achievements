@@ -25,6 +25,10 @@
         {
           "name": "REDIS_URL",
           "value": "redis://10.0.101.185:6379/1"
+        },
+        {
+          "name": "ADMIN_STEAM_ID",
+          "value": "76561199079570785"
         }
       ],
       "secrets": [

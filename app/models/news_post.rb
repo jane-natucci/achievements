@@ -1,7 +1,7 @@
-# Admin-authored only -- created directly via console/rails runner, no
-# public form exists. #show renders body with raw HTML allowed (see the
-# view), which is safe only because of that -- never expose a public
-# create/update path for this model without revisiting that.
+# Admin-authored only -- gated by ApplicationController#admin? (see
+# NewsController), not open to any signed-in user. body is markdown
+# source, rendered + sanitized on the way out (see NewsHelper#render_news_body),
+# not raw HTML -- unlike this model's original console-only design.
 class NewsPost < ApplicationRecord
   has_many :comments, as: :commentable, dependent: :destroy
 

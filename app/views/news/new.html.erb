@@ -1,0 +1,7 @@
+<% content_for :sidebar do %>
+  <div class="sidebar-stack">
+    <%= link_to "Back to News", news_index_path, class: "sidebar-button" %>
+  </div>
+<% end %>
+
+<%= render "form", submit_label: "Post", heading_title: "Post news", form_url: news_index_path %>

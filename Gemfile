@@ -74,5 +74,8 @@ gem "sidekiq-scheduler", "~> 6.0"
 gem "steam-api", "~> 1.2"
 gem "discard"
 
+# Markdown rendering for admin-authored news posts [https://github.com/vmg/redcarpet]
+gem "redcarpet"
+
 gem "sentry-ruby"
 gem "sentry-rails"

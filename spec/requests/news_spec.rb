@@ -52,6 +52,133 @@ RSpec.describe 'News', type: :request do
     end
   end
 
+  describe 'admin authoring' do
+    let(:admin_steam_id) { '76561199079570785' }
+
+    # Only a real Steam OpenID callback sets steam_verified -- the
+    # paste-a-profile-URL flow (see the plain #sign_in helper below)
+    # deliberately doesn't, and admin? requires it. Mirrors
+    # sessions_spec.rb's own GET /login/steam/callback test.
+    def sign_in_verified(user)
+      allow(SteamOpenid).to receive(:verify_steam_id).and_return(user.steam_id)
+      allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
+      allow(SyncUserAchievementProgressWorker).to receive(:perform_async)
+      get '/login/steam/callback'
+    end
+
+    before { ENV['ADMIN_STEAM_ID'] = admin_steam_id }
+    after { ENV.delete('ADMIN_STEAM_ID') }
+
+    describe 'GET /news/new' do
+      it 'redirects a non-admin visitor, including one who is Steam-verified but not the admin account' do
+        sign_in_verified(create(:user, steam_id: '76561199000000001'))
+
+        get new_news_path
+
+        expect(response).to redirect_to(news_index_path)
+        follow_redirect!
+        expect(response.body).to include('Not authorized')
+      end
+
+      it 'redirects a logged-out visitor' do
+        get new_news_path
+
+        expect(response).to redirect_to(news_index_path)
+      end
+
+      it 'shows the form to the verified admin' do
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+
+        get new_news_path
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Post news')
+      end
+    end
+
+    describe 'POST /news' do
+      it 'creates a published post with rendered, sanitized markdown when the admin checks publish now' do
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+
+        post news_index_path, params: {
+          news_post: { title: 'Big update', body: "**Bold** and <script>alert(1)</script>", publish_now: '1' }
+        }
+
+        post_record = NewsPost.find_by!(title: 'Big update')
+        expect(response).to redirect_to(news_path(post_record))
+        expect(post_record.published_at).to be_present
+
+        get news_path(post_record)
+        expect(response.body).to include('<strong>Bold</strong>')
+        expect(response.body).not_to include('<script>')
+      end
+
+      it 'creates a draft (published_at nil) when publish now is left unchecked' do
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+
+        post news_index_path, params: { news_post: { title: 'Draft', body: 'Body' } }
+
+        expect(NewsPost.find_by!(title: 'Draft').published_at).to be_nil
+      end
+
+      it 'is forbidden for a non-admin' do
+        sign_in_verified(create(:user, steam_id: '76561199000000002'))
+
+        expect {
+          post news_index_path, params: { news_post: { title: 'Nope', body: 'Body' } }
+        }.not_to change(NewsPost, :count)
+      end
+    end
+
+    describe 'draft visibility' do
+      it "lets the admin preview their own draft, but 404s it for anyone else" do
+        draft = NewsPost.create!(title: 'Unfinished', body: 'Body', published_at: nil)
+
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+        get news_path(draft)
+        expect(response).to have_http_status(:ok)
+
+        sign_in_verified(create(:user, steam_id: '76561199000000003'))
+        get news_path(draft)
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "lists drafts to the admin on the index, but not to anyone else" do
+        NewsPost.create!(title: 'Secret draft', body: 'Body', published_at: nil)
+
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+        get news_index_path
+        expect(response.body).to include('Secret draft')
+
+        sign_in_verified(create(:user, steam_id: '76561199000000004'))
+        get news_index_path
+        expect(response.body).not_to include('Secret draft')
+      end
+    end
+
+    describe 'PATCH /news/:id' do
+      it "lets the admin edit their own post, including turning a draft into a published one" do
+        draft = NewsPost.create!(title: 'WIP', body: 'Old body', published_at: nil)
+        sign_in_verified(create(:user, steam_id: admin_steam_id))
+
+        patch news_path(draft), params: { news_post: { title: 'WIP', body: 'New body', publish_now: '1' } }
+
+        draft.reload
+        expect(draft.body).to eq('New body')
+        expect(draft.published_at).to be_present
+      end
+
+      it 'is forbidden for a non-admin' do
+        post_record = NewsPost.create!(title: 'Live', body: 'Body', published_at: 1.day.ago)
+        sign_in_verified(create(:user, steam_id: '76561199000000005'))
+
+        patch news_path(post_record), params: { news_post: { title: 'Live', body: 'Hacked' } }
+
+        expect(post_record.reload.body).to eq('Body')
+      end
+    end
+  end
+
   describe 'unread news indicator' do
     def sign_in(user)
       allow(Steam::User).to receive(:summary).and_return('personaname' => user.display_name)
