@@ -507,4 +507,16 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).to include('topbar__avatar-initial')
     end
   end
+
+  describe 'GET /help' do
+    it 'sends questions and ideas to GitHub Issues, not to the old Steam group' do
+      get '/help'
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Where can I ask questions?')
+      expect(response.body).to include('href="https://github.com/jane-natucci/achievements/issues"')
+      expect(response.body).not_to include('steamcommunity.com/groups')
+      expect(response.body).not_to include('Steam group')
+    end
+  end
 end
