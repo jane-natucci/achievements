@@ -1,8 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= page_title("Achievements") %></title>
+    <title><%= page_title("Achievement ChainZ — chains of Steam achievements") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="<%= page_description %>">
+    <meta name="robots" content="<%= content_for(:robots).presence || "index, follow" %>">
+    <link rel="canonical" href="<%= canonical_url %>">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Achievement ChainZ">
+    <meta property="og:title" content="<%= page_title("Achievement ChainZ — chains of Steam achievements") %>">
+    <meta property="og:description" content="<%= page_description %>">
+    <meta property="og:url" content="<%= canonical_url %>">
+    <meta property="og:image" content="<%= content_for(:image).presence || "#{site_url}/og-image.jpg" %>">
+    <% unless content_for(:image).present? %>
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <% end %>
+    <meta name="twitter:card" content="<%= content_for(:image).present? ? "summary" : "summary_large_image" %>">
+    <meta name="twitter:title" content="<%= page_title("Achievement ChainZ — chains of Steam achievements") %>">
+    <meta name="twitter:description" content="<%= page_description %>">
+    <meta name="twitter:image" content="<%= content_for(:image).presence || "#{site_url}/og-image.jpg" %>">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Achievements">
     <meta name="mobile-web-app-capable" content="yes">

@@ -1,4 +1,11 @@
 <%
+  chain_titles = @nodes.map { |node| node.achievement.title }.compact
+  content_for :title, "#{@chain.title} — achievement chain for #{@chain.game.name}"
+  content_for :description, (@chain.description.presence || "A chain of #{@nodes.size} #{@chain.game.name} achievements: #{chain_titles.first(5).join(" → ")}#{" → …" if chain_titles.size > 5}.").to_s.squish.truncate(155, separator: " ")
+  first_icon = @nodes.first&.achievement&.icon_unlocked
+  content_for :image, first_icon if first_icon.present?
+%>
+<%
   total_nodes = @nodes.size
   unlocked_nodes = current_user ? @node_progress_by_node_id.size : total_nodes
   completion_rate = total_nodes.positive? ? ((unlocked_nodes.to_f / total_nodes) * 100).round : 0

@@ -1,3 +1,5 @@
+<% content_for :title, "#{@news_post.title} · Achievement ChainZ news" %>
+<% content_for :description, strip_tags(render_news_body(@news_post.body)).squish.truncate(155, separator: " ") %>
 <% content_for :sidebar do %>
   <div class="sidebar-stack">
     <%= link_to "Back to News", news_index_path, class: "sidebar-button" %>

@@ -1,4 +1,9 @@
 <%
+  content_for :title, "#{@achievement.title} — #{@achievement.game.name} achievement · Achievement ChainZ"
+  content_for :description, (@achievement.description.presence || "The #{@achievement.title} achievement in #{@achievement.game.name}, and the chains it is part of.").to_s.squish.truncate(155, separator: " ")
+  content_for :image, @achievement.icon_unlocked if @achievement.icon_unlocked.present?
+%>
+<%
   chains = @chain_nodes.map(&:chain).uniq
 %>
 

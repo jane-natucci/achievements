@@ -1,3 +1,5 @@
+<% content_for :title, "Achievement chains — paths through Steam achievements · Achievement ChainZ" %>
+<% content_for :description, "Chains of Steam achievements built by players: pick a game, follow a chain from first step to last, and see which players are working on it." %>
 <%
   total_chains = @chains.size
   total_nodes = @chains.sum { |chain| chain.chain_nodes.size }

@@ -23,6 +23,17 @@ module ApplicationHelper
     Rails.env.development? ? "#{title} (local)" : title
   end
 
+  # Every address the site gives to search engines is on this host, even when a page is reached as
+  # achievementchai.nz (the old name), so the same page is never indexed twice.
+  SITE_URL = "https://achievements.jane.berlin".freeze
+  SITE_DESCRIPTION = "Achievement ChainZ: chain Steam achievements into paths, follow them, earn XP and compare progress with other players.".freeze
+
+  def site_url = SITE_URL
+
+  def canonical_url = content_for(:url).presence || "#{SITE_URL}#{request.path unless request.path == "/"}"
+
+  def page_description = content_for(:description).presence || SITE_DESCRIPTION
+
   # Every icon slot already has its own CSS-based placeholder for a blank
   # icon URL (see the *__icon--placeholder classes) -- this instead covers
   # a *present-but-dead* URL, e.g. old achievements imported when Steam
