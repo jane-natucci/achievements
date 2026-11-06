@@ -3,6 +3,17 @@
 require 'rails_helper'
 
 RSpec.describe 'News', type: :request do
+  describe 'GET /news/:id' do
+    it 'keeps markdown tables and still drops scripts' do
+      post = NewsPost.create!(title: 'Table', body: "| a | b |\n| --- | --- |\n| 1 | 2 |\n\n<script>alert(1)</script>", published_at: 1.day.ago)
+
+      get news_path(post)
+
+      expect(response.body).to include('<td>2</td>')
+      expect(response.body).not_to include('<script>alert(1)')
+    end
+  end
+
   describe 'GET /news' do
     it 'lists published posts, newest first' do
       older = NewsPost.create!(title: 'Older post', body: 'Body', published_at: 2.days.ago)
@@ -22,6 +33,15 @@ RSpec.describe 'News', type: :request do
 
       expect(response.body).not_to include(draft.title)
       expect(response.body).not_to include(scheduled.title)
+    end
+
+    it 'previews a post as text, not its markdown source' do
+      NewsPost.create!(title: 'Linked', body: 'See [the page](https://example.com/page).', published_at: 1.day.ago)
+
+      get news_index_path
+
+      expect(response.body).to include('See the page.')
+      expect(response.body).not_to include('https://example.com/page')
     end
 
     it 'shows an empty state when there are no posts' do

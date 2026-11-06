@@ -3071,3 +3071,15 @@ a {
 .battle-hp-bar-flash {
   animation: battle-hp-bar-flash 1.4s ease-out;
 }
+
+.help-page .chain-card table {
+  border-collapse: collapse;
+}
+
+.help-page .chain-card th,
+.help-page .chain-card td {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}

@@ -30,7 +30,7 @@
               Draft
             <% end %>
           </p>
-          <p><%= truncate(strip_tags(post.body), length: 280, separator: " ") %></p>
+          <p><%= truncate(strip_tags(render_news_body(post.body)), length: 280, separator: " ") %></p>
         </div>
       <% end %>
     </div>

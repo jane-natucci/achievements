@@ -11,7 +11,11 @@ module NewsHelper
     autolink: true, fenced_code_blocks: true, strikethrough: true, tables: true, no_intra_emphasis: true
   )
 
+  # Rails' sanitizer drops table tags by default, which would leave a markdown
+  # table as run-together text.
+  ALLOWED_TAGS = (Rails::HTML5::SafeListSanitizer.allowed_tags.to_a + %w[table thead tbody tr th td]).freeze
+
   def render_news_body(body)
-    sanitize(MARKDOWN.render(body.to_s))
+    sanitize(MARKDOWN.render(body.to_s), tags: ALLOWED_TAGS)
   end
 end
