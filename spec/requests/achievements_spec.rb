@@ -35,6 +35,20 @@ RSpec.describe 'Achievements home', type: :request do
       expect(response.body).not_to include('Added')
     end
 
+    # Writing notes on a long chain posted one row per note and pushed everything else off the first page (2026-11-21).
+    it "hides individual achievement_note events, like achievement_added" do
+      user = create(:user, display_name: 'Notetaker')
+      chain = create(:chain, creator: user, title: 'Noted Chain')
+      nodes = Array.new(3) { create(:chain_node, chain: chain) }
+      AwardXp.call(user: user, amount: 50, reason: 'chain_created', subject: chain)
+      nodes.each { |node| AwardXp.call(user: user, amount: 3, reason: 'achievement_note', subject: node) }
+
+      get root_path
+
+      expect(response.body).to include('Noted Chain')
+      expect(response.body).not_to include('Wrote a note')
+    end
+
     it 'shows an empty state when nobody has earned xp yet' do
       get root_path
 

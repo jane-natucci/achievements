@@ -53,11 +53,16 @@ class XpEvent < ApplicationRecord
               .select(:id)
   end
 
-  # Sitewide feed visibility: drops "added to chain" noise, hides
-  # incidental (non-creator) chain completions, then collapses
-  # per-chain-node achievement_unlocked duplicates.
+  # One row per achievement in a chain: fine on a profile, a flood in the
+  # sitewide feed (a 14-step chain with notes posted 14 note rows at once).
+  FEED_HIDDEN_REASONS = %w[achievement_added achievement_note].freeze
+
+  # Sitewide feed visibility: drops per-achievement noise ("added to
+  # chain", "wrote a note"), hides incidental (non-creator) chain
+  # completions, then collapses per-chain-node achievement_unlocked
+  # duplicates.
   def self.visible_ids(scope = all)
-    candidates = scope.where.not(reason: "achievement_added")
+    candidates = scope.where.not(reason: FEED_HIDDEN_REASONS)
     non_incidental = candidates.where.not(id: incidental_chain_completion_ids(candidates))
     collapse_achievement_unlock_duplicates(non_incidental)
   end
