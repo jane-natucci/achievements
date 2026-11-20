@@ -132,7 +132,7 @@ class ChainsController < ApplicationController
   end
 
   def load_games
-    @games = Game.includes(:achievements).order(:name)
+    @games = Game.order(:name)
   end
 
   def parse_selected_achievements

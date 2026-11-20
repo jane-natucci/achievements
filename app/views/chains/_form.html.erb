@@ -6,19 +6,11 @@
   error_title = local_assigns.fetch(:error_title)
   form_url = local_assigns.fetch(:form_url)
   selected_achievements_json = params.dig(:chain, :selected_achievement_ids).presence || Array(@selected_achievements_payload).to_json
-  games_payload = @games.map do |game|
-    {
-      id: game.id,
-      name: game.name,
-      achievements: game.achievements.sort_by(&:title).map do |achievement|
-        {
-          id: achievement.id,
-          title: achievement.title,
-          description: achievement.description,
-          icon_unlocked: achievement.icon_unlocked
-        }
-      end
-    }
+  # Only the chosen game's achievements go into the page (editing, or the form shown again after an error); the
+  # builder fetches another game's when it's picked.
+  chosen_game = @games.find { |game| game.id == @chain.game_id }
+  achievements_payload = Array(chosen_game&.achievements&.order(:title)).map do |achievement|
+    achievement.slice(:id, :title, :description, :icon_unlocked)
   end
 %>
 
@@ -59,7 +51,8 @@
   <div
     class="chain-builder"
     data-controller="chain-builder"
-    data-chain-builder-games-value="<%= json_escape(games_payload.to_json) %>"
+    data-chain-builder-achievements-value="<%= json_escape(achievements_payload.to_json) %>"
+    data-chain-builder-achievements-url-value="<%= game_achievements_path(game_id: ":game_id") %>"
     data-chain-builder-placeholder-icon-value="<%= image_path('achievement-placeholder.svg') %>"
   >
     <%= form_with model: @chain, url: form_url, class: "chain-builder__form" do |form| %>

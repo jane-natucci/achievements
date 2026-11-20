@@ -82,6 +82,9 @@ Rails.application.routes.draw do
       delete :pin, action: :unpin
     end
   end
+  resources :games, only: [] do
+    resources :achievements, only: :index, module: :games
+  end
   resources :chains do
     member do
       post :favorite

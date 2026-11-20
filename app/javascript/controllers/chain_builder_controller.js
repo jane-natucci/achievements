@@ -2,29 +2,49 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["achievementSelect", "count", "emptyState", "gameSelect", "hiddenInput", "list"]
-  static values = { games: Array, placeholderIcon: String }
+  // achievements: the chosen game's, when the page already has one (editing a chain). achievementsUrl: where to fetch
+  // another game's, with ":game_id" in it.
+  static values = { achievements: Array, achievementsUrl: String, placeholderIcon: String }
 
   connect() {
+    this.achievements = this.achievementsValue
     this.selectedAchievements = this.initialSelectedAchievements()
     this.syncAchievementOptions()
     this.render()
   }
 
-  changeGame() {
+  async changeGame() {
+    const gameId = this.gameSelectTarget.value
     this.selectedAchievements = []
+    this.achievements = []
+    this.loading = Boolean(gameId)
     this.syncAchievementOptions()
     this.render()
+    if (!gameId) return
+
+    const url = this.achievementsUrlValue.replace(":game_id", encodeURIComponent(gameId))
+    let achievements = []
+    try {
+      const response = await fetch(url, { headers: { Accept: "application/json" } })
+      if (response.ok) achievements = await response.json()
+    } catch {
+      // Leaves the list empty; picking the game again retries.
+    }
+    if (this.gameSelectTarget.value !== gameId) return // another game was picked meanwhile
+
+    this.achievements = achievements
+    this.loading = false
+    this.syncAchievementOptions()
   }
 
   addAchievement() {
-    const selectedGame = this.currentGame()
     const achievementId = Number(this.achievementSelectTarget.value)
 
-    if (!selectedGame || !achievementId) {
+    if (!achievementId) {
       return
     }
 
-    const achievement = selectedGame.achievements.find((item) => item.id === achievementId)
+    const achievement = this.achievements.find((item) => item.id === achievementId)
 
     if (!achievement || this.selectedAchievements.some((item) => item.id === achievement.id)) {
       return
@@ -54,15 +74,9 @@ export default class extends Controller {
     this.syncHiddenInput()
   }
 
-  currentGame() {
-    const gameId = Number(this.gameSelectTarget.value)
-    return this.gamesValue.find((game) => game.id === gameId)
-  }
-
   initialSelectedAchievements() {
     const selectedPayload = this.parseHiddenPayload()
-    const currentAchievements = this.currentGame()?.achievements || []
-    const achievementMap = new Map(currentAchievements.map((achievement) => [achievement.id, achievement]))
+    const achievementMap = new Map(this.achievements.map((achievement) => [achievement.id, achievement]))
 
     return selectedPayload
       .map((item) => {
@@ -74,18 +88,18 @@ export default class extends Controller {
 
   availableAchievements() {
     const selectedIds = new Set(this.selectedAchievements.map((item) => item.id))
-    return (this.currentGame()?.achievements || []).filter((achievement) => !selectedIds.has(achievement.id))
+    return this.achievements.filter((achievement) => !selectedIds.has(achievement.id))
   }
 
   syncAchievementOptions() {
-    const selectedGame = this.currentGame()
+    const gameChosen = Boolean(this.gameSelectTarget.value)
     const availableAchievements = this.availableAchievements()
 
     this.achievementSelectTarget.innerHTML = ""
 
     const promptOption = document.createElement("option")
     promptOption.value = ""
-    promptOption.textContent = selectedGame ? "Select an achievement" : "Select a game first"
+    promptOption.textContent = !gameChosen ? "Select a game first" : this.loading ? "Loading achievements…" : "Select an achievement"
     this.achievementSelectTarget.append(promptOption)
 
     availableAchievements.forEach((achievement) => {
@@ -95,7 +109,7 @@ export default class extends Controller {
       this.achievementSelectTarget.append(option)
     })
 
-    this.achievementSelectTarget.disabled = !selectedGame || availableAchievements.length === 0
+    this.achievementSelectTarget.disabled = !gameChosen || this.loading || availableAchievements.length === 0
   }
 
   render() {
