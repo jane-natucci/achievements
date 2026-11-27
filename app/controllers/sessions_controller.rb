@@ -159,7 +159,7 @@ class SessionsController < ApplicationController
     return existing_chain if existing_chain
 
     chain = Chain.new(
-      title: params[:title].to_s.strip.presence || "Suggested by #{game.name} Strength Score",
+      title: params[:title].to_s.strip.presence || "Suggested by #{game.name} Achievement Score",
       description: description,
       game: game,
       creator: user

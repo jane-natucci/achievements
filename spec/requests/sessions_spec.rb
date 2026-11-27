@@ -211,7 +211,7 @@ RSpec.describe 'Sessions', type: :request do
 
       get '/login/steam_id', params: { steam_id: user.steam_id, achievements: [ 'ACH_FIRST' ] }
 
-      expect(Chain.last.title).to eq('Suggested by Europa Universalis IV Strength Score')
+      expect(Chain.last.title).to eq('Suggested by Europa Universalis IV Achievement Score')
     end
 
     it 'awards chain-creation XP the same way the normal chain-builder does' do
@@ -264,7 +264,7 @@ RSpec.describe 'Sessions', type: :request do
       chain = Chain.last
       expect(response).to redirect_to("/chains/#{chain.id}")
       expect(chain.game).to eq(vic3)
-      expect(chain.title).to eq('Suggested by Victoria 3 Strength Score')
+      expect(chain.title).to eq('Suggested by Victoria 3 Achievement Score')
       expect(chain.nodes_in_order.map(&:ref_id)).to eq([ achievement.id ])
     end
   end

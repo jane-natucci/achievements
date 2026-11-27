@@ -111,12 +111,12 @@ RSpec.describe 'Achievements home', type: :request do
       # auto-generated suggestion chains at once, flooding the dashboard.
       creator = create(:user, display_name: 'Creator')
       completer = create(:user, display_name: 'Completer')
-      chain = create(:chain, creator: creator, title: 'Suggested by EU4 Strength Score')
+      chain = create(:chain, creator: creator, title: 'Suggested by EU4 Achievement Score')
       AwardXp.call(user: completer, amount: 100, reason: 'chain_completed', subject: chain)
 
       get root_path
 
-      expect(response.body).not_to include('Suggested by EU4 Strength Score')
+      expect(response.body).not_to include('Suggested by EU4 Achievement Score')
     end
 
     it 'collapses one unlock into a single feed row even if the achievement appears in multiple chains' do
